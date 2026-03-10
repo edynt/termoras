@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, Pencil, Trash2, Check, ChevronDown } from "lucide-react";
+import { Copy, Pencil, Trash2, Check, ChevronDown, Play, Tag } from "lucide-react";
 import type { KanbanCard as KanbanCardType } from "../types/kanban";
 import { CARD_TYPES } from "../types/kanban";
 import { useKanbanStore } from "../stores/kanban-store";
+import { useAppStore } from "../stores/app-store";
+import { writeTerminal } from "../lib/tauri-commands";
 import { KanbanCardEditor } from "./kanban-card-editor";
 
 /** Left accent bar + badge colors per card type */
@@ -19,6 +21,9 @@ const TYPE_STYLES: Record<string, { bar: string; badge: string }> = {
   watzup:     { bar: "bg-slate-500",   badge: "bg-slate-500/15 text-slate-400 ring-slate-500/20" },
 };
 
+/** Fallback style when type is null */
+const UNTAGGED_STYLE = { bar: "bg-neutral-400", badge: "bg-neutral-500/10 text-neutral-400 ring-neutral-500/20" };
+
 interface Props {
   card: KanbanCardType;
   isDragOverlay?: boolean;
@@ -30,6 +35,9 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const removeCard = useKanbanStore((s) => s.removeCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
+  const terminals = useAppStore((s) => s.terminals);
+  const activeProjectId = useAppStore((s) => s.activeProjectId);
+  const setActiveTerminal = useAppStore((s) => s.setActiveTerminal);
 
   // Close type menu on outside click
   useEffect(() => {
@@ -54,11 +62,12 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     opacity: isDragging ? 0.3 : 1,
   };
 
-  const typeStyle = TYPE_STYLES[card.type] ?? TYPE_STYLES.watzup;
+  const typeStyle = card.type ? (TYPE_STYLES[card.type] ?? UNTAGGED_STYLE) : UNTAGGED_STYLE;
+  const hasType = card.type !== null;
 
   async function handleCopy(e: React.MouseEvent) {
     e.stopPropagation();
-    const text = `/${card.type} ${card.content}`;
+    const text = hasType ? `/${card.type} ${card.content}` : card.content;
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
@@ -67,6 +76,23 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
     removeCard(card.id);
+  }
+
+  async function handleRun(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!card.content) return;
+
+    // Find a terminal for the current project
+    const projectTerminal = terminals.find((t) => t.projectId === activeProjectId);
+    if (!projectTerminal) return;
+
+    const command = hasType ? `/${card.type} ${card.content}` : card.content;
+
+    // Switch to terminal view and activate the target terminal
+    setActiveTerminal(projectTerminal.id);
+
+    // Write command + enter to the PTY
+    await writeTerminal(projectTerminal.id, command + "\r");
   }
 
   if (editing) {
@@ -104,24 +130,35 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
               className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md ring-1 ring-inset cursor-pointer hover:opacity-80 transition-opacity ${typeStyle.badge}`}
               title="Change type"
             >
-              {card.type}
-              <ChevronDown size={10} />
+              {hasType ? (
+                <>
+                  {card.type}
+                  <ChevronDown size={10} />
+                </>
+              ) : (
+                <>
+                  <Tag size={10} />
+                  <ChevronDown size={10} />
+                </>
+              )}
             </button>
 
-            {/* Type selector dropdown */}
+            {/* Type selector dropdown — scrollable to show all tags */}
             {showTypeMenu && (
-              <div className="absolute left-0 top-full mt-1 z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1">
+              <div className="absolute left-0 top-full mt-1 z-50 min-w-[130px] max-h-[260px] overflow-y-auto rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1">
                 {CARD_TYPES.map((ct) => {
-                  const s = TYPE_STYLES[ct.value] ?? TYPE_STYLES.watzup;
+                  const s = TYPE_STYLES[ct.value] ?? UNTAGGED_STYLE;
                   const isSelected = card.type === ct.value;
                   return (
                     <button
                       key={ct.value}
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateCard(card.id, { type: ct.value });
+                        // Toggle: click selected tag to untag, click other to set
+                        updateCard(card.id, { type: isSelected ? null : ct.value });
                         setShowTypeMenu(false);
                       }}
+                      title={ct.description}
                       className={`w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] transition-colors ${
                         isSelected ? "font-semibold" : ""
                       }`}
@@ -141,6 +178,15 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
 
           {/* Actions — visible on hover */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            {card.content && (
+              <button
+                onClick={handleRun}
+                className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors"
+                title="Run in terminal"
+              >
+                <Play size={14} />
+              </button>
+            )}
             <button
               onClick={handleCopy}
               className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-blue)] transition-colors"
@@ -188,7 +234,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
         {card.content && (
           <div className="flex">
             <span className="inline-block text-[11px] font-mono px-2 py-1 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
-              /{card.type} {card.content.length > 40 ? card.content.slice(0, 40) + "…" : card.content}
+              {hasType ? `/${card.type} ` : ""}{card.content.length > 40 ? card.content.slice(0, 40) + "…" : card.content}
             </span>
           </div>
         )}

@@ -8,22 +8,22 @@ export type CardType =
   | "debug"
   | "watzup";
 
-export const CARD_TYPES: { value: CardType; label: string }[] = [
-  { value: "cook", label: "Cook" },
-  { value: "plan", label: "Plan" },
-  { value: "code", label: "Code" },
-  { value: "test", label: "Test" },
-  { value: "brainstorm", label: "Brainstorm" },
-  { value: "scout", label: "Scout" },
-  { value: "debug", label: "Debug" },
-  { value: "watzup", label: "Watzup" },
+export const CARD_TYPES: { value: CardType; label: string; description: string }[] = [
+  { value: "cook", label: "Cook", description: "Implement a feature step by step" },
+  { value: "plan", label: "Plan", description: "Create an implementation plan" },
+  { value: "code", label: "Code", description: "Implement code from a plan" },
+  { value: "test", label: "Test", description: "Run and analyze tests" },
+  { value: "brainstorm", label: "Brainstorm", description: "Brainstorm ideas" },
+  { value: "scout", label: "Scout", description: "Explore the codebase" },
+  { value: "debug", label: "Debug", description: "Debug and fix issues" },
+  { value: "watzup", label: "Watzup", description: "Review recent changes" },
 ];
 
 export interface KanbanCard {
   id: string;
   title: string;
   content: string;
-  type: CardType;
+  type: CardType | null;
 }
 
 export interface KanbanColumn {

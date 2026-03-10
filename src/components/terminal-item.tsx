@@ -14,6 +14,7 @@ export function TerminalItem({ terminal }: Props) {
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(
     null,
   );
+  const [confirmKill, setConfirmKill] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const activeTerminalId = useAppStore((s) => s.activeTerminalId);
   const setActiveTerminal = useAppStore((s) => s.setActiveTerminal);
@@ -68,8 +69,7 @@ export function TerminalItem({ terminal }: Props) {
     if (e.key === "Escape") setEditing(false);
   }
 
-  async function handleKill(e?: React.MouseEvent) {
-    e?.stopPropagation();
+  async function handleKill() {
     try {
       await killTerminal(terminal.id);
     } catch {
@@ -77,6 +77,7 @@ export function TerminalItem({ terminal }: Props) {
     }
     setTerminalRunning(terminal.id, false);
     removeTerminal(terminal.id);
+    setConfirmKill(false);
   }
 
   return (
@@ -115,7 +116,10 @@ export function TerminalItem({ terminal }: Props) {
         )}
 
         <button
-          onClick={(e) => handleKill(e)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setConfirmKill(true);
+          }}
           className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
           title="Kill terminal"
         >
@@ -141,12 +145,48 @@ export function TerminalItem({ terminal }: Props) {
           <button
             onClick={() => {
               setCtxMenu(null);
-              handleKill();
+              setConfirmKill(true);
             }}
             className="w-full text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
           >
             Kill
           </button>
+        </div>
+      )}
+
+      {/* Kill confirmation modal */}
+      {confirmKill && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setConfirmKill(false)}
+        >
+          <div
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[300px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold mb-1">Kill Terminal</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-4">
+              Are you sure you want to kill{" "}
+              <span className="font-medium text-[var(--text-primary)]">
+                {terminal.name}
+              </span>
+              ? Any running process will be terminated.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmKill(false)}
+                className="text-xs px-3 py-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleKill}
+                className="text-xs px-3 py-1.5 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
+              >
+                Kill
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

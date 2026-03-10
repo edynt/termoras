@@ -24,7 +24,7 @@ interface Props {
 export function KanbanCardEditor({ card, columnId, onClose }: Props) {
   const [title, setTitle] = useState(card?.title ?? "");
   const [content, setContent] = useState(card?.content ?? "");
-  const [type, setType] = useState<CardType>(card?.type ?? "cook");
+  const [type, setType] = useState<CardType | null>(card?.type ?? null);
   const titleRef = useRef<HTMLInputElement>(null);
   const addCard = useKanbanStore((s) => s.addCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
@@ -73,12 +73,13 @@ export function KanbanCardEditor({ card, columnId, onClose }: Props) {
         className="w-full text-[13px] bg-[var(--bg-hover)] rounded-md p-2.5 border-none outline-none resize-none mb-3 placeholder:text-[var(--text-secondary)]/60 leading-relaxed"
       />
 
-      {/* Type selector — pill buttons */}
+      {/* Type selector — pill buttons (click to toggle) */}
       <div className="flex flex-wrap gap-1.5 mb-3">
         {CARD_TYPES.map((ct) => (
           <button
             key={ct.value}
-            onClick={() => setType(ct.value)}
+            onClick={() => setType(type === ct.value ? null : ct.value)}
+            title={`/${ct.value} — ${ct.description}`}
             className={`text-xs font-semibold px-2.5 py-1 rounded-md ring-1 ring-inset transition-all ${
               type === ct.value
                 ? `${TYPE_PILL_STYLES[ct.value]} ring-2`

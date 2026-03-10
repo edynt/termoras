@@ -20,7 +20,7 @@ interface KanbanStore {
   loadBoard: (projectId: string) => Promise<void>;
 
   // Card actions
-  addCard: (columnId: string, title: string, content: string, type: CardType) => void;
+  addCard: (columnId: string, title: string, content: string, type: CardType | null) => void;
   updateCard: (cardId: string, updates: Partial<Omit<KanbanCard, "id">>) => void;
   removeCard: (cardId: string) => void;
   moveCard: (cardId: string, fromColId: string, toColId: string, newIndex: number) => void;

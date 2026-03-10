@@ -83,9 +83,26 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const name = path.split("/").pop() || path;
     const project: Project = { id: crypto.randomUUID(), name, path };
     const updated = [...projects, project];
-    set({ projects: updated, activeProjectId: project.id });
+
+    // Auto-create a default terminal for the new project
+    const terminal: TerminalSession = {
+      id: crypto.randomUUID(),
+      projectId: project.id,
+      name: "Terminal 1",
+      isRunning: false,
+    };
+    const updatedTerminals = [...get().terminals, terminal];
+
+    set({
+      projects: updated,
+      activeProjectId: project.id,
+      terminals: updatedTerminals,
+      activeTerminalId: terminal.id,
+      activeView: "terminal",
+    });
     await saveProjects(updated);
-    persistActiveIds(project.id, get().activeTerminalId, get().activeView);
+    persistTerminals(updatedTerminals);
+    persistActiveIds(project.id, terminal.id, "terminal");
   },
 
   removeProject: async (id: string) => {
