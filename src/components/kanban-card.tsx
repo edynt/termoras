@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, Pencil, Trash2, Check, ChevronDown, Play, Tag } from "lucide-react";
+import { Copy, Pencil, Trash2, Check, ChevronDown, Play, Tag, Loader2 } from "lucide-react";
 import type { KanbanCard as KanbanCardType } from "../types/kanban";
 import { CARD_TYPES } from "../types/kanban";
 import { useKanbanStore } from "../stores/kanban-store";
@@ -33,6 +33,9 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [runState, setRunState] = useState<"idle" | "running" | "done">("idle");
+  const tagBtnRef = useRef<HTMLButtonElement>(null);
   const removeCard = useKanbanStore((s) => s.removeCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
   const terminals = useAppStore((s) => s.terminals);
@@ -80,7 +83,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
 
   async function handleRun(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!card.content) return;
+    if (!card.content || runState !== "idle") return;
 
     // Find a terminal for the current project
     const projectTerminal = terminals.find((t) => t.projectId === activeProjectId);
@@ -88,11 +91,17 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
 
     const command = hasType ? `/${card.type} ${card.content}` : card.content;
 
+    setRunState("running");
+
     // Switch to terminal view and activate the target terminal
     setActiveTerminal(projectTerminal.id);
 
     // Write command + enter to the PTY
     await writeTerminal(projectTerminal.id, command + "\r");
+
+    // Show done state after command is sent
+    setRunState("done");
+    setTimeout(() => setRunState("idle"), 2000);
   }
 
   if (editing) {
@@ -109,29 +118,34 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
       style={isDragOverlay ? undefined : style}
       {...(isDragOverlay ? {} : attributes)}
       {...(isDragOverlay ? {} : listeners)}
-      className={`group relative overflow-hidden rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] cursor-grab active:cursor-grabbing transition-all duration-200 hover:border-[var(--text-secondary)]/30 ${
+      className={`group relative rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] cursor-grab active:cursor-grabbing transition-all duration-200 hover:border-[var(--text-secondary)]/30 ${
         isDragOverlay
           ? "shadow-2xl ring-2 ring-[var(--accent-blue)]/50 scale-[1.02]"
           : "shadow-sm hover:shadow-md"
       }`}
     >
-      {/* Left accent bar */}
-      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${typeStyle.bar}`} />
-
-      <div className="pl-4 pr-3 py-3">
+      <div className="px-3 py-3">
         {/* Header: type selector + actions */}
         <div className="flex items-center gap-2 mb-2">
-          <div className="relative">
+          <div>
             <button
+              ref={tagBtnRef}
               onClick={(e) => {
                 e.stopPropagation();
-                setShowTypeMenu(!showTypeMenu);
+                if (showTypeMenu) {
+                  setShowTypeMenu(false);
+                } else {
+                  const rect = tagBtnRef.current?.getBoundingClientRect();
+                  if (rect) setMenuPos({ x: rect.left, y: rect.bottom + 4 });
+                  setShowTypeMenu(true);
+                }
               }}
               className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md ring-1 ring-inset cursor-pointer hover:opacity-80 transition-opacity ${typeStyle.badge}`}
               title="Change type"
             >
               {hasType ? (
                 <>
+                  <span className={`w-2 h-2 rounded-full ${typeStyle.bar}`} />
                   {card.type}
                   <ChevronDown size={10} />
                 </>
@@ -143,9 +157,12 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
               )}
             </button>
 
-            {/* Type selector dropdown — scrollable to show all tags */}
-            {showTypeMenu && (
-              <div className="absolute left-0 top-full mt-1 z-50 min-w-[130px] max-h-[260px] overflow-y-auto rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1">
+            {/* Type selector dropdown — fixed position to escape overflow clipping */}
+            {showTypeMenu && menuPos && (
+              <div
+                className="fixed z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1"
+                style={{ left: menuPos.x, top: menuPos.y }}
+              >
                 {CARD_TYPES.map((ct) => {
                   const s = TYPE_STYLES[ct.value] ?? UNTAGGED_STYLE;
                   const isSelected = card.type === ct.value;
@@ -181,10 +198,22 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
             {card.content && (
               <button
                 onClick={handleRun}
-                className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors"
+                className={`p-1.5 rounded-md transition-colors ${
+                  runState === "done"
+                    ? "text-[var(--accent-green)]"
+                    : runState === "running"
+                    ? "text-[var(--accent-blue)]"
+                    : "hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-green)]"
+                }`}
                 title="Run in terminal"
               >
-                <Play size={14} />
+                {runState === "running" ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : runState === "done" ? (
+                  <Check size={14} />
+                ) : (
+                  <Play size={14} />
+                )}
               </button>
             )}
             <button

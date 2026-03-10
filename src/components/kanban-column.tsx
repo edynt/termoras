@@ -33,7 +33,7 @@ export function KanbanColumn({ column, cards }: Props) {
   }
 
   return (
-    <div className="flex flex-col w-[280px] min-w-[280px] max-h-full bg-[var(--bg-sidebar)] rounded-xl border border-[var(--border-color)]/50">
+    <div className="flex flex-col flex-1 min-w-[280px] max-h-full bg-[var(--bg-sidebar)] rounded-xl border border-[var(--border-color)]/50">
       {/* Column header */}
       <div className="relative flex items-center gap-2 px-3 py-2.5 shrink-0">
         {isEditingTitle ? (
