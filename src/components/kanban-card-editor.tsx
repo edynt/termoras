@@ -61,7 +61,7 @@ export function KanbanCardEditor({ card, columnId, onClose }: Props) {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Card title..."
-        className="w-full text-sm font-medium bg-transparent border-none outline-none mb-2.5 placeholder:text-[var(--text-secondary)]/60"
+        className="w-full text-sm font-medium bg-[var(--bg-hover)] rounded-md px-2.5 py-2 border border-[var(--border-color)] outline-none mb-2.5 placeholder:text-[var(--text-secondary)]/60 focus:border-[var(--accent-blue)] transition-colors"
       />
 
       {/* Content textarea */}

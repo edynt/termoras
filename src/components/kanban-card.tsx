@@ -1,21 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, Pencil, Trash2, Check } from "lucide-react";
+import { Copy, Pencil, Trash2, Check, ChevronDown } from "lucide-react";
 import type { KanbanCard as KanbanCardType } from "../types/kanban";
+import { CARD_TYPES } from "../types/kanban";
 import { useKanbanStore } from "../stores/kanban-store";
 import { KanbanCardEditor } from "./kanban-card-editor";
 
 /** Left accent bar + badge colors per card type */
-const TYPE_STYLES: Record<string, { bar: string; badge: string; icon: string }> = {
-  cook:       { bar: "bg-blue-500",   badge: "bg-blue-500/15 text-blue-400 ring-blue-500/20",     icon: "🍳" },
-  plan:       { bar: "bg-purple-500", badge: "bg-purple-500/15 text-purple-400 ring-purple-500/20", icon: "📋" },
-  code:       { bar: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-400 ring-emerald-500/20", icon: "⌨️" },
-  test:       { bar: "bg-amber-500",  badge: "bg-amber-500/15 text-amber-400 ring-amber-500/20",   icon: "🧪" },
-  brainstorm: { bar: "bg-orange-500", badge: "bg-orange-500/15 text-orange-400 ring-orange-500/20", icon: "💡" },
-  scout:      { bar: "bg-cyan-500",   badge: "bg-cyan-500/15 text-cyan-400 ring-cyan-500/20",     icon: "🔍" },
-  debug:      { bar: "bg-red-500",    badge: "bg-red-500/15 text-red-400 ring-red-500/20",       icon: "🐛" },
-  watzup:     { bar: "bg-slate-500",  badge: "bg-slate-500/15 text-slate-400 ring-slate-500/20",   icon: "👀" },
+const TYPE_STYLES: Record<string, { bar: string; badge: string }> = {
+  cook:       { bar: "bg-blue-500",    badge: "bg-blue-500/15 text-blue-400 ring-blue-500/20" },
+  plan:       { bar: "bg-purple-500",  badge: "bg-purple-500/15 text-purple-400 ring-purple-500/20" },
+  code:       { bar: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-400 ring-emerald-500/20" },
+  test:       { bar: "bg-amber-500",   badge: "bg-amber-500/15 text-amber-400 ring-amber-500/20" },
+  brainstorm: { bar: "bg-orange-500",  badge: "bg-orange-500/15 text-orange-400 ring-orange-500/20" },
+  scout:      { bar: "bg-cyan-500",    badge: "bg-cyan-500/15 text-cyan-400 ring-cyan-500/20" },
+  debug:      { bar: "bg-red-500",     badge: "bg-red-500/15 text-red-400 ring-red-500/20" },
+  watzup:     { bar: "bg-slate-500",   badge: "bg-slate-500/15 text-slate-400 ring-slate-500/20" },
 };
 
 interface Props {
@@ -26,7 +27,17 @@ interface Props {
 export function KanbanCard({ card, isDragOverlay }: Props) {
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
   const removeCard = useKanbanStore((s) => s.removeCard);
+  const updateCard = useKanbanStore((s) => s.updateCard);
+
+  // Close type menu on outside click
+  useEffect(() => {
+    if (!showTypeMenu) return;
+    const close = () => setShowTypeMenu(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [showTypeMenu]);
 
   const {
     attributes,
@@ -35,7 +46,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: card.id, disabled: editing });
+  } = useSortable({ id: card.id, disabled: editing || showTypeMenu });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -82,14 +93,50 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
       <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${typeStyle.bar}`} />
 
       <div className="pl-4 pr-3 py-3">
-        {/* Header: type badge + actions */}
+        {/* Header: type selector + actions */}
         <div className="flex items-center gap-2 mb-2">
-          <span
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-md ring-1 ring-inset ${typeStyle.badge}`}
-          >
-            <span className="text-xs">{typeStyle.icon}</span>
-            {card.type}
-          </span>
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTypeMenu(!showTypeMenu);
+              }}
+              className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md ring-1 ring-inset cursor-pointer hover:opacity-80 transition-opacity ${typeStyle.badge}`}
+              title="Change type"
+            >
+              {card.type}
+              <ChevronDown size={10} />
+            </button>
+
+            {/* Type selector dropdown */}
+            {showTypeMenu && (
+              <div className="absolute left-0 top-full mt-1 z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1">
+                {CARD_TYPES.map((ct) => {
+                  const s = TYPE_STYLES[ct.value] ?? TYPE_STYLES.watzup;
+                  const isSelected = card.type === ct.value;
+                  return (
+                    <button
+                      key={ct.value}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateCard(card.id, { type: ct.value });
+                        setShowTypeMenu(false);
+                      }}
+                      className={`w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] transition-colors ${
+                        isSelected ? "font-semibold" : ""
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${s.bar}`} />
+                      <span>{ct.label}</span>
+                      {isSelected && (
+                        <Check size={10} className="ml-auto text-[var(--accent-blue)]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <div className="flex-1" />
 
           {/* Actions — visible on hover */}
