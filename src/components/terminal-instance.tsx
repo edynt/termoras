@@ -39,6 +39,8 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       cursorBlink: true,
       scrollback: 10000,
       altClickMovesCursor: true,
+      // Don't treat Option as Meta — required for IME input methods (Vietnamese Telex/VNI)
+      macOptionIsMeta: false,
     });
     termRef.current = term;
 
@@ -84,7 +86,10 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
         setTerminalRunning(terminalId, false);
       });
 
-    // Send user input to PTY stdin
+    // Send user input to PTY stdin.
+    // Vietnamese IME (Telex/VNI) composition is handled natively by xterm.js v6's
+    // built-in CompositionHelper. It suppresses raw keystrokes during composition
+    // and only fires onData with the final composed text. No manual gating needed.
     term.onData((data) => {
       writeToPty(data);
     });

@@ -36,11 +36,11 @@ body {
   color: var(--text-primary);
   margin: 0;
   overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
-/* Allow IME composition (Vietnamese Telex/VNI) in xterm's hidden input */
+/* Ensure xterm's hidden textarea can receive IME composition events in WKWebView.
+   WKWebView checks ancestor user-select for IME activation, so we must NOT set
+   user-select: none on body — only on specific UI elements (sidebar). */
 .xterm-helper-textarea {
   user-select: text !important;
   -webkit-user-select: text !important;

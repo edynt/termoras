@@ -16,16 +16,19 @@ interface Props {
 }
 
 export function ProjectItem({ project }: Props) {
-  const [expanded, setExpanded] = useState(false);
   const activeProjectId = useAppStore((s) => s.activeProjectId);
   const terminals = useAppStore((s) => s.terminals);
+  const projectTerminals = terminals.filter(
+    (t) => t.projectId === project.id,
+  );
+  // Auto-expand if this is the active project and has terminals (e.g. on restore)
+  const [expanded, setExpanded] = useState(
+    activeProjectId === project.id && projectTerminals.length > 0,
+  );
   const removeProject = useAppStore((s) => s.removeProject);
   const setActiveProject = useAppStore((s) => s.setActiveProject);
   const addTerminal = useAppStore((s) => s.addTerminal);
 
-  const projectTerminals = terminals.filter(
-    (t) => t.projectId === project.id,
-  );
   const runningCount = projectTerminals.filter((t) => t.isRunning).length;
   const isActive = activeProjectId === project.id;
 

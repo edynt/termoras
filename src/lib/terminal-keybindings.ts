@@ -45,6 +45,10 @@ export function attachMacKeybindings(
     // Only handle keydown events
     if (event.type !== "keydown") return true;
 
+    // Skip during IME composition (Vietnamese Telex/VNI, Japanese, Chinese, etc.)
+    // keyCode 229 is the universal IME processing signal in browsers
+    if (event.isComposing || event.keyCode === 229) return true;
+
     const { metaKey, altKey, key } = event;
 
     // --- Cmd (Meta) shortcuts ---

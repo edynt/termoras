@@ -1,7 +1,14 @@
 import { create } from "zustand";
 import type { Project, TerminalSession } from "../types";
 import { pickProjectFolder, killTerminal } from "../lib/tauri-commands";
-import { loadProjects, saveProjects } from "../lib/storage";
+import {
+  loadProjects,
+  saveProjects,
+  loadTerminals,
+  saveTerminals,
+  loadActiveIds,
+  saveActiveIds,
+} from "../lib/storage";
 
 interface AppStore {
   // state
@@ -10,8 +17,10 @@ interface AppStore {
   activeProjectId: string | null;
   activeTerminalId: string | null;
 
+  // app init
+  init: () => Promise<void>;
+
   // project actions
-  initProjects: () => Promise<void>;
   addProject: () => Promise<void>;
   removeProject: (id: string) => Promise<void>;
   setActiveProject: (id: string) => void;
@@ -24,15 +33,37 @@ interface AppStore {
   renameTerminal: (id: string, name: string) => void;
 }
 
+/** Persist terminals to disk (fire-and-forget) */
+function persistTerminals(terminals: TerminalSession[]) {
+  saveTerminals(terminals);
+}
+
+/** Persist active IDs to disk (fire-and-forget) */
+function persistActiveIds(
+  activeProjectId: string | null,
+  activeTerminalId: string | null,
+) {
+  saveActiveIds({ activeProjectId, activeTerminalId });
+}
+
 export const useAppStore = create<AppStore>((set, get) => ({
   projects: [],
   terminals: [],
   activeProjectId: null,
   activeTerminalId: null,
 
-  initProjects: async () => {
-    const projects = await loadProjects();
-    set({ projects });
+  init: async () => {
+    const [projects, terminals, activeIds] = await Promise.all([
+      loadProjects(),
+      loadTerminals(),
+      loadActiveIds(),
+    ]);
+    set({
+      projects,
+      terminals,
+      activeProjectId: activeIds.activeProjectId,
+      activeTerminalId: activeIds.activeTerminalId,
+    });
   },
 
   addProject: async () => {
@@ -47,6 +78,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const updated = [...projects, project];
     set({ projects: updated, activeProjectId: project.id });
     await saveProjects(updated);
+    persistActiveIds(project.id, get().activeTerminalId);
   },
 
   removeProject: async (id: string) => {
@@ -62,39 +94,48 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const updatedProjects = projects.filter((p) => p.id !== id);
     const updatedTerminals = terminals.filter((t) => t.projectId !== id);
     const removedTerminalIds = projectTerminals.map((t) => t.id);
+    const newActiveProjectId =
+      activeProjectId === id ? null : activeProjectId;
+    const newActiveTerminalId =
+      activeTerminalId && removedTerminalIds.includes(activeTerminalId)
+        ? null
+        : activeTerminalId;
     set({
       projects: updatedProjects,
       terminals: updatedTerminals,
-      activeProjectId: activeProjectId === id ? null : activeProjectId,
-      activeTerminalId:
-        activeTerminalId && removedTerminalIds.includes(activeTerminalId)
-          ? null
-          : activeTerminalId,
+      activeProjectId: newActiveProjectId,
+      activeTerminalId: newActiveTerminalId,
     });
     await saveProjects(updatedProjects);
+    persistTerminals(updatedTerminals);
+    persistActiveIds(newActiveProjectId, newActiveTerminalId);
   },
 
   setActiveProject: (id: string) => {
     set({ activeProjectId: id });
+    persistActiveIds(id, get().activeTerminalId);
   },
 
   addTerminal: (terminal: TerminalSession) => {
-    set((state) => ({
-      terminals: [...state.terminals, terminal],
-      activeTerminalId: terminal.id,
-    }));
+    const updated = [...get().terminals, terminal];
+    set({ terminals: updated, activeTerminalId: terminal.id });
+    persistTerminals(updated);
+    persistActiveIds(get().activeProjectId, terminal.id);
   },
 
   removeTerminal: (id: string) => {
-    set((state) => ({
-      terminals: state.terminals.filter((t) => t.id !== id),
-      activeTerminalId:
-        state.activeTerminalId === id ? null : state.activeTerminalId,
-    }));
+    const { terminals, activeTerminalId, activeProjectId } = get();
+    const updated = terminals.filter((t) => t.id !== id);
+    const newActiveTerminalId =
+      activeTerminalId === id ? null : activeTerminalId;
+    set({ terminals: updated, activeTerminalId: newActiveTerminalId });
+    persistTerminals(updated);
+    persistActiveIds(activeProjectId, newActiveTerminalId);
   },
 
   setActiveTerminal: (id: string) => {
     set({ activeTerminalId: id });
+    persistActiveIds(get().activeProjectId, id);
   },
 
   setTerminalRunning: (id: string, running: boolean) => {
@@ -111,5 +152,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
         t.id === id ? { ...t, name } : t,
       ),
     }));
+    persistTerminals(get().terminals);
   },
 }));

@@ -8,7 +8,7 @@ export function Sidebar() {
   const addProject = useAppStore((s) => s.addProject);
 
   return (
-    <aside className="flex flex-col h-screen border-r border-[var(--border-color)] bg-[var(--bg-sidebar)]">
+    <aside className="flex flex-col h-screen border-r border-[var(--border-color)] bg-[var(--bg-sidebar)] select-none">
       {/* header */}
       <div className="flex items-center justify-between p-3 border-b border-[var(--border-color)]">
         <span className="text-sm font-semibold tracking-tight">Projects</span>
