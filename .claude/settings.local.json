@@ -14,7 +14,10 @@
       "Bash(cargo check:*)",
       "Bash(nvm ls:*)",
       "Bash(cargo build:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "WebSearch",
+      "Bash(node /Users/tringuyen/.claude/scripts/set-active-plan.cjs plans/260310-1623-vietnamese-ime-support)",
+      "Bash(ls /Users/tringuyen/Downloads/clcterm/*.html /Users/tringuyen/Downloads/clcterm/src/*.html 2>/dev/null; ls /Users/tringuyen/Downloads/clcterm/src-tauri/*.html 2>/dev/null)"
     ]
   }
 }

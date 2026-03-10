@@ -11,6 +11,9 @@ interface Props {
 export function TerminalItem({ terminal }: Props) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(terminal.name);
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const activeTerminalId = useAppStore((s) => s.activeTerminalId);
   const setActiveTerminal = useAppStore((s) => s.setActiveTerminal);
@@ -28,10 +31,28 @@ export function TerminalItem({ terminal }: Props) {
     }
   }, [editing]);
 
-  function handleDoubleClick(e: React.MouseEvent) {
-    e.stopPropagation();
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [ctxMenu]);
+
+  function startRename() {
     setEditValue(terminal.name);
     setEditing(true);
+  }
+
+  function handleDoubleClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    startRename();
+  }
+
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY });
   }
 
   function commitRename() {
@@ -47,8 +68,8 @@ export function TerminalItem({ terminal }: Props) {
     if (e.key === "Escape") setEditing(false);
   }
 
-  async function handleKill(e: React.MouseEvent) {
-    e.stopPropagation();
+  async function handleKill(e?: React.MouseEvent) {
+    e?.stopPropagation();
     try {
       await killTerminal(terminal.id);
     } catch {
@@ -59,45 +80,75 @@ export function TerminalItem({ terminal }: Props) {
   }
 
   return (
-    <div
-      onClick={() => setActiveTerminal(terminal.id)}
-      onDoubleClick={handleDoubleClick}
-      className={`group flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-colors duration-150 ${
-        isActive
-          ? "text-[var(--accent-blue)]"
-          : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-      }`}
-    >
-      <Terminal size={12} className="shrink-0" />
-
-      {editing ? (
-        <input
-          ref={inputRef}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={commitRename}
-          onKeyDown={handleKeyDown}
-          onClick={(e) => e.stopPropagation()}
-          className="text-xs flex-1 bg-[var(--bg-primary)] border border-[var(--accent-blue)] rounded px-1 py-0 outline-none text-[var(--text-primary)]"
-        />
-      ) : (
-        <span className="text-xs truncate flex-1">{terminal.name}</span>
-      )}
-
-      {terminal.isRunning && (
-        <Loader2
-          size={12}
-          className="shrink-0 animate-spin text-[var(--accent-blue)]"
-        />
-      )}
-
-      <button
-        onClick={handleKill}
-        className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
-        title="Kill terminal"
+    <>
+      <div
+        onClick={() => setActiveTerminal(terminal.id)}
+        onDoubleClick={handleDoubleClick}
+        onContextMenu={handleContextMenu}
+        className={`group flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-colors duration-150 ${
+          isActive
+            ? "text-[var(--accent-blue)]"
+            : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+        }`}
       >
-        <X size={10} />
-      </button>
-    </div>
+        <Terminal size={12} className="shrink-0" />
+
+        {editing ? (
+          <input
+            ref={inputRef}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={handleKeyDown}
+            onClick={(e) => e.stopPropagation()}
+            className="text-xs flex-1 bg-[var(--bg-primary)] border border-[var(--accent-blue)] rounded px-1 py-0 outline-none text-[var(--text-primary)]"
+          />
+        ) : (
+          <span className="text-xs truncate flex-1">{terminal.name}</span>
+        )}
+
+        {terminal.isRunning && (
+          <Loader2
+            size={12}
+            className="shrink-0 animate-spin text-[var(--accent-blue)]"
+          />
+        )}
+
+        <button
+          onClick={(e) => handleKill(e)}
+          className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
+          title="Kill terminal"
+        >
+          <X size={10} />
+        </button>
+      </div>
+
+      {/* Right-click context menu */}
+      {ctxMenu && (
+        <div
+          className="fixed z-50 min-w-[120px] rounded-md border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-lg py-1"
+          style={{ left: ctxMenu.x, top: ctxMenu.y }}
+        >
+          <button
+            onClick={() => {
+              setCtxMenu(null);
+              startRename();
+            }}
+            className="w-full text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+          >
+            Rename
+          </button>
+          <button
+            onClick={() => {
+              setCtxMenu(null);
+              handleKill();
+            }}
+            className="w-full text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
+          >
+            Kill
+          </button>
+        </div>
+      )}
+    </>
   );
 }

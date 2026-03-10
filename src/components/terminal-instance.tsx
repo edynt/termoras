@@ -5,6 +5,7 @@ import { WebglAddon } from "@xterm/addon-webgl";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Channel } from "@tauri-apps/api/core";
 import { getTerminalTheme } from "../lib/terminal-theme";
+import { attachMacKeybindings } from "../lib/terminal-keybindings";
 import {
   createTerminal,
   writeTerminal,
@@ -57,6 +58,14 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
     fitAddon.fit();
 
+    // PTY write helper — shared by keybindings and onData
+    const writeToPty = (data: string) => {
+      writeTerminal(terminalId, data).catch(() => {});
+    };
+
+    // Attach macOS keybindings (Cmd+Delete, Cmd+Left/Right, Option+Left/Right, etc.)
+    attachMacKeybindings(term, writeToPty);
+
     // Create Tauri channel for streaming PTY output
     const channel = new Channel<number[]>();
     channel.onmessage = (data) => {
@@ -77,7 +86,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
     // Send user input to PTY stdin
     term.onData((data) => {
-      writeTerminal(terminalId, data).catch(() => {});
+      writeToPty(data);
     });
 
     // Send resize events to PTY

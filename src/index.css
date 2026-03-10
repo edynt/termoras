@@ -39,3 +39,9 @@ body {
   user-select: none;
   -webkit-user-select: none;
 }
+
+/* Allow IME composition (Vietnamese Telex/VNI) in xterm's hidden input */
+.xterm-helper-textarea {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}

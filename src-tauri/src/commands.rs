@@ -35,8 +35,11 @@ pub fn create_terminal(
 
     // Set TERM for color/TUI support (required by Claude Code CLI)
     cmd.env("TERM", "xterm-256color");
-    // Ensure proper locale for Unicode/emoji (used by Claude Code)
-    cmd.env("LANG", std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".to_string()));
+    // Propagate full locale chain for programs that check LC_* independently (vim, less, python)
+    let locale = std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".to_string());
+    cmd.env("LANG", &locale);
+    cmd.env("LC_ALL", std::env::var("LC_ALL").unwrap_or_else(|_| locale.clone()));
+    cmd.env("LC_CTYPE", std::env::var("LC_CTYPE").unwrap_or_else(|_| locale.clone()));
 
     let child = pair
         .slave
