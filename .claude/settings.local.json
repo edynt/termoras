@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo $CK_PLAN_DATE_FORMAT)",
+      "Bash(python ~/.claude/scripts/generate_catalogs.py --skills 2>&1 | head -50)",
+      "Bash(node $HOME/.claude/scripts/set-active-plan.cjs plans/260310-clcterm-bootstrap 2>/dev/null || echo \"Script not found, skipping\")",
+      "Bash(wc -l /Users/tringuyen/Downloads/clcterm/plans/260310-clcterm-bootstrap/*.md)",
+      "Bash(which cargo:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tauri:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e \"const s = require\\('@tauri-apps/plugin-store/package.json'\\); console.log\\(s.version\\)\")",
+      "Bash(cargo check:*)",
+      "Bash(nvm ls:*)",
+      "Bash(cargo build:*)",
+      "Bash(npx vite:*)"
+    ]
+  }
+}

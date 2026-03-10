@@ -1,0 +1,165 @@
+use crate::pty_manager::{AppState, PtySession};
+use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use std::io::Read;
+use std::thread;
+use tauri::ipc::Channel;
+use tauri::State;
+
+/// Create a new PTY terminal session. Accepts frontend-generated ID.
+#[tauri::command]
+pub fn create_terminal(
+    id: String,
+    project_path: String,
+    on_data: Channel<Vec<u8>>,
+    state: State<AppState>,
+) -> Result<String, String> {
+
+    // Detect default shell
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+
+    let pty_system = native_pty_system();
+
+    let pair = pty_system
+        .openpty(PtySize {
+            rows: 24,
+            cols: 80,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .map_err(|e| format!("Failed to open PTY: {}", e))?;
+
+    // Start as login shell (-l) so user profile loads (PATH, nvm, cargo, etc.)
+    let mut cmd = CommandBuilder::new(&shell);
+    cmd.arg("-l");
+    cmd.cwd(&project_path);
+
+    // Set TERM for color/TUI support (required by Claude Code CLI)
+    cmd.env("TERM", "xterm-256color");
+    // Ensure proper locale for Unicode/emoji (used by Claude Code)
+    cmd.env("LANG", std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".to_string()));
+
+    let child = pair
+        .slave
+        .spawn_command(cmd)
+        .map_err(|e| format!("Failed to spawn shell: {}", e))?;
+
+    // Clone reader for output streaming thread
+    let mut reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| format!("Failed to clone reader: {}", e))?;
+
+    // Get writer for stdin
+    let writer = pair
+        .master
+        .take_writer()
+        .map_err(|e| format!("Failed to get writer: {}", e))?;
+
+    // Spawn a thread to read PTY output and send via channel
+    let session_id = id.clone();
+    thread::spawn(move || {
+        let mut buf = [0u8; 4096];
+        loop {
+            match reader.read(&mut buf) {
+                Ok(0) => break, // PTY closed
+                Ok(n) => {
+                    if on_data.send(buf[..n].to_vec()).is_err() {
+                        break; // Channel closed
+                    }
+                }
+                Err(e) => {
+                    log::debug!("PTY reader error for {}: {}", session_id, e);
+                    break;
+                }
+            }
+        }
+    });
+
+    let session = PtySession {
+        writer,
+        master: pair.master,
+        child,
+    };
+
+    state
+        .sessions
+        .lock()
+        .map_err(|e| format!("Lock error: {}", e))?
+        .insert(id.clone(), session);
+
+    Ok(id)
+}
+
+/// Write user input to terminal PTY stdin
+#[tauri::command]
+pub fn write_terminal(
+    id: String,
+    data: String,
+    state: State<AppState>,
+) -> Result<(), String> {
+    let mut sessions = state
+        .sessions
+        .lock()
+        .map_err(|e| format!("Lock error: {}", e))?;
+
+    let session = sessions
+        .get_mut(&id)
+        .ok_or_else(|| format!("Session not found: {}", id))?;
+
+    session
+        .writer
+        .write_all(data.as_bytes())
+        .map_err(|e| format!("Write error: {}", e))?;
+
+    session
+        .writer
+        .flush()
+        .map_err(|e| format!("Flush error: {}", e))?;
+
+    Ok(())
+}
+
+/// Resize terminal PTY
+#[tauri::command]
+pub fn resize_terminal(
+    id: String,
+    rows: u16,
+    cols: u16,
+    state: State<AppState>,
+) -> Result<(), String> {
+    let sessions = state
+        .sessions
+        .lock()
+        .map_err(|e| format!("Lock error: {}", e))?;
+
+    let session = sessions
+        .get(&id)
+        .ok_or_else(|| format!("Session not found: {}", id))?;
+
+    session
+        .master
+        .resize(PtySize {
+            rows,
+            cols,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .map_err(|e| format!("Resize error: {}", e))?;
+
+    Ok(())
+}
+
+/// Kill a terminal session
+#[tauri::command]
+pub fn kill_terminal(id: String, state: State<AppState>) -> Result<(), String> {
+    let mut sessions = state
+        .sessions
+        .lock()
+        .map_err(|e| format!("Lock error: {}", e))?;
+
+    if let Some(mut session) = sessions.remove(&id) {
+        let _ = session.child.kill();
+    }
+
+    Ok(())
+}
