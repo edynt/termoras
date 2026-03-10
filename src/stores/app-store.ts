@@ -16,6 +16,7 @@ interface AppStore {
   terminals: TerminalSession[];
   activeProjectId: string | null;
   activeTerminalId: string | null;
+  activeView: "terminal" | "kanban";
 
   // app init
   init: () => Promise<void>;
@@ -24,6 +25,9 @@ interface AppStore {
   addProject: () => Promise<void>;
   removeProject: (id: string) => Promise<void>;
   setActiveProject: (id: string) => void;
+
+  // view actions
+  setActiveView: (view: "terminal" | "kanban") => void;
 
   // terminal actions
   addTerminal: (terminal: TerminalSession) => void;
@@ -42,8 +46,9 @@ function persistTerminals(terminals: TerminalSession[]) {
 function persistActiveIds(
   activeProjectId: string | null,
   activeTerminalId: string | null,
+  activeView: "terminal" | "kanban" = "terminal",
 ) {
-  saveActiveIds({ activeProjectId, activeTerminalId });
+  saveActiveIds({ activeProjectId, activeTerminalId, activeView });
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
@@ -51,6 +56,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   terminals: [],
   activeProjectId: null,
   activeTerminalId: null,
+  activeView: "terminal",
 
   init: async () => {
     const [projects, terminals, activeIds] = await Promise.all([
@@ -63,6 +69,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       terminals,
       activeProjectId: activeIds.activeProjectId,
       activeTerminalId: activeIds.activeTerminalId,
+      activeView: activeIds.activeView ?? "terminal",
     });
   },
 
@@ -78,7 +85,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const updated = [...projects, project];
     set({ projects: updated, activeProjectId: project.id });
     await saveProjects(updated);
-    persistActiveIds(project.id, get().activeTerminalId);
+    persistActiveIds(project.id, get().activeTerminalId, get().activeView);
   },
 
   removeProject: async (id: string) => {
@@ -108,34 +115,40 @@ export const useAppStore = create<AppStore>((set, get) => ({
     });
     await saveProjects(updatedProjects);
     persistTerminals(updatedTerminals);
-    persistActiveIds(newActiveProjectId, newActiveTerminalId);
+    persistActiveIds(newActiveProjectId, newActiveTerminalId, get().activeView);
   },
 
   setActiveProject: (id: string) => {
     set({ activeProjectId: id });
-    persistActiveIds(id, get().activeTerminalId);
+    persistActiveIds(id, get().activeTerminalId, get().activeView);
+  },
+
+  setActiveView: (view) => {
+    set({ activeView: view });
+    const { activeProjectId, activeTerminalId } = get();
+    persistActiveIds(activeProjectId, activeTerminalId, view);
   },
 
   addTerminal: (terminal: TerminalSession) => {
     const updated = [...get().terminals, terminal];
-    set({ terminals: updated, activeTerminalId: terminal.id });
+    set({ terminals: updated, activeTerminalId: terminal.id, activeView: "terminal" });
     persistTerminals(updated);
-    persistActiveIds(get().activeProjectId, terminal.id);
+    persistActiveIds(get().activeProjectId, terminal.id, "terminal");
   },
 
   removeTerminal: (id: string) => {
-    const { terminals, activeTerminalId, activeProjectId } = get();
+    const { terminals, activeTerminalId, activeProjectId, activeView } = get();
     const updated = terminals.filter((t) => t.id !== id);
     const newActiveTerminalId =
       activeTerminalId === id ? null : activeTerminalId;
     set({ terminals: updated, activeTerminalId: newActiveTerminalId });
     persistTerminals(updated);
-    persistActiveIds(activeProjectId, newActiveTerminalId);
+    persistActiveIds(activeProjectId, newActiveTerminalId, activeView);
   },
 
   setActiveTerminal: (id: string) => {
-    set({ activeTerminalId: id });
-    persistActiveIds(get().activeProjectId, id);
+    set({ activeTerminalId: id, activeView: "terminal" });
+    persistActiveIds(get().activeProjectId, id, "terminal");
   },
 
   setTerminalRunning: (id: string, running: boolean) => {

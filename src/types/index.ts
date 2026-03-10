@@ -12,3 +12,6 @@ export interface TerminalSession {
 }
 
 export type ThemeMode = "light" | "dark" | "system";
+
+export type { CardType, KanbanCard, KanbanColumn, KanbanBoard } from "./kanban";
+export { CARD_TYPES } from "./kanban";

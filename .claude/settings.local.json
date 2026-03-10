@@ -18,7 +18,8 @@
       "WebSearch",
       "Bash(node /Users/tringuyen/.claude/scripts/set-active-plan.cjs plans/260310-1623-vietnamese-ime-support)",
       "Bash(ls /Users/tringuyen/Downloads/clcterm/*.html /Users/tringuyen/Downloads/clcterm/src/*.html 2>/dev/null; ls /Users/tringuyen/Downloads/clcterm/src-tauri/*.html 2>/dev/null)",
-      "Bash(find /Users/tringuyen/Downloads/clcterm -name \"*.toml\" -o -name \"*.conf.json\" 2>/dev/null | grep -v node_modules | head -20)"
+      "Bash(find /Users/tringuyen/Downloads/clcterm -name \"*.toml\" -o -name \"*.conf.json\" 2>/dev/null | grep -v node_modules | head -20)",
+      "Bash(node /Users/tringuyen/.claude/scripts/set-active-plan.cjs plans/260310-1726-kanban-board 2>&1 || echo \"script not found, continuing\")"
     ]
   }
 }

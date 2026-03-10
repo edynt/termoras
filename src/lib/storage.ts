@@ -62,15 +62,16 @@ export async function saveTerminals(
 interface ActiveIds {
   activeProjectId: string | null;
   activeTerminalId: string | null;
+  activeView?: "terminal" | "kanban";
 }
 
 export async function loadActiveIds(): Promise<ActiveIds> {
   try {
     const store = await getStore();
     const ids = await store.get<ActiveIds>("activeIds");
-    return ids ?? { activeProjectId: null, activeTerminalId: null };
+    return ids ?? { activeProjectId: null, activeTerminalId: null, activeView: "terminal" };
   } catch {
-    return { activeProjectId: null, activeTerminalId: null };
+    return { activeProjectId: null, activeTerminalId: null, activeView: "terminal" };
   }
 }
 
