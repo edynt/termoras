@@ -5,14 +5,14 @@ import { useKanbanStore } from "../stores/kanban-store";
 
 /** Color ring per type for the selector pills */
 const TYPE_PILL_STYLES: Record<string, string> = {
-  cook:       "bg-blue-500/15 text-blue-400 ring-blue-500/30",
-  plan:       "bg-purple-500/15 text-purple-400 ring-purple-500/30",
-  code:       "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30",
-  test:       "bg-amber-500/15 text-amber-400 ring-amber-500/30",
-  brainstorm: "bg-orange-500/15 text-orange-400 ring-orange-500/30",
-  scout:      "bg-cyan-500/15 text-cyan-400 ring-cyan-500/30",
-  debug:      "bg-red-500/15 text-red-400 ring-red-500/30",
-  watzup:     "bg-slate-500/15 text-slate-400 ring-slate-500/30",
+  cook:       "bg-blue-500/10 text-blue-600 ring-blue-500/25",
+  plan:       "bg-purple-500/10 text-purple-600 ring-purple-500/25",
+  code:       "bg-emerald-500/10 text-emerald-600 ring-emerald-500/25",
+  test:       "bg-amber-500/10 text-amber-600 ring-amber-500/25",
+  brainstorm: "bg-orange-500/10 text-orange-600 ring-orange-500/25",
+  scout:      "bg-cyan-500/10 text-cyan-600 ring-cyan-500/25",
+  debug:      "bg-red-500/10 text-red-600 ring-red-500/25",
+  watzup:     "bg-slate-500/10 text-slate-600 ring-slate-500/25",
 };
 
 interface Props {

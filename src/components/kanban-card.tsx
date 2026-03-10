@@ -9,16 +9,16 @@ import { useAppStore } from "../stores/app-store";
 import { writeTerminal } from "../lib/tauri-commands";
 import { KanbanCardEditor } from "./kanban-card-editor";
 
-/** Left accent bar + badge colors per card type */
+/** Dot + badge colors per card type */
 const TYPE_STYLES: Record<string, { bar: string; badge: string }> = {
-  cook:       { bar: "bg-blue-500",    badge: "bg-blue-500/15 text-blue-400 ring-blue-500/20" },
-  plan:       { bar: "bg-purple-500",  badge: "bg-purple-500/15 text-purple-400 ring-purple-500/20" },
-  code:       { bar: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-400 ring-emerald-500/20" },
-  test:       { bar: "bg-amber-500",   badge: "bg-amber-500/15 text-amber-400 ring-amber-500/20" },
-  brainstorm: { bar: "bg-orange-500",  badge: "bg-orange-500/15 text-orange-400 ring-orange-500/20" },
-  scout:      { bar: "bg-cyan-500",    badge: "bg-cyan-500/15 text-cyan-400 ring-cyan-500/20" },
-  debug:      { bar: "bg-red-500",     badge: "bg-red-500/15 text-red-400 ring-red-500/20" },
-  watzup:     { bar: "bg-slate-500",   badge: "bg-slate-500/15 text-slate-400 ring-slate-500/20" },
+  cook:       { bar: "bg-blue-500",    badge: "bg-blue-500/10 text-blue-600 ring-blue-500/25" },
+  plan:       { bar: "bg-purple-500",  badge: "bg-purple-500/10 text-purple-600 ring-purple-500/25" },
+  code:       { bar: "bg-emerald-500", badge: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/25" },
+  test:       { bar: "bg-amber-500",   badge: "bg-amber-500/10 text-amber-600 ring-amber-500/25" },
+  brainstorm: { bar: "bg-orange-500",  badge: "bg-orange-500/10 text-orange-600 ring-orange-500/25" },
+  scout:      { bar: "bg-cyan-500",    badge: "bg-cyan-500/10 text-cyan-600 ring-cyan-500/25" },
+  debug:      { bar: "bg-red-500",     badge: "bg-red-500/10 text-red-600 ring-red-500/25" },
+  watzup:     { bar: "bg-slate-500",   badge: "bg-slate-500/10 text-slate-600 ring-slate-500/25" },
 };
 
 /** Fallback style when type is null */

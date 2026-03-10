@@ -4,12 +4,12 @@
 :root,
 [data-theme="light"] {
   --bg-primary: #ffffff;
-  --bg-sidebar: #f8f8f8;
-  --bg-active: #e8e8e8;
-  --bg-hover: #f0f0f0;
-  --text-primary: #1e1e1e;
+  --bg-sidebar: #f9fafb;
+  --bg-active: #e5e7eb;
+  --bg-hover: #f3f4f6;
+  --text-primary: #111827;
   --text-secondary: #6b7280;
-  --border-color: #e5e5e5;
+  --border-color: #e5e7eb;
   --accent-blue: #3b82f6;
   --accent-green: #10b981;
   --accent-red: #ef4444;
