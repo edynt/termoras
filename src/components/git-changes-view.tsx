@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, FileText, GitBranch, Upload, Check, Loader2 } from "lucide-react";
+import { RefreshCw, FileText, GitBranch, Upload, Check, Loader2, Undo2 } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import {
   gitChangedFiles,
@@ -8,6 +8,8 @@ import {
   gitLastCommitMessage,
   gitStageAll,
   gitCommit,
+  gitHasUnpushed,
+  gitUndoCommit,
   gitPush,
   type GitChangedFile,
   type GitStatusSummary,
@@ -28,21 +30,26 @@ export function GitChangesView() {
   const [staging, setStaging] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [pushing, setPushing] = useState(false);
+  const [undoing, setUndoing] = useState(false);
+  const [hasUnpushed, setHasUnpushed] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!project) return;
     setLoading(true);
     try {
-      const [f, s] = await Promise.all([
+      const [f, s, unpushed] = await Promise.all([
         gitChangedFiles(project.path),
         gitStatusSummary(project.path),
+        gitHasUnpushed(project.path).catch(() => false),
       ]);
       setFiles(f);
       setStatus(s);
+      setHasUnpushed(unpushed);
     } catch {
       setFiles([]);
       setStatus(null);
+      setHasUnpushed(false);
     }
     setLoading(false);
   }, [project]);
@@ -99,6 +106,23 @@ export function GitChangesView() {
       setActionError(`Push failed: ${e}`);
     }
     setPushing(false);
+  }
+
+  async function handleUndoCommit() {
+    if (!project) return;
+    setUndoing(true);
+    setActionError(null);
+    try {
+      await gitUndoCommit(project.path);
+      // Re-fill commit message with the undone commit's message (now it's the previous one)
+      gitLastCommitMessage(project.path)
+        .then((msg) => { if (msg) setCommitMsg(msg); })
+        .catch(() => {});
+      await refresh();
+    } catch (e) {
+      setActionError(`Undo failed: ${e}`);
+    }
+    setUndoing(false);
   }
 
   // Load diff when a file is selected
@@ -235,6 +259,19 @@ export function GitChangesView() {
               Push
             </button>
           </div>
+
+          {/* Undo last commit — only show when there are unpushed commits */}
+          {hasUnpushed && (
+            <button
+              onClick={handleUndoCommit}
+              disabled={undoing}
+              className="w-full flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="Undo last commit (git reset --soft HEAD~1) — changes stay staged"
+            >
+              {undoing ? <Loader2 size={10} className="animate-spin" /> : <Undo2 size={10} />}
+              Undo Last Commit
+            </button>
+          )}
         </div>
       </div>
 

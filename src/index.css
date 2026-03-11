@@ -4,29 +4,39 @@
 :root,
 [data-theme="light"] {
   --bg-primary: #ffffff;
-  --bg-sidebar: #f9fafb;
-  --bg-active: #e5e7eb;
-  --bg-hover: #f3f4f6;
-  --text-primary: #111827;
+  --bg-sidebar: #f7f8fa;
+  --bg-active: #e8eaef;
+  --bg-hover: #f0f1f4;
+  --text-primary: #1a1d26;
   --text-secondary: #6b7280;
-  --border-color: #e5e7eb;
-  --accent-blue: #3b82f6;
-  --accent-green: #10b981;
-  --accent-red: #ef4444;
+  --border-color: #e3e5ea;
+  --accent-blue: #4a8ff5;
+  --accent-green: #1aad8a;
+  --accent-red: #e94e4e;
 }
 
-/* Dark theme */
+/* Dark theme — refined developer aesthetic */
 [data-theme="dark"] {
-  --bg-primary: #1e1e1e;
-  --bg-sidebar: #252526;
-  --bg-active: #37373d;
-  --bg-hover: #2a2d2e;
-  --text-primary: #cccccc;
-  --text-secondary: #858585;
-  --border-color: #3c3c3c;
-  --accent-blue: #569cd6;
-  --accent-green: #4ec9b0;
-  --accent-red: #f14c4c;
+  --bg-primary: #181a1f;
+  --bg-sidebar: #1e2027;
+  --bg-active: #2c2f3a;
+  --bg-hover: #252830;
+  --text-primary: #d4d5d9;
+  --text-secondary: #7a7e8a;
+  --border-color: #2c2f38;
+  --accent-blue: #6ba1f1;
+  --accent-green: #5ec4a8;
+  --accent-red: #f06f6f;
+}
+
+/* Window drag region for custom titlebar */
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] a,
+[data-tauri-drag-region] input {
+  -webkit-app-region: no-drag;
 }
 
 body {

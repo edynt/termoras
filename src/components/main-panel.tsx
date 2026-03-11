@@ -96,6 +96,9 @@ export function MainPanel() {
 
   return (
     <div ref={containerRef} className="flex flex-col h-full overflow-hidden">
+      {/* Titlebar drag region — matches macOS traffic light height */}
+      <div data-tauri-drag-region className="h-8 shrink-0" />
+
       {/* Kanban board */}
       {activeView === "kanban" && (
         <div className="flex-1 min-h-0 overflow-auto">

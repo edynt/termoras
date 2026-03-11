@@ -189,6 +189,42 @@ pub fn git_commit(path: String, message: String) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
 
+/// Check if there are unpushed commits (ahead of remote)
+#[tauri::command]
+pub fn git_has_unpushed(path: String) -> Result<bool, String> {
+    let output = Command::new("git")
+        .args(["rev-list", "--count", "@{u}..HEAD"])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git rev-list: {}", e))?;
+
+    // If no upstream is set, rev-list will fail — treat as "no unpushed"
+    if !output.status.success() {
+        return Ok(false);
+    }
+
+    let count: u32 = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .parse()
+        .unwrap_or(0);
+    Ok(count > 0)
+}
+
+/// Undo the last commit, keeping changes staged (git reset --soft HEAD~1)
+#[tauri::command]
+pub fn git_undo_commit(path: String) -> Result<String, String> {
+    let output = Command::new("git")
+        .args(["reset", "--soft", "HEAD~1"])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git reset: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok("Commit undone. Changes are back in staging.".to_string())
+}
+
 /// Push to remote (git push)
 #[tauri::command]
 pub fn git_push(path: String) -> Result<String, String> {

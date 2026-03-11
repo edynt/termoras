@@ -53,6 +53,8 @@ pub fn run() {
             git_commands::git_last_commit_message,
             git_commands::git_stage_all,
             git_commands::git_commit,
+            git_commands::git_has_unpushed,
+            git_commands::git_undo_commit,
             git_commands::git_push,
         ])
         .on_window_event(|window, event| {

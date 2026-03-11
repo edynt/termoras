@@ -14,7 +14,7 @@ export function App() {
   }, [init, initTheme]);
 
   return (
-    <div className="grid grid-cols-[260px_1fr] h-screen">
+    <div className="grid grid-cols-[260px_1fr] h-screen bg-[var(--bg-primary)]">
       <Sidebar />
       <MainPanel />
     </div>

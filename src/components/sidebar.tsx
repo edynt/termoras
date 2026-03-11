@@ -12,9 +12,12 @@ export function Sidebar() {
 
   return (
     <aside className="flex flex-col h-screen border-r border-[var(--border-color)] bg-[var(--bg-sidebar)] select-none">
-      {/* header */}
-      <div className="flex items-center justify-between p-3 border-b border-[var(--border-color)]">
-        <span className="text-sm font-semibold tracking-tight">Projects</span>
+      {/* header — draggable titlebar region with traffic light padding */}
+      <div
+        data-tauri-drag-region
+        className="flex items-center justify-between px-3 pb-2 pt-8 border-b border-[var(--border-color)]"
+      >
+        <span data-tauri-drag-region className="text-sm font-semibold tracking-tight">Projects</span>
         <button
           onClick={addProject}
           className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors duration-150"

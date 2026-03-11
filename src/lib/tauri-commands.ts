@@ -82,6 +82,16 @@ export async function gitCommit(path: string, message: string): Promise<string> 
   return invoke<string>("git_commit", { path, message });
 }
 
+/** Check if there are unpushed commits */
+export async function gitHasUnpushed(path: string): Promise<boolean> {
+  return invoke<boolean>("git_has_unpushed", { path });
+}
+
+/** Undo last commit, keep changes staged (git reset --soft HEAD~1) */
+export async function gitUndoCommit(path: string): Promise<string> {
+  return invoke<string>("git_undo_commit", { path });
+}
+
 /** Push to remote */
 export async function gitPush(path: string): Promise<string> {
   return invoke<string>("git_push", { path });
