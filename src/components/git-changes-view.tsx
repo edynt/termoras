@@ -48,6 +48,8 @@ export function GitChangesView() {
       setFiles(f);
       setStatus(s);
       setHasUnpushed(unpushed);
+      // Notify sidebar to sync git badge count
+      window.dispatchEvent(new CustomEvent("kodeck:git-changed", { detail: { path: project.path, status: s } }));
     } catch {
       setFiles([]);
       setStatus(null);

@@ -64,6 +64,18 @@ export function ProjectItem({ project }: Props) {
     }
   }, [hasGit, isActive, project.path]);
 
+  // Sync git status when Changes page refreshes (commit, stage, push, etc.)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.path === project.path && detail?.status) {
+        setGitStatus(detail.status);
+      }
+    };
+    window.addEventListener("kodeck:git-changed", handler);
+    return () => window.removeEventListener("kodeck:git-changed", handler);
+  }, [project.path]);
+
   // Close context menu on outside click
   useEffect(() => {
     if (!ctxMenu) return;
