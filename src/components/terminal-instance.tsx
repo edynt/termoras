@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Channel } from "@tauri-apps/api/core";
+import { Paperclip } from "lucide-react";
 import { getTerminalTheme } from "../lib/terminal-theme";
 import { attachMacKeybindings } from "../lib/terminal-keybindings";
 import { TelexEngine } from "../lib/telex-engine";
@@ -12,7 +13,9 @@ import {
   writeTerminal,
   resizeTerminal,
   killTerminal,
+  pickImageFile,
 } from "../lib/tauri-commands";
+import { saveImageBlob, isImageFile } from "../lib/image-upload";
 import { useAppStore } from "../stores/app-store";
 import { useThemeStore } from "../stores/theme-store";
 import "@xterm/xterm/css/xterm.css";
@@ -26,6 +29,8 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+  const writeToPtyRef = useRef<((data: string) => void) | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const setTerminalRunning = useAppStore((s) => s.setTerminalRunning);
   const isDark = useThemeStore((s) => s.isDark);
   const vietnameseInput = useAppStore((s) => s.vietnameseInput);
@@ -62,10 +67,11 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
     fitAddon.fit();
 
-    // PTY write helper — shared by keybindings and onData
+    // PTY write helper — shared by keybindings, onData, and image upload
     const writeToPty = (data: string) => {
       writeTerminal(terminalId, data).catch(() => {});
     };
+    writeToPtyRef.current = writeToPty;
 
     // Telex engine for Vietnamese input (one per terminal instance)
     const telex = new TelexEngine();
@@ -184,9 +190,75 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     }
   }, [activeTerminalId, terminalId]);
 
+  // Drag-and-drop handlers for image upload
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragOver(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
+
+      const files = Array.from(e.dataTransfer.files);
+      const imageFile = files.find((f) => isImageFile(f));
+      if (imageFile && writeToPtyRef.current) {
+        const path = await saveImageBlob(imageFile);
+        writeToPtyRef.current(path + " ");
+        termRef.current?.focus();
+      }
+    },
+    [],
+  );
+
+  // Attach button: open file picker for images
+  const handleAttachImage = useCallback(async () => {
+    const path = await pickImageFile();
+    if (path && writeToPtyRef.current) {
+      writeToPtyRef.current(path + " ");
+      termRef.current?.focus();
+    }
+  }, []);
+
   return (
-    <div className="relative h-full w-full" style={{ padding: "4px" }}>
+    <div
+      className="relative h-full w-full"
+      style={{ padding: "4px" }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div ref={containerRef} className="h-full w-full" />
+
+      {/* Drag-and-drop overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-[var(--accent-blue)] bg-[var(--accent-blue)]/10">
+          <span className="text-sm font-medium text-[var(--accent-blue)]">
+            Drop image here
+          </span>
+        </div>
+      )}
+
+      {/* Attach image button */}
+      <button
+        onClick={handleAttachImage}
+        className="absolute bottom-2 left-3 rounded p-1 text-[var(--text-secondary)] opacity-30 transition-opacity hover:text-[var(--accent-blue)] hover:opacity-100"
+        title="Attach image"
+      >
+        <Paperclip size={14} />
+      </button>
+
       {/* Vietnamese input mode indicator */}
       {vietnameseInput && (
         <div className="absolute bottom-2 right-3 px-1.5 py-0.5 text-[10px] font-bold rounded bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] select-none pointer-events-none tracking-wide">

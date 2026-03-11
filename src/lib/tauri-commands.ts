@@ -121,3 +121,26 @@ export async function pickProjectFolder(): Promise<string | null> {
   });
   return selected as string | null;
 }
+
+/** Save base64-encoded image to temp file. Returns absolute path. */
+export async function saveTempImage(
+  data: string,
+  extension: string,
+): Promise<string> {
+  return invoke<string>("save_temp_image", { data, extension });
+}
+
+/** Open native file picker for images. Returns path or null. */
+export async function pickImageFile(): Promise<string | null> {
+  const selected = await open({
+    multiple: false,
+    title: "Select Image",
+    filters: [
+      {
+        name: "Images",
+        extensions: ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"],
+      },
+    ],
+  });
+  return selected as string | null;
+}

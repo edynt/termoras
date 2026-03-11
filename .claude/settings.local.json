@@ -31,7 +31,9 @@
       "Bash(which rsvg-convert:*)",
       "Bash(pip3 install:*)",
       "Bash(python3 -c \"import cairosvg; print\\('cairosvg ok'\\)\" 2>&1)",
-      "Bash(python3 scripts/generate-logo.py 2>&1)"
+      "Bash(python3 scripts/generate-logo.py 2>&1)",
+      "Bash(open /Users/tringuyen/Downloads/kodeck/index.html)",
+      "Bash(grep -r \"bg-\\\\|text-\" src/components/*.tsx 2>/dev/null | head -30)"
     ]
   }
 }

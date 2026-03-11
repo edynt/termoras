@@ -47,6 +47,7 @@ pub fn run() {
             commands::resize_terminal,
             commands::kill_terminal,
             commands::open_in_vscode,
+            commands::save_temp_image,
             git_commands::is_git_repo,
             git_commands::git_status_summary,
             git_commands::git_changed_files,

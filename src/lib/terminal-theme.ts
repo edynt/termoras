@@ -26,23 +26,23 @@ export const lightTheme: ITheme = {
   brightWhite: "#e5e5e5",
 };
 
-/** Dark theme for xterm.js — matches refined dark UI */
+/** Dark theme for xterm.js — deep teal-navy aesthetic */
 export const darkTheme: ITheme = {
-  background: "#181a1f",
-  foreground: "#d4d5d9",
-  cursor: "#a0a4b0",
-  cursorAccent: "#181a1f",
-  selectionBackground: "#2e4a6e",
-  selectionForeground: "#d4d5d9",
-  black: "#181a1f",
+  background: "#0d1b2a",
+  foreground: "#d4dde8",
+  cursor: "#8fa8c0",
+  cursorAccent: "#0d1b2a",
+  selectionBackground: "#1e3a55",
+  selectionForeground: "#d4dde8",
+  black: "#0d1b2a",
   red: "#f06f6f",
   green: "#5ec4a8",
   yellow: "#e0c285",
   blue: "#6ba1f1",
   magenta: "#c586c0",
   cyan: "#56c8d8",
-  white: "#d4d5d9",
-  brightBlack: "#7a7e8a",
+  white: "#d4dde8",
+  brightBlack: "#7089a0",
   brightRed: "#f28b8b",
   brightGreen: "#7ad4b8",
   brightYellow: "#f0d090",

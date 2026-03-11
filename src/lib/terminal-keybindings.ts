@@ -1,6 +1,7 @@
 import type { Terminal } from "@xterm/xterm";
 import type { TelexEngine } from "./telex-engine";
 import { useAppStore } from "../stores/app-store";
+import { pasteImageFromClipboard } from "./image-upload";
 
 /**
  * Terminal keyboard handler for xterm.js.
@@ -108,11 +109,17 @@ export function attachMacKeybindings(
           return true;
 
         case "v":
-          // Cmd+V → paste from clipboard
+          // Cmd+V → paste image from clipboard (if any), else paste text
           telex.reset();
-          navigator.clipboard.readText().then((text) => {
-            if (text) writeToPty(text);
-          });
+          (async () => {
+            const imagePath = await pasteImageFromClipboard();
+            if (imagePath) {
+              writeToPty(imagePath + " ");
+            } else {
+              const text = await navigator.clipboard.readText();
+              if (text) writeToPty(text);
+            }
+          })();
           event.preventDefault();
           return false;
 

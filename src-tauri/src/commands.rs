@@ -168,6 +168,38 @@ pub fn kill_terminal(id: String, state: State<AppState>) -> Result<(), String> {
     Ok(())
 }
 
+/// Save base64-encoded image data to a temp file. Returns absolute path.
+#[tauri::command]
+pub fn save_temp_image(data: String, extension: String) -> Result<String, String> {
+    use base64::Engine;
+    use std::io::Write;
+
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(&data)
+        .map_err(|e| format!("Base64 decode error: {}", e))?;
+
+    let temp_dir = std::env::temp_dir().join("kodeck-uploads");
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("Failed to create temp dir: {}", e))?;
+
+    let filename = format!(
+        "image-{}.{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis(),
+        extension
+    );
+
+    let path = temp_dir.join(&filename);
+    let mut file =
+        std::fs::File::create(&path).map_err(|e| format!("Failed to create file: {}", e))?;
+    file.write_all(&bytes)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+
+    Ok(path.to_string_lossy().to_string())
+}
+
 /// Open a directory in VS Code
 #[tauri::command]
 pub fn open_in_vscode(path: String) -> Result<(), String> {

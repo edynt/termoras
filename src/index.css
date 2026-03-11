@@ -21,23 +21,23 @@
   --diff-hunk-text: #0969da;
 }
 
-/* Dark theme — refined developer aesthetic */
+/* Dark theme — deep teal-navy aesthetic */
 [data-theme="dark"] {
-  --bg-primary: #181a1f;
-  --bg-sidebar: #1e2027;
-  --bg-active: #2c2f3a;
-  --bg-hover: #252830;
-  --text-primary: #d4d5d9;
-  --text-secondary: #7a7e8a;
-  --border-color: #2c2f38;
+  --bg-primary: #0d1b2a;
+  --bg-sidebar: #091520;
+  --bg-active: #1a3040;
+  --bg-hover: #122535;
+  --text-primary: #d4dde8;
+  --text-secondary: #7089a0;
+  --border-color: #17293a;
   --accent-blue: #6ba1f1;
   --accent-green: #5ec4a8;
   --accent-red: #f06f6f;
-  --diff-add-bg: #1a4721;
+  --diff-add-bg: #0d2f1e;
   --diff-add-border: #3fb950;
-  --diff-del-bg: #5d1418;
+  --diff-del-bg: #3a1520;
   --diff-del-border: #f85149;
-  --diff-hunk-bg: #1b2a44;
+  --diff-hunk-bg: #0d2540;
   --diff-hunk-text: #79c0ff;
 }
 
