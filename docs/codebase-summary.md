@@ -1,4 +1,4 @@
-# CLCTerm - Codebase Summary
+# Kodeck - Codebase Summary
 
 ## Tech Stack
 Tauri v2 + React 19 + TypeScript + Vite 6 + Zustand v5 + Tailwind CSS v4 + xterm.js v5 + portable-pty

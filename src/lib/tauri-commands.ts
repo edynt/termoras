@@ -77,6 +77,16 @@ export async function gitStageAll(path: string): Promise<void> {
   return invoke("git_stage_all", { path });
 }
 
+/** Stage specific files */
+export async function gitStageFiles(path: string, files: string[]): Promise<void> {
+  return invoke("git_stage_files", { path, files });
+}
+
+/** Unstage specific files */
+export async function gitUnstageFiles(path: string, files: string[]): Promise<void> {
+  return invoke("git_unstage_files", { path, files });
+}
+
 /** Commit with message */
 export async function gitCommit(path: string, message: string): Promise<string> {
   return invoke<string>("git_commit", { path, message });

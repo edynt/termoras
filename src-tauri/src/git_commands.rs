@@ -174,6 +174,50 @@ pub fn git_stage_all(path: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Stage specific files (git add <files...>)
+#[tauri::command]
+pub fn git_stage_files(path: String, files: Vec<String>) -> Result<(), String> {
+    if files.is_empty() {
+        return Ok(());
+    }
+    let mut args = vec!["add", "--"];
+    let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
+    args.extend(file_refs);
+
+    let output = Command::new("git")
+        .args(&args)
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git add: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(())
+}
+
+/// Unstage specific files (git reset HEAD <files...>)
+#[tauri::command]
+pub fn git_unstage_files(path: String, files: Vec<String>) -> Result<(), String> {
+    if files.is_empty() {
+        return Ok(());
+    }
+    let mut args = vec!["reset", "HEAD", "--"];
+    let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
+    args.extend(file_refs);
+
+    let output = Command::new("git")
+        .args(&args)
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git reset: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(())
+}
+
 /// Commit with message (git commit -m "...")
 #[tauri::command]
 pub fn git_commit(path: String, message: String) -> Result<String, String> {

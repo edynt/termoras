@@ -91,7 +91,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     const { activeView } = useAppStore.getState();
     const terminalVisibleInDashboard =
       activeView === "kanban" &&
-      localStorage.getItem("clcterm:terminal-panel-open") !== "false";
+      localStorage.getItem("kodeck:terminal-panel-open") !== "false";
 
     if (terminalVisibleInDashboard) {
       setActiveTerminalInPlace(projectTerminal.id);

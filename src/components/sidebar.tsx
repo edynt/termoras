@@ -16,10 +16,13 @@ export function Sidebar() {
       {/* header — draggable titlebar region with traffic light padding */}
       <div
         onMouseDown={(e) => {
-          // Only drag if clicking on the header itself, not on buttons
           if ((e.target as HTMLElement).closest("button")) return;
           e.preventDefault();
           getCurrentWindow().startDragging();
+        }}
+        onDoubleClick={(e) => {
+          if ((e.target as HTMLElement).closest("button")) return;
+          getCurrentWindow().toggleMaximize();
         }}
         className="flex items-center justify-between px-3 pb-2 pt-8 border-b border-[var(--border-color)] cursor-default"
       >

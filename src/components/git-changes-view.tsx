@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, FileText, GitBranch, Upload, Check, Loader2, Undo2 } from "lucide-react";
+import { RefreshCw, FileText, GitBranch, Upload, Check, Loader2, Undo2, Plus, Minus } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import {
   gitChangedFiles,
@@ -7,6 +7,8 @@ import {
   gitStatusSummary,
   gitLastCommitMessage,
   gitStageAll,
+  gitStageFiles,
+  gitUnstageFiles,
   gitCommit,
   gitHasUnpushed,
   gitUndoCommit,
@@ -68,6 +70,35 @@ export function GitChangesView() {
       .catch(() => {});
   }, [project?.path]);
 
+  /** Stage a single file */
+  async function handleStageFile(filePath: string) {
+    if (!project) return;
+    setStaging(true);
+    setActionError(null);
+    try {
+      await gitStageFiles(project.path, [filePath]);
+      await refresh();
+    } catch (e) {
+      setActionError(`Stage failed: ${e}`);
+    }
+    setStaging(false);
+  }
+
+  /** Unstage a single file */
+  async function handleUnstageFile(filePath: string) {
+    if (!project) return;
+    setStaging(true);
+    setActionError(null);
+    try {
+      await gitUnstageFiles(project.path, [filePath]);
+      await refresh();
+    } catch (e) {
+      setActionError(`Unstage failed: ${e}`);
+    }
+    setStaging(false);
+  }
+
+  /** Stage all unstaged files */
   async function handleStageAll() {
     if (!project) return;
     setStaging(true);
@@ -77,6 +108,22 @@ export function GitChangesView() {
       await refresh();
     } catch (e) {
       setActionError(`Stage failed: ${e}`);
+    }
+    setStaging(false);
+  }
+
+  /** Unstage all staged files */
+  async function handleUnstageAll() {
+    if (!project) return;
+    const stagedPaths = files.filter((f) => f.staged).map((f) => f.path);
+    if (stagedPaths.length === 0) return;
+    setStaging(true);
+    setActionError(null);
+    try {
+      await gitUnstageFiles(project.path, stagedPaths);
+      await refresh();
+    } catch (e) {
+      setActionError(`Unstage failed: ${e}`);
     }
     setStaging(false);
   }
@@ -114,7 +161,6 @@ export function GitChangesView() {
     setActionError(null);
     try {
       await gitUndoCommit(project.path);
-      // Re-fill commit message with the undone commit's message (now it's the previous one)
       gitLastCommitMessage(project.path)
         .then((msg) => { if (msg) setCommitMsg(msg); })
         .catch(() => {});
@@ -178,21 +224,33 @@ export function GitChangesView() {
             </div>
           )}
 
+          {/* Staged section */}
           {stagedFiles.length > 0 && (
             <FileSection
               title="Staged"
               files={stagedFiles}
               selectedFile={selectedFile}
               onSelect={setSelectedFile}
+              actionIcon="unstage"
+              onFileAction={handleUnstageFile}
+              onSectionAction={handleUnstageAll}
+              sectionActionTitle="Unstage all"
+              disabled={staging}
             />
           )}
 
+          {/* Unstaged section */}
           {unstagedFiles.length > 0 && (
             <FileSection
               title="Changes"
               files={unstagedFiles}
               selectedFile={selectedFile}
               onSelect={setSelectedFile}
+              actionIcon="stage"
+              onFileAction={handleStageFile}
+              onSectionAction={handleStageAll}
+              sectionActionTitle="Stage all"
+              disabled={staging}
             />
           )}
         </div>
@@ -231,15 +289,6 @@ export function GitChangesView() {
 
           {/* Action buttons */}
           <div className="flex gap-1.5">
-            <button
-              onClick={handleStageAll}
-              disabled={staging || files.length === 0}
-              className="flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded bg-[var(--accent-green)]/15 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Stage all changes (git add -A)"
-            >
-              {staging ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
-              Stage All
-            </button>
             <button
               onClick={handleCommit}
               disabled={committing || !commitMsg.trim() || !status?.staged}
@@ -289,39 +338,77 @@ export function GitChangesView() {
   );
 }
 
-/** Section header + file list group */
+/** Section header + file list with per-file stage/unstage buttons */
 function FileSection({
   title,
   files,
   selectedFile,
   onSelect,
+  actionIcon,
+  onFileAction,
+  onSectionAction,
+  sectionActionTitle,
+  disabled,
 }: {
   title: string;
   files: GitChangedFile[];
   selectedFile: { path: string; staged: boolean } | null;
   onSelect: (f: { path: string; staged: boolean }) => void;
+  actionIcon: "stage" | "unstage";
+  onFileAction: (filePath: string) => void;
+  onSectionAction: () => void;
+  sectionActionTitle: string;
+  disabled: boolean;
 }) {
   return (
     <div>
-      <div className="px-3 py-1 text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-        {title} ({files.length})
+      {/* Section header with bulk action */}
+      <div className="flex items-center justify-between px-3 py-1">
+        <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+          {title} ({files.length})
+        </span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onSectionAction(); }}
+          disabled={disabled}
+          className="p-0.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
+          title={sectionActionTitle}
+        >
+          {actionIcon === "stage" ? <Plus size={12} /> : <Minus size={12} />}
+        </button>
       </div>
+
+      {/* File rows */}
       {files.map((f) => {
         const isSelected = selectedFile?.path === f.path && selectedFile?.staged === f.staged;
         return (
-          <button
+          <div
             key={`${f.staged ? "s" : "u"}-${f.path}`}
-            onClick={() => onSelect({ path: f.path, staged: f.staged })}
-            className={`w-full flex items-center gap-1.5 px-3 py-1 text-left text-xs transition-colors ${
+            className={`group flex items-center gap-1 px-1.5 py-0.5 transition-colors ${
               isSelected
                 ? "bg-[var(--bg-active)] text-[var(--text-primary)]"
                 : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
             }`}
           >
-            <FileText size={12} className="shrink-0" />
-            <span className="truncate flex-1">{f.path}</span>
-            <StatusBadge status={f.status} />
-          </button>
+            {/* Stage/Unstage button for this file */}
+            <button
+              onClick={(e) => { e.stopPropagation(); onFileAction(f.path); }}
+              disabled={disabled}
+              className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-active)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-40"
+              title={actionIcon === "stage" ? `Stage ${f.path}` : `Unstage ${f.path}`}
+            >
+              {actionIcon === "stage" ? <Plus size={10} /> : <Minus size={10} />}
+            </button>
+
+            {/* File row — clickable to view diff */}
+            <button
+              onClick={() => onSelect({ path: f.path, staged: f.staged })}
+              className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-xs min-w-0"
+            >
+              <FileText size={12} className="shrink-0" />
+              <span className="truncate flex-1">{f.path}</span>
+              <StatusBadge status={f.status} />
+            </button>
+          </div>
         );
       })}
     </div>

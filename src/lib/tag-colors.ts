@@ -17,8 +17,9 @@ export const COLOR_PALETTE: { name: string; hex: string }[] = [
   { name: "teal", hex: "#14b8a6" },
 ];
 
-/** Default tags matching the original 8 hardcoded types */
+/** Default tags matching slash commands */
 export const DEFAULT_TAGS: TagDefinition[] = [
+  { id: "bootstrap", label: "Bootstrap", color: "#6366f1", description: "Initialize a new project", command: "/bootstrap" },
   { id: "cook", label: "Cook", color: "#3b82f6", description: "Implement a feature step by step", command: "/cook" },
   { id: "plan", label: "Plan", color: "#a855f7", description: "Create an implementation plan", command: "/plan" },
   { id: "code", label: "Code", color: "#10b981", description: "Implement code from a plan", command: "/code" },

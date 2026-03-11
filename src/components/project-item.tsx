@@ -122,7 +122,7 @@ export function ProjectItem({ project }: Props) {
             <ChevronRight size={14} className="shrink-0" />
           )}
           <Folder size={14} className="shrink-0 text-[var(--accent-blue)]" />
-          <span className="text-sm truncate flex-1">{project.name}</span>
+          <span className="text-sm truncate flex-1" title={project.path}>{project.name}</span>
 
           {/* git indicator */}
           {hasGit && (

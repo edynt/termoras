@@ -1,4 +1,4 @@
-# CLCTerm - Code Standards
+# Kodeck - Code Standards
 
 ## General
 - File naming: kebab-case (`terminal-instance.tsx`, `pty_manager.rs`)

@@ -5,7 +5,7 @@ let storeInstance: Awaited<ReturnType<typeof load>> | null = null;
 
 async function getStore() {
   if (!storeInstance) {
-    storeInstance = await load("clcterm-data.json");
+    storeInstance = await load("kodeck-data.json");
   }
   return storeInstance;
 }

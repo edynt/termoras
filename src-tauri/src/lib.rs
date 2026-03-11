@@ -52,6 +52,8 @@ pub fn run() {
             git_commands::git_file_diff,
             git_commands::git_last_commit_message,
             git_commands::git_stage_all,
+            git_commands::git_stage_files,
+            git_commands::git_unstage_files,
             git_commands::git_commit,
             git_commands::git_has_unpushed,
             git_commands::git_undo_commit,
@@ -67,7 +69,7 @@ pub fn run() {
                     window
                         .dialog()
                         .message("All terminal sessions will be terminated.")
-                        .title("Quit CLCTerm?")
+                        .title("Quit Kodeck?")
                         .kind(MessageDialogKind::Warning)
                         .buttons(MessageDialogButtons::OkCancelCustom(
                             "Quit".to_string(),

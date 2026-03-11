@@ -9,8 +9,8 @@ import { GitChangesView } from "./git-changes-view";
 const DEFAULT_TERMINAL_HEIGHT = 300;
 const MIN_TERMINAL_HEIGHT = 100;
 const MIN_KANBAN_HEIGHT = 200;
-const STORAGE_KEY = "clcterm:terminal-panel-height";
-const OPEN_KEY = "clcterm:terminal-panel-open";
+const STORAGE_KEY = "kodeck:terminal-panel-height";
+const OPEN_KEY = "kodeck:terminal-panel-open";
 
 function loadSavedHeight(): number {
   try {
@@ -103,6 +103,7 @@ export function MainPanel() {
           e.preventDefault();
           getCurrentWindow().startDragging();
         }}
+        onDoubleClick={() => getCurrentWindow().toggleMaximize()}
         className="h-8 shrink-0 cursor-default"
       />
 

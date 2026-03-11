@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { X, Plus, Trash2 } from "lucide-react";
 import { useTagStore } from "../stores/tag-store";
 import { COLOR_PALETTE, getTagStyles, randomColor } from "../lib/tag-colors";
 import type { TagDefinition } from "../types/kanban";
@@ -14,7 +14,6 @@ export function TagSettingsModal({ onClose }: Props) {
   const updateTag = useTagStore((s) => s.updateTag);
   const removeTag = useTagStore((s) => s.removeTag);
   const [paletteOpenFor, setPaletteOpenFor] = useState<string | null>(null);
-  const [expandedTag, setExpandedTag] = useState<string | null>(null);
 
   return (
     <div
@@ -47,12 +46,8 @@ export function TagSettingsModal({ onClose }: Props) {
                   tag={tag}
                   styles={styles}
                   isPaletteOpen={paletteOpenFor === tag.id}
-                  isExpanded={expandedTag === tag.id}
                   onTogglePalette={() =>
                     setPaletteOpenFor(paletteOpenFor === tag.id ? null : tag.id)
-                  }
-                  onToggleExpand={() =>
-                    setExpandedTag(expandedTag === tag.id ? null : tag.id)
                   }
                   onUpdate={(updates) => updateTag(tag.id, updates)}
                   onDelete={() => removeTag(tag.id)}
@@ -82,18 +77,14 @@ function TagRow({
   tag,
   styles,
   isPaletteOpen,
-  isExpanded,
   onTogglePalette,
-  onToggleExpand,
   onUpdate,
   onDelete,
 }: {
   tag: TagDefinition;
   styles: ReturnType<typeof getTagStyles>;
   isPaletteOpen: boolean;
-  isExpanded: boolean;
   onTogglePalette: () => void;
-  onToggleExpand: () => void;
   onUpdate: (updates: Partial<Omit<TagDefinition, "id">>) => void;
   onDelete: () => void;
 }) {
@@ -124,18 +115,9 @@ function TagRow({
     }
   }
 
-  const ExpandIcon = isExpanded ? ChevronDown : ChevronRight;
-
   return (
     <>
       <div className="flex items-center gap-2 py-1.5 group">
-        {/* Expand toggle */}
-        <button
-          onClick={onToggleExpand}
-          className="p-0.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-        >
-          <ExpandIcon size={12} />
-        </button>
         {/* Color dot — clickable */}
         <button
           onClick={onTogglePalette}
@@ -168,33 +150,31 @@ function TagRow({
         </button>
       </div>
 
-      {/* Expanded: description + command fields */}
-      {isExpanded && (
-        <div className="pl-8 pr-2 pb-2 space-y-1.5">
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={handleDescriptionBlur}
-            maxLength={100}
-            placeholder="Description..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-            }}
-            className="w-full text-[11px] text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
-          />
-          <input
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            onBlur={handleCommandBlur}
-            maxLength={100}
-            placeholder="Command (e.g. /cook)..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-            }}
-            className="w-full text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
-          />
-        </div>
-      )}
+      {/* Description + command fields — always visible */}
+      <div className="pl-7 pr-2 pb-2 space-y-1.5">
+        <input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onBlur={handleDescriptionBlur}
+          maxLength={100}
+          placeholder="Description..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          className="w-full text-[11px] text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
+        />
+        <input
+          value={command}
+          onChange={(e) => setCommand(e.target.value)}
+          onBlur={handleCommandBlur}
+          maxLength={100}
+          placeholder="Command (e.g. /cook)..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          className="w-full text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
+        />
+      </div>
 
       {/* Color palette — inline below row */}
       {isPaletteOpen && (

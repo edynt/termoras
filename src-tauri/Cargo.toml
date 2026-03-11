@@ -1,5 +1,5 @@
 [package]
-name = "clcterm"
+name = "kodeck"
 version = "0.1.0"
 description = "Terminal manager for projects"
 authors = ["you"]

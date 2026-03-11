@@ -1,7 +1,7 @@
-# CLCTerm - Product Development Requirements
+# Kodeck - Product Development Requirements
 
 ## Product
-**CLCTerm** — Desktop terminal manager for multi-project workflows
+**Kodeck** — Desktop terminal manager for multi-project workflows
 
 ## Problem
 Developers working on multiple projects need to manage many terminal sessions. Existing terminals (iTerm2, Terminal.app) don't organize terminals by project with status indicators.

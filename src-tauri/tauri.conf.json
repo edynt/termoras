@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "CLCTerm",
+  "productName": "Kodeck",
   "version": "0.1.0",
-  "identifier": "com.clcterm.app",
+  "identifier": "com.kodeck.app",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "CLCTerm",
+        "title": "Kodeck",
         "width": 1200,
         "height": 800,
         "minWidth": 800,

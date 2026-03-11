@@ -1,4 +1,4 @@
-# CLCTerm - System Architecture
+# Kodeck - System Architecture
 
 ## Overview
 ```
@@ -53,7 +53,7 @@
 - xterm.js refs persist across view switches
 
 ## Persistence
-- Tauri Store plugin → `clcterm-data.json`
+- Tauri Store plugin → `kodeck-data.json`
 - Stores: project list (id, name, path)
 - Loaded on app start, saved on project add/remove
 

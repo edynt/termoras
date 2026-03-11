@@ -1,4 +1,4 @@
-# CLCTerm
+# Kodeck
 
 Desktop terminal manager for multi-project workflows. Built with Tauri v2.
 

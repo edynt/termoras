@@ -1,4 +1,4 @@
-# CLCTerm - Tech Stack
+# Kodeck - Tech Stack
 
 ## Core
 | Layer | Technology | Version |

@@ -24,11 +24,31 @@ export const useTagStore = create<TagStore>((set, get) => ({
     if (loaded || loading) return;
     set({ loading: true });
     const stored = await loadTags();
-    const tags = stored ?? [...DEFAULT_TAGS];
-    set({ tags, loaded: true, loading: false });
-    if (!stored) {
+    let tags: TagDefinition[];
+    if (stored) {
+      // Merge default description/command into stored tags missing them
+      const defaultMap = new Map(DEFAULT_TAGS.map((d) => [d.id, d]));
+      tags = stored.map((t) => {
+        const def = defaultMap.get(t.id);
+        if (!def) return t;
+        return {
+          ...t,
+          description: t.description ?? def.description,
+          command: t.command ?? def.command,
+        };
+      });
+      // Add any new default tags not in stored
+      for (const def of DEFAULT_TAGS) {
+        if (!tags.some((t) => t.id === def.id)) {
+          tags.push({ ...def });
+        }
+      }
+      saveTags(tags);
+    } else {
+      tags = [...DEFAULT_TAGS];
       saveTags(tags);
     }
+    set({ tags, loaded: true, loading: false });
   },
 
   addTag: (label, color, description, command) => {

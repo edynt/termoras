@@ -61,7 +61,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   activeProjectId: null,
   activeTerminalId: null,
   activeView: "terminal",
-  vietnameseInput: (() => { try { return localStorage.getItem("clcterm:vi-input") === "true"; } catch { return false; } })(),
+  vietnameseInput: (() => { try { return localStorage.getItem("kodeck:vi-input") === "true"; } catch { return false; } })(),
 
   init: async () => {
     const [projects, terminals, activeIds] = await Promise.all([
@@ -154,7 +154,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   toggleVietnameseInput: () => {
     set((s) => {
       const next = !s.vietnameseInput;
-      localStorage.setItem("clcterm:vi-input", String(next));
+      localStorage.setItem("kodeck:vi-input", String(next));
       return { vietnameseInput: next };
     });
   },
