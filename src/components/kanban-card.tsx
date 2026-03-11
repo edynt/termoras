@@ -23,6 +23,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [runState, setRunState] = useState<"idle" | "running" | "done">("idle");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const tagBtnRef = useRef<HTMLButtonElement>(null);
   const removeCard = useKanbanStore((s) => s.removeCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
@@ -255,9 +256,12 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
           {card.title}
         </p>
 
-        {/* Content preview */}
+        {/* Content preview — click to expand/collapse */}
         {card.content && (
-          <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-3 mb-2">
+          <p
+            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+            className={`text-xs text-[var(--text-secondary)] leading-relaxed mb-2 cursor-pointer ${expanded ? "" : "line-clamp-3"}`}
+          >
             {card.content}
           </p>
         )}

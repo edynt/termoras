@@ -17,12 +17,23 @@ export function KanbanCardEditor({ card, columnId, onClose }: Props) {
   const [type, setType] = useState<string | null>(card?.type ?? null);
   const tags = useTagStore((s) => s.tags);
   const titleRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const addCard = useKanbanStore((s) => s.addCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
 
   useEffect(() => {
     titleRef.current?.focus();
   }, []);
+
+  /** Auto-resize textarea to fit content */
+  function autoResize() {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }
+
+  useEffect(autoResize, [content]);
 
   function handleSave() {
     const trimmedTitle = title.trim();
@@ -63,11 +74,12 @@ export function KanbanCardEditor({ card, columnId, onClose }: Props) {
 
       {/* Content textarea */}
       <textarea
+        ref={textareaRef}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Content / command..."
-        rows={4}
-        className="w-full text-[13px] bg-[var(--bg-hover)] rounded-md p-2.5 border-none outline-none resize-none mb-3 placeholder:text-[var(--text-secondary)]/60 leading-relaxed"
+        rows={2}
+        className="w-full text-[13px] bg-[var(--bg-hover)] rounded-md p-2.5 border-none outline-none resize-none mb-3 placeholder:text-[var(--text-secondary)]/60 leading-relaxed max-h-[40vh] overflow-y-auto"
       />
 
       {/* Type selector — pill buttons (click to toggle) */}
