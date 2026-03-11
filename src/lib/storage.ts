@@ -62,7 +62,7 @@ export async function saveTerminals(
 interface ActiveIds {
   activeProjectId: string | null;
   activeTerminalId: string | null;
-  activeView?: "terminal" | "kanban";
+  activeView?: "terminal" | "kanban" | "git";
 }
 
 export async function loadActiveIds(): Promise<ActiveIds> {

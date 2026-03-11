@@ -3,6 +3,7 @@ import { X, Terminal } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import { TerminalPanel } from "./terminal-panel";
 import { KanbanBoard } from "./kanban-board";
+import { GitChangesView } from "./git-changes-view";
 
 const DEFAULT_TERMINAL_HEIGHT = 300;
 const MIN_TERMINAL_HEIGHT = 100;
@@ -95,10 +96,17 @@ export function MainPanel() {
 
   return (
     <div ref={containerRef} className="flex flex-col h-full overflow-hidden">
-      {/* Kanban board — visible only in split view */}
+      {/* Kanban board */}
       {activeView === "kanban" && (
         <div className="flex-1 min-h-0 overflow-auto">
           <KanbanBoard />
+        </div>
+      )}
+
+      {/* Git changes view */}
+      {activeView === "git" && (
+        <div className="flex-1 min-h-0 overflow-auto">
+          <GitChangesView />
         </div>
       )}
 
@@ -145,7 +153,7 @@ export function MainPanel() {
         }
         style={{
           height: activeView === "kanban" && terminalOpen ? terminalHeight : undefined,
-          display: activeView === "kanban" && !terminalOpen ? "none" : undefined,
+          display: (activeView === "kanban" && !terminalOpen) || activeView === "git" ? "none" : undefined,
         }}
       >
         <TerminalPanel />

@@ -8,9 +8,11 @@ import {
   LayoutGrid,
   Terminal,
   Trash2,
+  GitBranch,
 } from "lucide-react";
 import type { Project } from "../types";
 import { useAppStore } from "../stores/app-store";
+import { isGitRepo, gitStatusSummary, type GitStatusSummary } from "../lib/tauri-commands";
 import { TerminalItem } from "./terminal-item";
 
 interface Props {
@@ -39,6 +41,27 @@ export function ProjectItem({ project }: Props) {
   const runningCount = projectTerminals.filter((t) => t.isRunning).length;
   const isActive = activeProjectId === project.id;
   const isBoardActive = isActive && activeView === "kanban";
+  const isGitViewActive = isActive && activeView === "git";
+
+  const [hasGit, setHasGit] = useState(false);
+  const [gitStatus, setGitStatus] = useState<GitStatusSummary | null>(null);
+
+  // Check git on mount
+  useEffect(() => {
+    isGitRepo(project.path).then((result) => {
+      setHasGit(result);
+      if (result) {
+        gitStatusSummary(project.path).then(setGitStatus).catch(() => {});
+      }
+    }).catch(() => {});
+  }, [project.path]);
+
+  // Refresh git status when project becomes active
+  useEffect(() => {
+    if (hasGit && isActive) {
+      gitStatusSummary(project.path).then(setGitStatus).catch(() => {});
+    }
+  }, [hasGit, isActive, project.path]);
 
   // Close context menu on outside click
   useEffect(() => {
@@ -75,6 +98,11 @@ export function ProjectItem({ project }: Props) {
     setActiveView("kanban");
   }
 
+  function handleOpenGitView() {
+    setActiveProject(project.id);
+    setActiveView("git");
+  }
+
   return (
     <>
       <div>
@@ -95,6 +123,26 @@ export function ProjectItem({ project }: Props) {
           )}
           <Folder size={14} className="shrink-0 text-[var(--accent-blue)]" />
           <span className="text-sm truncate flex-1">{project.name}</span>
+
+          {/* git indicator */}
+          {hasGit && (
+            <span
+              className="shrink-0 text-[9px] font-bold text-[var(--accent-red)] opacity-70"
+              title={gitStatus ? `${gitStatus.branch} — ${gitStatus.modified + gitStatus.untracked} changed` : "git"}
+            >
+              git
+            </span>
+          )}
+
+          {/* git changes count */}
+          {gitStatus && (gitStatus.modified + gitStatus.untracked + gitStatus.staged) > 0 && (
+            <span
+              className="shrink-0 text-[9px] font-medium px-1 py-0.5 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]"
+              title={`${gitStatus.staged} staged, ${gitStatus.modified} modified, ${gitStatus.untracked} untracked`}
+            >
+              {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
+            </span>
+          )}
 
           {/* running indicator */}
           {runningCount > 0 && (
@@ -142,6 +190,26 @@ export function ProjectItem({ project }: Props) {
               <LayoutGrid size={12} className="shrink-0" />
               <span className="text-xs truncate flex-1">Board</span>
             </div>
+
+            {/* Git Changes tab — only if git repo */}
+            {hasGit && (
+              <div
+                onClick={() => handleOpenGitView()}
+                className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-colors duration-150 ${
+                  isGitViewActive
+                    ? "text-[var(--accent-blue)]"
+                    : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+                }`}
+              >
+                <GitBranch size={12} className="shrink-0" />
+                <span className="text-xs truncate flex-1">Changes</span>
+                {gitStatus && (gitStatus.modified + gitStatus.untracked + gitStatus.staged) > 0 && (
+                  <span className="text-[9px] font-medium px-1 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]">
+                    {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Terminal items */}
             {projectTerminals.map((t) => (

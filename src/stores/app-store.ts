@@ -16,7 +16,7 @@ interface AppStore {
   terminals: TerminalSession[];
   activeProjectId: string | null;
   activeTerminalId: string | null;
-  activeView: "terminal" | "kanban";
+  activeView: "terminal" | "kanban" | "git";
   vietnameseInput: boolean;
 
   // app init
@@ -28,7 +28,7 @@ interface AppStore {
   setActiveProject: (id: string) => void;
 
   // view actions
-  setActiveView: (view: "terminal" | "kanban") => void;
+  setActiveView: (view: "terminal" | "kanban" | "git") => void;
   toggleVietnameseInput: () => void;
 
   // terminal actions
@@ -50,7 +50,7 @@ function persistTerminals(terminals: TerminalSession[]) {
 function persistActiveIds(
   activeProjectId: string | null,
   activeTerminalId: string | null,
-  activeView: "terminal" | "kanban" = "terminal",
+  activeView: "terminal" | "kanban" | "git" = "terminal",
 ) {
   saveActiveIds({ activeProjectId, activeTerminalId, activeView });
 }

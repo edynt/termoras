@@ -1,4 +1,5 @@
 mod commands;
+mod git_commands;
 mod pty_manager;
 
 use pty_manager::AppState;
@@ -45,6 +46,14 @@ pub fn run() {
             commands::write_terminal,
             commands::resize_terminal,
             commands::kill_terminal,
+            git_commands::is_git_repo,
+            git_commands::git_status_summary,
+            git_commands::git_changed_files,
+            git_commands::git_file_diff,
+            git_commands::git_last_commit_message,
+            git_commands::git_stage_all,
+            git_commands::git_commit,
+            git_commands::git_push,
         ])
         .on_window_event(|window, event| {
             match event {
