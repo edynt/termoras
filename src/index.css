@@ -29,16 +29,6 @@
   --accent-red: #f06f6f;
 }
 
-/* Window drag region for custom titlebar */
-[data-tauri-drag-region] {
-  -webkit-app-region: drag;
-}
-[data-tauri-drag-region] button,
-[data-tauri-drag-region] a,
-[data-tauri-drag-region] input {
-  -webkit-app-region: no-drag;
-}
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
     sans-serif;

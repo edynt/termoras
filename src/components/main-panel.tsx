@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { X, Terminal } from "lucide-react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useAppStore } from "../stores/app-store";
 import { TerminalPanel } from "./terminal-panel";
 import { KanbanBoard } from "./kanban-board";
@@ -97,7 +98,13 @@ export function MainPanel() {
   return (
     <div ref={containerRef} className="flex flex-col h-full overflow-hidden">
       {/* Titlebar drag region — matches macOS traffic light height */}
-      <div data-tauri-drag-region className="h-8 shrink-0" />
+      <div
+        onMouseDown={(e) => {
+          e.preventDefault();
+          getCurrentWindow().startDragging();
+        }}
+        className="h-8 shrink-0 cursor-default"
+      />
 
       {/* Kanban board */}
       {activeView === "kanban" && (

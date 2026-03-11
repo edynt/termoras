@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FolderPlus, Settings } from "lucide-react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useAppStore } from "../stores/app-store";
 import { ProjectItem } from "./project-item";
 import { ThemeToggle } from "./theme-toggle";
@@ -14,10 +15,15 @@ export function Sidebar() {
     <aside className="flex flex-col h-screen border-r border-[var(--border-color)] bg-[var(--bg-sidebar)] select-none">
       {/* header — draggable titlebar region with traffic light padding */}
       <div
-        data-tauri-drag-region
-        className="flex items-center justify-between px-3 pb-2 pt-8 border-b border-[var(--border-color)]"
+        onMouseDown={(e) => {
+          // Only drag if clicking on the header itself, not on buttons
+          if ((e.target as HTMLElement).closest("button")) return;
+          e.preventDefault();
+          getCurrentWindow().startDragging();
+        }}
+        className="flex items-center justify-between px-3 pb-2 pt-8 border-b border-[var(--border-color)] cursor-default"
       >
-        <span data-tauri-drag-region className="text-sm font-semibold tracking-tight">Projects</span>
+        <span className="text-sm font-semibold tracking-tight pointer-events-none">Projects</span>
         <button
           onClick={addProject}
           className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors duration-150"
