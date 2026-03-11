@@ -1,19 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import type { KanbanCard, CardType } from "../types/kanban";
-import { CARD_TYPES } from "../types/kanban";
+import type { KanbanCard } from "../types/kanban";
 import { useKanbanStore } from "../stores/kanban-store";
+import { useTagStore } from "../stores/tag-store";
+import { getTagStyles } from "../lib/tag-colors";
 
-/** Color ring per type for the selector pills */
-const TYPE_PILL_STYLES: Record<string, string> = {
-  cook:       "bg-blue-500/10 text-blue-600 ring-blue-500/25",
-  plan:       "bg-purple-500/10 text-purple-600 ring-purple-500/25",
-  code:       "bg-emerald-500/10 text-emerald-600 ring-emerald-500/25",
-  test:       "bg-amber-500/10 text-amber-600 ring-amber-500/25",
-  brainstorm: "bg-orange-500/10 text-orange-600 ring-orange-500/25",
-  scout:      "bg-cyan-500/10 text-cyan-600 ring-cyan-500/25",
-  debug:      "bg-red-500/10 text-red-600 ring-red-500/25",
-  watzup:     "bg-slate-500/10 text-slate-600 ring-slate-500/25",
-};
 
 interface Props {
   card?: KanbanCard;
@@ -24,7 +14,8 @@ interface Props {
 export function KanbanCardEditor({ card, columnId, onClose }: Props) {
   const [title, setTitle] = useState(card?.title ?? "");
   const [content, setContent] = useState(card?.content ?? "");
-  const [type, setType] = useState<CardType | null>(card?.type ?? null);
+  const [type, setType] = useState<string | null>(card?.type ?? null);
+  const tags = useTagStore((s) => s.tags);
   const titleRef = useRef<HTMLInputElement>(null);
   const addCard = useKanbanStore((s) => s.addCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
@@ -60,6 +51,12 @@ export function KanbanCardEditor({ card, columnId, onClose }: Props) {
         ref={titleRef}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSave();
+          }
+        }}
         placeholder="Card title..."
         className="w-full text-sm font-medium bg-[var(--bg-hover)] rounded-md px-2.5 py-2 border border-[var(--border-color)] outline-none mb-2.5 placeholder:text-[var(--text-secondary)]/60 focus:border-[var(--accent-blue)] transition-colors"
       />
@@ -75,26 +72,31 @@ export function KanbanCardEditor({ card, columnId, onClose }: Props) {
 
       {/* Type selector — pill buttons (click to toggle) */}
       <div className="flex flex-wrap gap-1.5 mb-3">
-        {CARD_TYPES.map((ct) => (
-          <button
-            key={ct.value}
-            onClick={() => setType(type === ct.value ? null : ct.value)}
-            title={`/${ct.value} — ${ct.description}`}
-            className={`text-xs font-semibold px-2.5 py-1 rounded-md ring-1 ring-inset transition-all ${
-              type === ct.value
-                ? `${TYPE_PILL_STYLES[ct.value]} ring-2`
-                : "bg-transparent text-[var(--text-secondary)] ring-[var(--border-color)] hover:ring-[var(--text-secondary)]/40"
-            }`}
-          >
-            {ct.label}
-          </button>
-        ))}
+        {tags.map((tag) => {
+          const isActive = type === tag.id;
+          const styles = getTagStyles(tag.color);
+          return (
+            <button
+              key={tag.id}
+              onClick={() => setType(isActive ? null : tag.id)}
+              title={tag.description ? `${tag.command ?? `/${tag.id}`} — ${tag.description}` : (tag.command ?? `/${tag.id}`)}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-md transition-all ${
+                isActive
+                  ? ""
+                  : "bg-transparent text-[var(--text-secondary)] ring-1 ring-inset ring-[var(--border-color)] hover:ring-[var(--text-secondary)]/40"
+              }`}
+              style={isActive ? { ...styles.badge, boxShadow: `inset 0 0 0 2px ${tag.color}40` } : undefined}
+            >
+              {tag.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Actions */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-[var(--text-secondary)]/60">
-          ⌘+Enter to save
+          Enter to save
         </span>
         <div className="flex items-center gap-2">
           <button

@@ -17,6 +17,7 @@ interface AppStore {
   activeProjectId: string | null;
   activeTerminalId: string | null;
   activeView: "terminal" | "kanban";
+  vietnameseInput: boolean;
 
   // app init
   init: () => Promise<void>;
@@ -28,6 +29,7 @@ interface AppStore {
 
   // view actions
   setActiveView: (view: "terminal" | "kanban") => void;
+  toggleVietnameseInput: () => void;
 
   // terminal actions
   addTerminal: (terminal: TerminalSession) => void;
@@ -59,6 +61,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   activeProjectId: null,
   activeTerminalId: null,
   activeView: "terminal",
+  vietnameseInput: (() => { try { return localStorage.getItem("clcterm:vi-input") === "true"; } catch { return false; } })(),
 
   init: async () => {
     const [projects, terminals, activeIds] = await Promise.all([
@@ -146,6 +149,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ activeView: view });
     const { activeProjectId, activeTerminalId } = get();
     persistActiveIds(activeProjectId, activeTerminalId, view);
+  },
+
+  toggleVietnameseInput: () => {
+    set((s) => {
+      const next = !s.vietnameseInput;
+      localStorage.setItem("clcterm:vi-input", String(next));
+      return { vietnameseInput: next };
+    });
   },
 
   addTerminal: (terminal: TerminalSession) => {

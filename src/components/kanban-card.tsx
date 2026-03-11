@@ -3,26 +3,13 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Copy, Pencil, Trash2, Check, ChevronDown, Play, Tag, Loader2 } from "lucide-react";
 import type { KanbanCard as KanbanCardType } from "../types/kanban";
-import { CARD_TYPES } from "../types/kanban";
 import { useKanbanStore } from "../stores/kanban-store";
 import { useAppStore } from "../stores/app-store";
+import { useTagStore } from "../stores/tag-store";
+import { getTagStyles, UNTAGGED_STYLES } from "../lib/tag-colors";
 import { writeTerminal } from "../lib/tauri-commands";
 import { KanbanCardEditor } from "./kanban-card-editor";
 
-/** Dot + badge colors per card type */
-const TYPE_STYLES: Record<string, { bar: string; badge: string }> = {
-  cook:       { bar: "bg-blue-500",    badge: "bg-blue-500/10 text-blue-600 ring-blue-500/25" },
-  plan:       { bar: "bg-purple-500",  badge: "bg-purple-500/10 text-purple-600 ring-purple-500/25" },
-  code:       { bar: "bg-emerald-500", badge: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/25" },
-  test:       { bar: "bg-amber-500",   badge: "bg-amber-500/10 text-amber-600 ring-amber-500/25" },
-  brainstorm: { bar: "bg-orange-500",  badge: "bg-orange-500/10 text-orange-600 ring-orange-500/25" },
-  scout:      { bar: "bg-cyan-500",    badge: "bg-cyan-500/10 text-cyan-600 ring-cyan-500/25" },
-  debug:      { bar: "bg-red-500",     badge: "bg-red-500/10 text-red-600 ring-red-500/25" },
-  watzup:     { bar: "bg-slate-500",   badge: "bg-slate-500/10 text-slate-600 ring-slate-500/25" },
-};
-
-/** Fallback style when type is null */
-const UNTAGGED_STYLE = { bar: "bg-neutral-400", badge: "bg-neutral-500/10 text-neutral-400 ring-neutral-500/20" };
 
 interface Props {
   card: KanbanCardType;
@@ -67,12 +54,17 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     opacity: isDragging ? 0.3 : 1,
   };
 
-  const typeStyle = card.type ? (TYPE_STYLES[card.type] ?? UNTAGGED_STYLE) : UNTAGGED_STYLE;
+  const tags = useTagStore((s) => s.tags);
+  const currentTag = card.type ? tags.find((t) => t.id === card.type) : null;
+  const typeStyle = currentTag ? getTagStyles(currentTag.color) : UNTAGGED_STYLES;
   const hasType = card.type !== null;
+
+  // Use tag command if available, otherwise fallback to /{type}
+  const tagPrefix = currentTag?.command ?? (hasType ? `/${card.type}` : "");
 
   async function handleCopy(e: React.MouseEvent) {
     e.stopPropagation();
-    const text = hasType ? `/${card.type} ${card.content}` : card.content;
+    const text = tagPrefix ? `${tagPrefix} ${card.content}` : card.content;
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
@@ -91,7 +83,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     const projectTerminal = terminals.find((t) => t.projectId === activeProjectId);
     if (!projectTerminal) return;
 
-    const command = hasType ? `/${card.type} ${card.content}` : card.content;
+    const command = tagPrefix ? `${tagPrefix} ${card.content}` : card.content;
 
     setRunState("running");
 
@@ -151,13 +143,14 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                   setShowTypeMenu(true);
                 }
               }}
-              className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md ring-1 ring-inset cursor-pointer hover:opacity-80 transition-opacity ${typeStyle.badge}`}
+              className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+              style={typeStyle.badge}
               title="Change type"
             >
               {hasType ? (
                 <>
-                  <span className={`w-2 h-2 rounded-full ${typeStyle.bar}`} />
-                  {card.type}
+                  <span className="w-2 h-2 rounded-full" style={typeStyle.bar} />
+                  {currentTag?.label ?? card.type}
                   <ChevronDown size={10} />
                 </>
               ) : (
@@ -174,25 +167,24 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                 className="fixed z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1"
                 style={{ left: menuPos.x, top: menuPos.y }}
               >
-                {CARD_TYPES.map((ct) => {
-                  const s = TYPE_STYLES[ct.value] ?? UNTAGGED_STYLE;
-                  const isSelected = card.type === ct.value;
+                {tags.map((tag) => {
+                  const s = getTagStyles(tag.color);
+                  const isSelected = card.type === tag.id;
                   return (
                     <button
-                      key={ct.value}
+                      key={tag.id}
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Toggle: click selected tag to untag, click other to set
-                        updateCard(card.id, { type: isSelected ? null : ct.value });
+                        updateCard(card.id, { type: isSelected ? null : tag.id });
                         setShowTypeMenu(false);
                       }}
-                      title={ct.description}
+                      title={tag.description ?? ""}
                       className={`w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] transition-colors ${
                         isSelected ? "font-semibold" : ""
                       }`}
                     >
-                      <span className={`w-2 h-2 rounded-full ${s.bar}`} />
-                      <span>{ct.label}</span>
+                      <span className="w-2 h-2 rounded-full" style={s.bar} />
+                      <span>{tag.label}</span>
                       {isSelected && (
                         <Check size={10} className="ml-auto text-[var(--accent-blue)]" />
                       )}
@@ -274,7 +266,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
         {card.content && (
           <div className="flex">
             <span className="inline-block text-[11px] font-mono px-2 py-1 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
-              {hasType ? `/${card.type} ` : ""}{card.content.length > 40 ? card.content.slice(0, 40) + "…" : card.content}
+              {tagPrefix ? `${tagPrefix} ` : ""}{card.content.length > 40 ? card.content.slice(0, 40) + "…" : card.content}
             </span>
           </div>
         )}

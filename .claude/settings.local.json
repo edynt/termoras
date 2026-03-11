@@ -20,7 +20,18 @@
       "Bash(ls /Users/tringuyen/Downloads/clcterm/*.html /Users/tringuyen/Downloads/clcterm/src/*.html 2>/dev/null; ls /Users/tringuyen/Downloads/clcterm/src-tauri/*.html 2>/dev/null)",
       "Bash(find /Users/tringuyen/Downloads/clcterm -name \"*.toml\" -o -name \"*.conf.json\" 2>/dev/null | grep -v node_modules | head -20)",
       "Bash(node /Users/tringuyen/.claude/scripts/set-active-plan.cjs plans/260310-1726-kanban-board 2>&1 || echo \"script not found, continuing\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node /Users/tringuyen/.claude/scripts/set-active-plan.cjs plans/260311-1029-customizable-tag-system 2>&1 || echo \"Script not found, skipping\")",
+      "Bash(cat package.json | python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Bash(grep -rn \"^import.*React\\\\|from 'react'\" /Users/tringuyen/Downloads/clcterm/src/lib/tag-colors.ts)",
+      "Bash(cat /Users/tringuyen/Downloads/clcterm/.env* 2>/dev/null; ls /Users/tringuyen/Downloads/clcterm/.env* 2>/dev/null)",
+      "Bash(identify /Users/tringuyen/Downloads/clcterm/src-tauri/icons/icon.png 2>&1 | head -3)",
+      "Bash(which rsvg-convert:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3 -c \"import cairosvg; print\\('cairosvg ok'\\)\" 2>&1)",
+      "Bash(python3 scripts/generate-logo.py 2>&1)"
     ]
   }
 }

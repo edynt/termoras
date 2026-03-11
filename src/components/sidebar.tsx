@@ -1,11 +1,14 @@
-import { FolderPlus } from "lucide-react";
+import { useState } from "react";
+import { FolderPlus, Settings } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import { ProjectItem } from "./project-item";
 import { ThemeToggle } from "./theme-toggle";
+import { TagSettingsModal } from "./tag-settings-modal";
 
 export function Sidebar() {
   const projects = useAppStore((s) => s.projects);
   const addProject = useAppStore((s) => s.addProject);
+  const [showTagSettings, setShowTagSettings] = useState(false);
 
   return (
     <aside className="flex flex-col h-screen border-r border-[var(--border-color)] bg-[var(--bg-sidebar)] select-none">
@@ -38,10 +41,21 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* footer — theme toggle */}
-      <div className="flex items-center justify-center p-2 border-t border-[var(--border-color)]">
+      {/* footer — theme toggle + settings */}
+      <div className="flex items-center justify-center gap-1 p-2 border-t border-[var(--border-color)]">
         <ThemeToggle />
+        <button
+          onClick={() => setShowTagSettings(true)}
+          className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          title="Tag settings"
+        >
+          <Settings size={14} />
+        </button>
       </div>
+
+      {showTagSettings && (
+        <TagSettingsModal onClose={() => setShowTagSettings(false)} />
+      )}
     </aside>
   );
 }

@@ -1,29 +1,17 @@
-export type CardType =
-  | "cook"
-  | "plan"
-  | "code"
-  | "test"
-  | "brainstorm"
-  | "scout"
-  | "debug"
-  | "watzup";
-
-export const CARD_TYPES: { value: CardType; label: string; description: string }[] = [
-  { value: "cook", label: "Cook", description: "Implement a feature step by step" },
-  { value: "plan", label: "Plan", description: "Create an implementation plan" },
-  { value: "code", label: "Code", description: "Implement code from a plan" },
-  { value: "test", label: "Test", description: "Run and analyze tests" },
-  { value: "brainstorm", label: "Brainstorm", description: "Brainstorm ideas" },
-  { value: "scout", label: "Scout", description: "Explore the codebase" },
-  { value: "debug", label: "Debug", description: "Debug and fix issues" },
-  { value: "watzup", label: "Watzup", description: "Review recent changes" },
-];
+/** Tag definition for customizable card types */
+export interface TagDefinition {
+  id: string;          // unique slug, e.g., "cook", "my-tag"
+  label: string;       // display name, e.g., "Cook", "My Tag"
+  color: string;       // hex color, e.g., "#3b82f6"
+  description?: string; // short description, e.g., "Implement a feature step by step"
+  command?: string;     // associated command, e.g., "/cook"
+}
 
 export interface KanbanCard {
   id: string;
   title: string;
   content: string;
-  type: CardType | null;
+  type: string | null;
 }
 
 export interface KanbanColumn {

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { KanbanBoard, KanbanCard, CardType } from "../types/kanban";
+import type { KanbanBoard, KanbanCard } from "../types/kanban";
 import { loadBoard, saveBoard } from "../lib/kanban-storage";
 
 function createDefaultBoard(): KanbanBoard {
@@ -20,7 +20,7 @@ interface KanbanStore {
   loadBoard: (projectId: string) => Promise<void>;
 
   // Card actions
-  addCard: (columnId: string, title: string, content: string, type: CardType | null) => void;
+  addCard: (columnId: string, title: string, content: string, type: string | null) => void;
   updateCard: (cardId: string, updates: Partial<Omit<KanbanCard, "id">>) => void;
   removeCard: (cardId: string) => void;
   moveCard: (cardId: string, fromColId: string, toColId: string, newIndex: number) => void;

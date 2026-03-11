@@ -1,9 +1,14 @@
 import type { Terminal } from "@xterm/xterm";
+import type { TelexEngine } from "./telex-engine";
+import { useAppStore } from "../stores/app-store";
 
 /**
- * macOS-style keyboard shortcuts for xterm.js terminals.
- * Maps Cmd/Option key combos to ANSI escape sequences,
- * matching iTerm2/Warp behavior.
+ * Terminal keyboard handler for xterm.js.
+ * Handles macOS shortcuts (Cmd/Option combos) and Vietnamese input toggle.
+ *
+ * Vietnamese Telex input is processed in the onData handler (terminal-instance.tsx),
+ * NOT here. This handler only manages the toggle shortcut and resets the Telex
+ * buffer when navigation/editing shortcuts are used.
  */
 
 // ANSI escape sequences for shell line editing
@@ -23,10 +28,9 @@ const SEQUENCES = {
 type WriteCallback = (data: string) => void;
 
 /**
- * Attach macOS keybinding handler to an xterm Terminal instance.
- * Returns a cleanup function.
+ * Attach keyboard handler to an xterm Terminal instance.
  *
- * Handled shortcuts:
+ * Shortcuts:
  * - Cmd+Backspace  → delete entire line (Ctrl+U)
  * - Cmd+Left       → move to line start (Ctrl+A)
  * - Cmd+Right      → move to line end (Ctrl+E)
@@ -36,44 +40,57 @@ type WriteCallback = (data: string) => void;
  * - Cmd+K          → clear terminal scrollback + screen
  * - Cmd+C          → copy selection (or send SIGINT if no selection)
  * - Cmd+V          → paste from clipboard
+ * - Ctrl+Shift+Space → toggle Vietnamese input
  */
 export function attachMacKeybindings(
   term: Terminal,
   writeToPty: WriteCallback,
+  telex: TelexEngine,
 ): void {
   term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
     // Only handle keydown events
     if (event.type !== "keydown") return true;
 
-    // Skip during IME composition (Vietnamese Telex/VNI, Japanese, Chinese, etc.)
+    // Skip during IME composition (system-level Vietnamese, Japanese, Chinese, etc.)
     // keyCode 229 is the universal IME processing signal in browsers
     if (event.isComposing || event.keyCode === 229) return true;
 
-    const { metaKey, altKey, key } = event;
+    const { metaKey, altKey, ctrlKey, shiftKey, key } = event;
+
+    // --- Toggle Vietnamese input: Ctrl+Shift+Space ---
+    if (ctrlKey && shiftKey && key === " ") {
+      useAppStore.getState().toggleVietnameseInput();
+      event.preventDefault();
+      return false;
+    }
 
     // --- Cmd (Meta) shortcuts ---
     if (metaKey && !altKey) {
       switch (key) {
         case "Backspace":
           // Cmd+Backspace → kill line (Ctrl+U)
+          telex.reset();
           writeToPty(SEQUENCES.KILL_LINE);
           event.preventDefault();
           return false;
 
         case "ArrowLeft":
           // Cmd+Left → beginning of line
+          telex.reset();
           writeToPty(SEQUENCES.HOME);
           event.preventDefault();
           return false;
 
         case "ArrowRight":
           // Cmd+Right → end of line
+          telex.reset();
           writeToPty(SEQUENCES.END);
           event.preventDefault();
           return false;
 
         case "k":
           // Cmd+K → clear terminal
+          telex.reset();
           term.clear();
           event.preventDefault();
           return false;
@@ -87,10 +104,12 @@ export function attachMacKeybindings(
             return false;
           }
           // No selection → let xterm handle as normal (sends SIGINT)
+          telex.reset();
           return true;
 
         case "v":
           // Cmd+V → paste from clipboard
+          telex.reset();
           navigator.clipboard.readText().then((text) => {
             if (text) writeToPty(text);
           });
@@ -110,25 +129,28 @@ export function attachMacKeybindings(
       switch (key) {
         case "ArrowLeft":
           // Option+Left → word backward
+          telex.reset();
           writeToPty(SEQUENCES.WORD_BACK);
           event.preventDefault();
           return false;
 
         case "ArrowRight":
           // Option+Right → word forward
+          telex.reset();
           writeToPty(SEQUENCES.WORD_FWD);
           event.preventDefault();
           return false;
 
         case "Backspace":
           // Option+Backspace → delete word backward
+          telex.reset();
           writeToPty(SEQUENCES.KILL_WORD);
           event.preventDefault();
           return false;
       }
     }
 
-    // Let xterm handle everything else
+    // Let xterm handle everything else → fires onData where Telex processes input
     return true;
   });
 }

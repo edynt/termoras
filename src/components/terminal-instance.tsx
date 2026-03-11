@@ -6,6 +6,7 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Channel } from "@tauri-apps/api/core";
 import { getTerminalTheme } from "../lib/terminal-theme";
 import { attachMacKeybindings } from "../lib/terminal-keybindings";
+import { TelexEngine } from "../lib/telex-engine";
 import {
   createTerminal,
   writeTerminal,
@@ -27,6 +28,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   const fitRef = useRef<FitAddon | null>(null);
   const setTerminalRunning = useAppStore((s) => s.setTerminalRunning);
   const isDark = useThemeStore((s) => s.isDark);
+  const vietnameseInput = useAppStore((s) => s.vietnameseInput);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -65,8 +67,12 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       writeTerminal(terminalId, data).catch(() => {});
     };
 
-    // Attach macOS keybindings (Cmd+Delete, Cmd+Left/Right, Option+Left/Right, etc.)
-    attachMacKeybindings(term, writeToPty);
+    // Telex engine for Vietnamese input (one per terminal instance)
+    const telex = new TelexEngine();
+
+    // Attach macOS keybindings + Vietnamese toggle (Ctrl+Shift+Space)
+    // Vietnamese Telex processing happens below in onData, not in the key handler.
+    attachMacKeybindings(term, writeToPty, telex);
 
     // Create Tauri channel for streaming PTY output
     const channel = new Channel<number[]>();
@@ -86,11 +92,53 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
         setTerminalRunning(terminalId, false);
       });
 
-    // Send user input to PTY stdin.
-    // Vietnamese IME (Telex/VNI) composition is handled natively by xterm.js v6's
-    // built-in CompositionHelper. It suppresses raw keystrokes during composition
-    // and only fires onData with the final composed text. No manual gating needed.
+    // All user input flows through onData → single data path to PTY.
+    // Vietnamese Telex processing intercepts here to transform keystrokes
+    // before they reach the PTY. xterm.js does NOT echo locally — display
+    // is driven entirely by PTY output, so transforms are visually seamless.
     term.onData((data) => {
+      // Vietnamese mode: process single printable chars through Telex engine
+      if (useAppStore.getState().vietnameseInput) {
+        // Multi-char data (escape sequences, pastes) → reset buffer, passthrough
+        if (data.length > 1) {
+          telex.reset();
+          writeToPty(data);
+          return;
+        }
+
+        const code = data.charCodeAt(0);
+
+        // Backspace → keep Telex buffer in sync, passthrough to shell
+        if (data === "\x7f") {
+          telex.popBuffer();
+          writeToPty(data);
+          return;
+        }
+
+        // Control characters (Enter, Tab, Ctrl+C, etc.) → reset buffer, passthrough
+        if (code < 0x20) {
+          telex.reset();
+          writeToPty(data);
+          return;
+        }
+
+        // Process printable character through Telex engine
+        const result = telex.processKey(data);
+        switch (result.type) {
+          case "passthrough":
+          case "commit":
+            writeToPty(data);
+            break;
+          case "transform":
+            // Send DEL chars to erase previous characters, then replacement text.
+            // The shell's readline handles multibyte-aware backward-delete-char.
+            writeToPty("\x7f".repeat(result.backspaces) + result.replacement);
+            break;
+        }
+        return;
+      }
+
+      // Normal mode: passthrough all data directly to PTY
       writeToPty(data);
     });
 
@@ -137,10 +185,14 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   }, [activeTerminalId, terminalId]);
 
   return (
-    <div
-      ref={containerRef}
-      className="h-full w-full"
-      style={{ padding: "4px" }}
-    />
+    <div className="relative h-full w-full" style={{ padding: "4px" }}>
+      <div ref={containerRef} className="h-full w-full" />
+      {/* Vietnamese input mode indicator */}
+      {vietnameseInput && (
+        <div className="absolute bottom-2 right-3 px-1.5 py-0.5 text-[10px] font-bold rounded bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] select-none pointer-events-none tracking-wide">
+          VI
+        </div>
+      )}
+    </div>
   );
 }
