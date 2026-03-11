@@ -9,10 +9,11 @@ import {
   Terminal,
   Trash2,
   GitBranch,
+  Code2,
 } from "lucide-react";
 import type { Project } from "../types";
 import { useAppStore } from "../stores/app-store";
-import { isGitRepo, gitStatusSummary, type GitStatusSummary } from "../lib/tauri-commands";
+import { isGitRepo, gitStatusSummary, openInVscode, type GitStatusSummary } from "../lib/tauri-commands";
 import { TerminalItem } from "./terminal-item";
 
 interface Props {
@@ -244,6 +245,16 @@ export function ProjectItem({ project }: Props) {
           >
             <Terminal size={12} />
             Create Terminal
+          </button>
+          <button
+            onClick={() => {
+              setCtxMenu(null);
+              openInVscode(project.path);
+            }}
+            className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+          >
+            <Code2 size={12} />
+            Open in VS Code
           </button>
           <div className="my-1 border-t border-[var(--border-color)]" />
           <button

@@ -1,6 +1,7 @@
 use crate::pty_manager::{AppState, PtySession};
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use std::io::Read;
+use std::process::Command;
 use std::thread;
 use tauri::ipc::Channel;
 use tauri::State;
@@ -164,5 +165,15 @@ pub fn kill_terminal(id: String, state: State<AppState>) -> Result<(), String> {
         let _ = session.child.kill();
     }
 
+    Ok(())
+}
+
+/// Open a directory in VS Code
+#[tauri::command]
+pub fn open_in_vscode(path: String) -> Result<(), String> {
+    Command::new("code")
+        .arg(&path)
+        .spawn()
+        .map_err(|e| format!("Failed to open VS Code: {}", e))?;
     Ok(())
 }

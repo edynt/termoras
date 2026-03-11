@@ -107,6 +107,11 @@ export async function gitPush(path: string): Promise<string> {
   return invoke<string>("git_push", { path });
 }
 
+/** Open a directory in VS Code */
+export async function openInVscode(path: string): Promise<void> {
+  return invoke("open_in_vscode", { path });
+}
+
 /** Open native folder picker. Returns path or null. */
 export async function pickProjectFolder(): Promise<string | null> {
   const selected = await open({

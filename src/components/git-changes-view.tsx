@@ -60,15 +60,7 @@ export function GitChangesView() {
     refresh();
   }, [refresh]);
 
-  // Auto-fill commit message with latest commit on mount
-  useEffect(() => {
-    if (!project) return;
-    gitLastCommitMessage(project.path)
-      .then((msg) => {
-        if (msg) setCommitMsg(msg);
-      })
-      .catch(() => {});
-  }, [project?.path]);
+
 
   /** Stage a single file */
   async function handleStageFile(filePath: string) {
@@ -300,7 +292,7 @@ export function GitChangesView() {
             </button>
             <button
               onClick={handlePush}
-              disabled={pushing}
+              disabled={pushing || !hasUnpushed}
               className="flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               title="Push to remote"
             >
