@@ -7,6 +7,8 @@
     "core:default",
     "core:window:allow-start-dragging",
     "core:window:allow-toggle-maximize",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text",
     "dialog:allow-open",
     "store:default"
   ]

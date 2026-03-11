@@ -269,8 +269,8 @@ pub fn git_undo_commit(path: String) -> Result<String, String> {
     Ok("Commit undone. Changes are back in staging.".to_string())
 }
 
-/// Push to remote (git push)
-#[tauri::command]
+/// Push to remote (git push) — async to avoid blocking the UI
+#[tauri::command(async)]
 pub fn git_push(path: String) -> Result<String, String> {
     let output = Command::new("git")
         .args(["push"])
@@ -280,12 +280,10 @@ pub fn git_push(path: String) -> Result<String, String> {
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        // git push writes progress to stderr even on success
         if output.status.code() != Some(0) {
             return Err(stderr);
         }
     }
-    // git push outputs to stderr for progress info
     let result = String::from_utf8_lossy(&output.stderr).to_string();
     Ok(result)
 }

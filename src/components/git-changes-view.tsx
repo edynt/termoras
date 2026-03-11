@@ -34,7 +34,6 @@ export function GitChangesView() {
   const [pushing, setPushing] = useState(false);
   const [undoing, setUndoing] = useState(false);
   const [hasUnpushed, setHasUnpushed] = useState(false);
-  const [confirmPush, setConfirmPush] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -51,7 +50,7 @@ export function GitChangesView() {
       setStatus(s);
       setHasUnpushed(unpushed);
       // Notify sidebar to sync git badge count
-      window.dispatchEvent(new CustomEvent("kodeck:git-changed", { detail: { path: project.path, status: s } }));
+      window.dispatchEvent(new CustomEvent("termoras:git-changed", { detail: { path: project.path, status: s } }));
     } catch {
       setFiles([]);
       setStatus(null);
@@ -311,7 +310,7 @@ export function GitChangesView() {
               {committing ? "Committing..." : "Commit"}
             </button>
             <button
-              onClick={() => setConfirmPush(true)}
+              onClick={handlePush}
               disabled={!hasUnpushed || pushing}
               className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded transition-colors ${
                 pushing
@@ -349,43 +348,6 @@ export function GitChangesView() {
             Select a file to view changes
           </div>
         )}
-      {/* Push confirmation modal */}
-      {confirmPush && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          onClick={() => setConfirmPush(false)}
-        >
-          <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[320px]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-sm font-semibold mb-1">Push to Remote</p>
-            <p className="text-xs text-[var(--text-secondary)] mb-1">
-              Push commits on <span className="font-medium text-[var(--text-primary)]">{status?.branch}</span> to remote?
-            </p>
-            <p className="text-[10px] text-[var(--text-secondary)]/60 mb-4">
-              This action will make your changes visible to others.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setConfirmPush(false)}
-                className="px-3 py-1.5 text-xs rounded-md border border-[var(--border-color)] hover:bg-[var(--bg-hover)] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setConfirmPush(false);
-                  handlePush();
-                }}
-                className="px-3 py-1.5 text-xs rounded-md bg-[var(--accent-red)] text-white hover:opacity-90 font-medium transition-opacity"
-              >
-                Push
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       </div>
     </div>
   );

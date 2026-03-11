@@ -1,4 +1,4 @@
-# Kodeck - System Architecture
+# Termoras - System Architecture
 
 ## Overview
 ```
@@ -53,7 +53,7 @@
 - xterm.js refs persist across view switches
 
 ## Persistence
-- Tauri Store plugin → `kodeck-data.json`
+- Tauri Store plugin → `termoras-data.json`
 - Stores: project list (id, name, path)
 - Loaded on app start, saved on project add/remove
 

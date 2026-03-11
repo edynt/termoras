@@ -1,4 +1,4 @@
-# Kodeck
+# Termoras
 
 Desktop terminal manager for multi-project workflows. Built with Tauri v2.
 

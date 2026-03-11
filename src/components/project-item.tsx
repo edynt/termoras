@@ -77,8 +77,8 @@ export function ProjectItem({ project }: Props) {
         setGitStatus(detail.status);
       }
     };
-    window.addEventListener("kodeck:git-changed", handler);
-    return () => window.removeEventListener("kodeck:git-changed", handler);
+    window.addEventListener("termoras:git-changed", handler);
+    return () => window.removeEventListener("termoras:git-changed", handler);
   }, [project.path]);
 
   // Close context menu on outside click

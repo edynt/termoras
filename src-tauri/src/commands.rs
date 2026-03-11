@@ -178,7 +178,7 @@ pub fn save_temp_image(data: String, extension: String) -> Result<String, String
         .decode(&data)
         .map_err(|e| format!("Base64 decode error: {}", e))?;
 
-    let temp_dir = std::env::temp_dir().join("kodeck-uploads");
+    let temp_dir = std::env::temp_dir().join("termoras-uploads");
     std::fs::create_dir_all(&temp_dir)
         .map_err(|e| format!("Failed to create temp dir: {}", e))?;
 

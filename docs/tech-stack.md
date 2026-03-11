@@ -1,4 +1,4 @@
-# Kodeck - Tech Stack
+# Termoras - Tech Stack
 
 ## Core
 | Layer | Technology | Version |

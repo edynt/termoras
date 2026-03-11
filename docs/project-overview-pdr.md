@@ -1,7 +1,7 @@
-# Kodeck - Product Development Requirements
+# Termoras - Product Development Requirements
 
 ## Product
-**Kodeck** — Desktop terminal manager for multi-project workflows
+**Termoras** — Desktop terminal manager for multi-project workflows
 
 ## Problem
 Developers working on multiple projects need to manage many terminal sessions. Existing terminals (iTerm2, Terminal.app) don't organize terminals by project with status indicators.

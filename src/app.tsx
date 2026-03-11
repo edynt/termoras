@@ -7,7 +7,7 @@ import { useThemeStore } from "./stores/theme-store";
 const MIN_SIDEBAR = 180;
 const MAX_SIDEBAR = 480;
 const DEFAULT_SIDEBAR = 260;
-const STORAGE_KEY = "kodeck-sidebar-width";
+const STORAGE_KEY = "termoras-sidebar-width";
 
 export function App() {
   const init = useAppStore((s) => s.init);

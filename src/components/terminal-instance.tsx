@@ -16,6 +16,7 @@ import {
   pickImageFile,
 } from "../lib/tauri-commands";
 import { saveImageBlob, isImageFile } from "../lib/image-upload";
+import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { useAppStore } from "../stores/app-store";
 import { useThemeStore } from "../stores/theme-store";
 import "@xterm/xterm/css/xterm.css";
@@ -98,6 +99,28 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
         setTerminalRunning(terminalId, false);
       });
 
+    // Block WebKit's native "Paste" confirmation button by intercepting paste
+    // at the capture phase on the container. All paste is handled via Cmd+V
+    // keybinding using Tauri native clipboard (no browser clipboard API needed).
+    const container = containerRef.current;
+    const blockPaste = (e: Event) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      // Use Tauri native clipboard instead of browser paste
+      readText().then((text) => {
+        if (text) writeToPty(text);
+      }).catch(() => {});
+    };
+    container?.addEventListener("paste", blockPaste, true);
+    // Also prevent beforeinput "insertFromPaste" which WebKit fires before paste
+    const blockBeforeInput = (e: InputEvent) => {
+      if (e.inputType === "insertFromPaste") {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    };
+    container?.addEventListener("beforeinput", blockBeforeInput as EventListener, true);
+
     // All user input flows through onData → single data path to PTY.
     // Vietnamese Telex processing intercepts here to transform keystrokes
     // before they reach the PTY. xterm.js does NOT echo locally — display
@@ -162,9 +185,10 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     if (containerRef.current) observer.observe(containerRef.current);
 
     return () => {
+      container?.removeEventListener("paste", blockPaste, true);
+      container?.removeEventListener("beforeinput", blockBeforeInput as EventListener, true);
       observer.disconnect();
       clearTimeout(resizeTimer);
-      // Kill PTY session on unmount
       killTerminal(terminalId).catch(() => {});
       term.dispose();
       termRef.current = null;

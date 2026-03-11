@@ -33,7 +33,15 @@
       "Bash(python3 -c \"import cairosvg; print\\('cairosvg ok'\\)\" 2>&1)",
       "Bash(python3 scripts/generate-logo.py 2>&1)",
       "Bash(open /Users/tringuyen/Downloads/kodeck/index.html)",
-      "Bash(grep -r \"bg-\\\\|text-\" src/components/*.tsx 2>/dev/null | head -30)"
+      "Bash(grep -r \"bg-\\\\|text-\" src/components/*.tsx 2>/dev/null | head -30)",
+      "Bash(cd /Users/tringuyen/github.com/edynt/clcterm/src-tauri && cargo generate-lockfile 2>&1)",
+      "Bash(cd /Users/tringuyen/github.com/edynt/termoras/src-tauri && cargo clean)",
+      "Bash(cargo clean:*)",
+      "Bash(cd /Users/tringuyen/github.com/edynt/termoras/src-tauri && cargo add tauri-plugin-clipboard-manager 2>&1)",
+      "Bash(rustup target:*)",
+      "Bash(ls /Users/tringuyen/github.com/edynt/termoras/src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null)",
+      "Bash(find /Users/tringuyen/github.com/edynt/termoras/src-tauri/target -name \"*.dmg\" 2>/dev/null | head -5)",
+      "Bash(convert -size 660x400 xc:'#1a1a2e' /Users/tringuyen/github.com/edynt/termoras/src-tauri/icons/dmg-background.png 2>&1)"
     ]
   }
 }

@@ -1,5 +1,6 @@
 import type { Terminal } from "@xterm/xterm";
 import type { TelexEngine } from "./telex-engine";
+import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { useAppStore } from "../stores/app-store";
 import { pasteImageFromClipboard } from "./image-upload";
 
@@ -99,7 +100,7 @@ export function attachMacKeybindings(
         case "c":
           // Cmd+C → copy if selection exists, otherwise let terminal send Ctrl+C
           if (term.hasSelection()) {
-            navigator.clipboard.writeText(term.getSelection());
+            writeText(term.getSelection());
             term.clearSelection();
             event.preventDefault();
             return false;
@@ -109,14 +110,14 @@ export function attachMacKeybindings(
           return true;
 
         case "v":
-          // Cmd+V → paste image from clipboard (if any), else paste text
+          // Cmd+V → paste via Tauri native clipboard (bypasses WebKit "Paste" button)
           telex.reset();
           (async () => {
             const imagePath = await pasteImageFromClipboard();
             if (imagePath) {
               writeToPty(imagePath + " ");
             } else {
-              const text = await navigator.clipboard.readText();
+              const text = await readText();
               if (text) writeToPty(text);
             }
           })();
