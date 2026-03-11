@@ -284,20 +284,28 @@ export function GitChangesView() {
             <button
               onClick={handleCommit}
               disabled={committing || !commitMsg.trim() || !status?.staged}
-              className="flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded transition-colors ${
+                committing
+                  ? "bg-[var(--accent-blue)]/25 text-[var(--accent-blue)] cursor-wait"
+                  : "bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+              }`}
               title="Commit staged changes"
             >
               {committing ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
-              Commit
+              {committing ? "Committing..." : "Commit"}
             </button>
             <button
               onClick={handlePush}
-              disabled={pushing || !hasUnpushed}
-              className="flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              disabled={!hasUnpushed || pushing}
+              className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded transition-colors ${
+                pushing
+                  ? "bg-[var(--accent-red)]/25 text-[var(--accent-red)] cursor-wait"
+                  : "bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+              }`}
               title="Push to remote"
             >
               {pushing ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />}
-              Push
+              {pushing ? "Pushing..." : "Push"}
             </button>
           </div>
 
