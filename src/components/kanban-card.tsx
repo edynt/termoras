@@ -35,6 +35,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [runState, setRunState] = useState<"idle" | "running" | "done">("idle");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const tagBtnRef = useRef<HTMLButtonElement>(null);
   const removeCard = useKanbanStore((s) => s.removeCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
@@ -78,7 +79,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
 
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    removeCard(card.id);
+    setConfirmDelete(true);
   }
 
   async function handleRun(e: React.MouseEvent) {
@@ -268,6 +269,45 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
           </div>
         )}
       </div>
+
+      {/* Delete confirmation modal */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setConfirmDelete(false)}
+        >
+          <div
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[300px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold mb-1">Delete Card</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-4">
+              Are you sure you want to delete{" "}
+              <span className="font-medium text-[var(--text-primary)]">
+                {card.title}
+              </span>
+              ?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="px-3 py-1.5 text-xs rounded-md border border-[var(--border-color)] hover:bg-[var(--bg-hover)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setConfirmDelete(false);
+                  removeCard(card.id);
+                }}
+                className="px-3 py-1.5 text-xs rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
