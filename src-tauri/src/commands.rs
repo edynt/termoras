@@ -171,8 +171,10 @@ pub fn kill_terminal(id: String, state: State<AppState>) -> Result<(), String> {
 /// Open a directory in VS Code
 #[tauri::command]
 pub fn open_in_vscode(path: String) -> Result<(), String> {
-    Command::new("code")
-        .arg(&path)
+    // Use macOS `open -a` instead of `code` CLI — production builds have minimal PATH
+    // that doesn't include /usr/local/bin where `code` lives
+    Command::new("open")
+        .args(["-a", "Visual Studio Code", &path])
         .spawn()
         .map_err(|e| format!("Failed to open VS Code: {}", e))?;
     Ok(())
