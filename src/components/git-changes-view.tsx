@@ -36,6 +36,7 @@ export function GitChangesView() {
   const [hasUnpushed, setHasUnpushed] = useState(false);
   const [confirmPush, setConfirmPush] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!project) return;
@@ -131,6 +132,8 @@ export function GitChangesView() {
       await gitCommit(project.path, commitMsg.trim());
       setCommitMsg("");
       await refresh();
+      setSuccessMsg("Committed!");
+      setTimeout(() => setSuccessMsg(null), 3000);
     } catch (e) {
       setActionError(`Commit failed: ${e}`);
     }
@@ -144,6 +147,8 @@ export function GitChangesView() {
     try {
       await gitPush(project.path);
       await refresh();
+      setSuccessMsg("Pushed successfully!");
+      setTimeout(() => setSuccessMsg(null), 3000);
     } catch (e) {
       setActionError(`Push failed: ${e}`);
     }
@@ -263,6 +268,14 @@ export function GitChangesView() {
 
         {/* Action bar */}
         <div className="border-t border-[var(--border-color)] p-2 space-y-1.5">
+          {/* Success toast */}
+          {successMsg && (
+            <div className="text-[10px] text-[var(--accent-green)] bg-[var(--accent-green)]/10 rounded px-2 py-1 flex items-center gap-1">
+              <Check size={10} />
+              {successMsg}
+            </div>
+          )}
+
           {/* Error message */}
           {actionError && (
             <div className="text-[10px] text-[var(--accent-red)] bg-[var(--accent-red)]/10 rounded px-2 py-1 break-words">
