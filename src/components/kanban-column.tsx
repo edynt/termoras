@@ -17,6 +17,7 @@ export function KanbanColumn({ column, cards }: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(column.title);
   const [showMenu, setShowMenu] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const renameColumn = useKanbanStore((s) => s.renameColumn);
   const removeColumn = useKanbanStore((s) => s.removeColumn);
 
@@ -33,6 +34,7 @@ export function KanbanColumn({ column, cards }: Props) {
   }
 
   return (
+    <>
     <div className="flex flex-col flex-1 min-w-[280px] max-h-full bg-[var(--bg-sidebar)] rounded-xl border border-[var(--border-color)]/50">
       {/* Column header */}
       <div className="relative flex items-center gap-2 px-3 py-2.5 shrink-0">
@@ -85,7 +87,7 @@ export function KanbanColumn({ column, cards }: Props) {
                 Rename
               </button>
               <button
-                onClick={() => { setShowMenu(false); removeColumn(column.id); }}
+                onClick={() => { setShowMenu(false); setConfirmDelete(true); }}
                 className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
               >
                 <Trash2 size={12} />
@@ -132,5 +134,45 @@ export function KanbanColumn({ column, cards }: Props) {
         </button>
       )}
     </div>
+
+    {/* Delete column confirmation modal */}
+    {confirmDelete && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+        onClick={() => setConfirmDelete(false)}
+      >
+        <div
+          className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[300px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-sm font-semibold mb-1">Delete Column</p>
+          <p className="text-xs text-[var(--text-secondary)] mb-4">
+            Are you sure you want to delete{" "}
+            <span className="font-medium text-[var(--text-primary)]">
+              {column.title}
+            </span>
+            ? All {cards.length} card{cards.length !== 1 ? "s" : ""} in this column will be removed.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="text-xs px-3 py-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setConfirmDelete(false);
+                removeColumn(column.id);
+              }}
+              className="text-xs px-3 py-1.5 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
