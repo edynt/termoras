@@ -42,6 +42,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const terminals = useAppStore((s) => s.terminals);
   const activeProjectId = useAppStore((s) => s.activeProjectId);
   const setActiveTerminal = useAppStore((s) => s.setActiveTerminal);
+  const setActiveTerminalInPlace = useAppStore((s) => s.setActiveTerminalInPlace);
 
   // Close type menu on outside click
   useEffect(() => {
@@ -94,8 +95,17 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
 
     setRunState("running");
 
-    // Switch to terminal view and activate the target terminal
-    setActiveTerminal(projectTerminal.id);
+    // If terminal panel is visible in dashboard, stay on dashboard
+    const { activeView } = useAppStore.getState();
+    const terminalVisibleInDashboard =
+      activeView === "kanban" &&
+      localStorage.getItem("clcterm:terminal-panel-open") !== "false";
+
+    if (terminalVisibleInDashboard) {
+      setActiveTerminalInPlace(projectTerminal.id);
+    } else {
+      setActiveTerminal(projectTerminal.id);
+    }
 
     // Write command + enter to the PTY
     await writeTerminal(projectTerminal.id, command + "\r");

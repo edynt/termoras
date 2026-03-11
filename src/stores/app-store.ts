@@ -33,6 +33,8 @@ interface AppStore {
   addTerminal: (terminal: TerminalSession) => void;
   removeTerminal: (id: string) => void;
   setActiveTerminal: (id: string) => void;
+  /** Set active terminal without switching view (for running commands in split view) */
+  setActiveTerminalInPlace: (id: string) => void;
   setTerminalRunning: (id: string, running: boolean) => void;
   renameTerminal: (id: string, name: string) => void;
 }
@@ -166,6 +168,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setActiveTerminal: (id: string) => {
     set({ activeTerminalId: id, activeView: "terminal" });
     persistActiveIds(get().activeProjectId, id, "terminal");
+  },
+
+  setActiveTerminalInPlace: (id: string) => {
+    const { activeView } = get();
+    set({ activeTerminalId: id });
+    persistActiveIds(get().activeProjectId, id, activeView);
   },
 
   setTerminalRunning: (id: string, running: boolean) => {
