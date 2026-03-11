@@ -35,9 +35,7 @@ export function MainPanel() {
     setTerminalOpen((prev) => {
       const next = !prev;
       localStorage.setItem(OPEN_KEY, String(next));
-      if (next) {
-        requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
-      }
+      // ResizeObserver in TerminalInstance handles refit automatically
       return next;
     });
   }, []);
@@ -54,14 +52,7 @@ export function MainPanel() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeView, toggleTerminal]);
 
-  /* Trigger terminal refit when switching to kanban split view */
-  useEffect(() => {
-    if (activeView === "kanban") {
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new Event("resize"));
-      });
-    }
-  }, [activeView]);
+  /* No synthetic resize dispatch needed — ResizeObserver in TerminalInstance handles it */
 
   /* Divider drag handler */
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -83,12 +74,11 @@ export function MainPanel() {
       isDragging.current = false;
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
-      // Persist height & trigger terminal refit
+      // Persist height (ResizeObserver handles terminal refit)
       setTerminalHeight((h) => {
         localStorage.setItem(STORAGE_KEY, String(h));
         return h;
       });
-      window.dispatchEvent(new Event("resize"));
     };
 
     document.addEventListener("mousemove", onMouseMove);

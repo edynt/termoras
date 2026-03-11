@@ -25,12 +25,15 @@ export function TerminalPanel() {
 
   return (
     <main className="relative h-full w-full overflow-hidden bg-[var(--bg-primary)]">
-      {terminals.map((t) => (
+      {terminals.map((t) => {
+        const isActive = t.id === activeTerminalId;
+        return (
         <div
           key={t.id}
           className="absolute inset-0"
           style={{
-            display: t.id === activeTerminalId ? "block" : "none",
+            visibility: isActive ? "visible" : "hidden",
+            pointerEvents: isActive ? "auto" : "none",
           }}
         >
           <TerminalInstance
@@ -38,7 +41,8 @@ export function TerminalPanel() {
             projectPath={getProjectPath(t.projectId)}
           />
         </div>
-      ))}
+        );
+      })}
     </main>
   );
 }

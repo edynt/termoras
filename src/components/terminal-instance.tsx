@@ -147,16 +147,16 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       resizeTerminal(terminalId, rows, cols).catch(() => {});
     });
 
-    // Handle window resize with debounce
+    // Observe container size changes (sidebar drag, view switch, window resize, etc.)
     let resizeTimer: ReturnType<typeof setTimeout>;
-    const handleResize = () => {
+    const observer = new ResizeObserver(() => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => fitAddon.fit(), 150);
-    };
-    window.addEventListener("resize", handleResize);
+      resizeTimer = setTimeout(() => fitAddon.fit(), 50);
+    });
+    if (containerRef.current) observer.observe(containerRef.current);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      observer.disconnect();
       clearTimeout(resizeTimer);
       // Kill PTY session on unmount
       killTerminal(terminalId).catch(() => {});
