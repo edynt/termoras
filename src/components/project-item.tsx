@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronRight,
   ChevronDown,
@@ -10,6 +10,7 @@ import {
   Trash2,
   GitBranch,
   Code2,
+  Pencil,
 } from "lucide-react";
 import type { Project } from "../types";
 import { useAppStore } from "../stores/app-store";
@@ -33,7 +34,11 @@ export function ProjectItem({ project }: Props) {
     null,
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [renameName, setRenameName] = useState(project.name);
+  const renameRef = useRef<HTMLInputElement>(null);
   const removeProject = useAppStore((s) => s.removeProject);
+  const renameProject = useAppStore((s) => s.renameProject);
   const setActiveProject = useAppStore((s) => s.setActiveProject);
   const addTerminal = useAppStore((s) => s.addTerminal);
   const activeView = useAppStore((s) => s.activeView);
@@ -135,7 +140,28 @@ export function ProjectItem({ project }: Props) {
             <ChevronRight size={14} className="shrink-0" />
           )}
           <Folder size={14} className="shrink-0 text-[var(--accent-blue)]" />
-          <span className="text-sm truncate flex-1" title={project.path}>{project.name}</span>
+          {renaming ? (
+            <input
+              ref={renameRef}
+              value={renameName}
+              onChange={(e) => setRenameName(e.target.value)}
+              onBlur={() => {
+                const trimmed = renameName.trim();
+                if (trimmed && trimmed !== project.name) renameProject(project.id, trimmed);
+                else setRenameName(project.name);
+                setRenaming(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                if (e.key === "Escape") { setRenameName(project.name); setRenaming(false); }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 text-sm bg-[var(--bg-hover)] rounded px-1 py-0 border border-[var(--accent-blue)] outline-none min-w-0"
+              autoFocus
+            />
+          ) : (
+            <span className="text-sm truncate flex-1" title={project.path}>{project.name}</span>
+          )}
 
           {/* git indicator */}
           {hasGit && (
@@ -267,6 +293,17 @@ export function ProjectItem({ project }: Props) {
           >
             <Code2 size={12} />
             Open in VS Code
+          </button>
+          <button
+            onClick={() => {
+              setCtxMenu(null);
+              setRenameName(project.name);
+              setRenaming(true);
+            }}
+            className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+          >
+            <Pencil size={12} />
+            Rename
           </button>
           <div className="my-1 border-t border-[var(--border-color)]" />
           <button

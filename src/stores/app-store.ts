@@ -25,6 +25,7 @@ interface AppStore {
   // project actions
   addProject: () => Promise<void>;
   removeProject: (id: string) => Promise<void>;
+  renameProject: (id: string, name: string) => void;
   setActiveProject: (id: string) => void;
 
   // view actions
@@ -138,6 +139,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await saveProjects(updatedProjects);
     persistTerminals(updatedTerminals);
     persistActiveIds(newActiveProjectId, newActiveTerminalId, get().activeView);
+  },
+
+  renameProject: (id, name) => {
+    const { projects } = get();
+    const updated = projects.map((p) => (p.id === id ? { ...p, name } : p));
+    set({ projects: updated });
+    saveProjects(updated);
   },
 
   setActiveProject: (id: string) => {
