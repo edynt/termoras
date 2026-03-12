@@ -269,21 +269,22 @@ pub fn git_undo_commit(path: String) -> Result<String, String> {
     Ok("Commit undone. Changes are back in staging.".to_string())
 }
 
-/// Push to remote (git push) — async to avoid blocking the UI
-#[tauri::command(async)]
-pub fn git_push(path: String) -> Result<String, String> {
+/// Push to remote (git push) — async fn so Tauri v2 runs it on the
+/// tokio thread pool instead of blocking the main/UI thread.
+#[tauri::command]
+pub async fn git_push(path: String) -> Result<String, String> {
     let output = Command::new("git")
         .args(["push"])
+        // Prevent git from prompting for credentials (no TTY available).
+        // Auth should be handled by SSH agent or credential helper.
+        .env("GIT_TERMINAL_PROMPT", "0")
         .current_dir(&path)
         .output()
         .map_err(|e| format!("Failed to run git push: {}", e))?;
 
     if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        if output.status.code() != Some(0) {
-            return Err(stderr);
-        }
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
     }
-    let result = String::from_utf8_lossy(&output.stderr).to_string();
-    Ok(result)
+    // git push writes progress info to stderr even on success
+    Ok(String::from_utf8_lossy(&output.stderr).to_string())
 }

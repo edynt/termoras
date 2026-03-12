@@ -41,7 +41,9 @@
       "Bash(rustup target:*)",
       "Bash(ls /Users/tringuyen/github.com/edynt/termoras/src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null)",
       "Bash(find /Users/tringuyen/github.com/edynt/termoras/src-tauri/target -name \"*.dmg\" 2>/dev/null | head -5)",
-      "Bash(convert -size 660x400 xc:'#1a1a2e' /Users/tringuyen/github.com/edynt/termoras/src-tauri/icons/dmg-background.png 2>&1)"
+      "Bash(convert -size 660x400 xc:'#1a1a2e' /Users/tringuyen/github.com/edynt/termoras/src-tauri/icons/dmg-background.png 2>&1)",
+      "Bash(npm ls:*)",
+      "WebFetch(domain:v2.tauri.app)"
     ]
   }
 }

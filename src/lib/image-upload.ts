@@ -1,3 +1,4 @@
+import { readImage } from "@tauri-apps/plugin-clipboard-manager";
 import { saveTempImage } from "./tauri-commands";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
@@ -48,21 +49,40 @@ export function isImagePath(path: string): boolean {
 }
 
 /**
- * Try reading an image from clipboard. Returns temp file path if found, null otherwise.
- * Falls back gracefully if Clipboard API is unavailable.
+ * Try reading an image from clipboard via Tauri native API.
+ * Returns temp file path if found, null otherwise.
+ * Uses Tauri's clipboard plugin (not browser Clipboard API) to avoid
+ * WebKit's "Paste" permission badge in WKWebView.
  */
 export async function pasteImageFromClipboard(): Promise<string | null> {
   try {
-    const items = await navigator.clipboard.read();
-    for (const item of items) {
-      const imageType = item.types.find((t) => t.startsWith("image/"));
-      if (imageType) {
-        const blob = await item.getType(imageType);
-        return saveImageBlob(blob);
-      }
-    }
+    const image = await readImage();
+    const rgba = await image.rgba();
+    const size = await image.size();
+    if (!size.width || !size.height) return null;
+
+    // Convert raw RGBA pixels to PNG via Canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = size.width;
+    canvas.height = size.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    const imageData = new ImageData(
+      new Uint8ClampedArray(rgba),
+      size.width,
+      size.height,
+    );
+    ctx.putImageData(imageData, 0, 0);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/png"),
+    );
+    if (!blob) return null;
+
+    return saveImageBlob(blob);
   } catch {
-    // Clipboard API not available or permission denied — fall through
+    // No image in clipboard or plugin unavailable — fall through
   }
   return null;
 }

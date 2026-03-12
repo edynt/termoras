@@ -9,6 +9,7 @@
     "core:window:allow-toggle-maximize",
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
+    "clipboard-manager:allow-read-image",
     "dialog:allow-open",
     "store:default"
   ]
