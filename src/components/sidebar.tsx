@@ -77,7 +77,7 @@ export function Sidebar() {
           className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors duration-150"
           title="Add project folder"
         >
-          <FolderPlus size={16} />
+          <FolderPlus size={18} />
         </button>
       </div>
 
@@ -115,7 +115,7 @@ export function Sidebar() {
           className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           title="Tag settings"
         >
-          <Settings size={14} />
+          <Settings size={16} />
         </button>
       </div>
 

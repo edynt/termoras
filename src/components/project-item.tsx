@@ -147,25 +147,25 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
         <div
           onClick={handleClick}
           onContextMenu={handleContextMenu}
-          className={`group flex items-center gap-1.5 px-2 py-1.5 cursor-pointer transition-colors duration-150 ${
+          className={`group flex items-center gap-1.5 px-2 py-1.5 cursor-pointer transition-all duration-150 ${
             isActive
-              ? "bg-[var(--bg-active)] border-l-3"
+              ? "bg-[var(--bg-active)] border-l-3 glow-active"
               : "hover:bg-[var(--bg-hover)] border-l-3 border-l-transparent"
           } ${isDragOver ? "border-t-2 border-t-[var(--accent-blue)]" : "border-t-2 border-t-transparent"} ${isDragging ? "opacity-40" : ""}`}
           style={isActive ? { borderLeftColor: project.color || "var(--accent-blue)" } : undefined}
         >
           {/* Drag handle — pointer-based */}
           <GripVertical
-            size={12}
+            size={14}
             className="shrink-0 opacity-0 group-hover:opacity-40 cursor-grab active:cursor-grabbing transition-opacity"
             onPointerDown={(e) => { e.stopPropagation(); onGripPointerDown(); }}
           />
           {expanded ? (
-            <ChevronDown size={14} className="shrink-0" />
+            <ChevronDown size={16} className="shrink-0" />
           ) : (
-            <ChevronRight size={14} className="shrink-0" />
+            <ChevronRight size={16} className="shrink-0" />
           )}
-          <Folder size={14} className="shrink-0" color={project.color || "var(--accent-blue)"} />
+          <Folder size={16} className="shrink-0" color={project.color || "var(--accent-blue)"} />
           {renaming ? (
             <input
               ref={renameRef}
@@ -192,7 +192,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           {/* git indicator */}
           {hasGit && (
             <span
-              className="shrink-0 text-[9px] font-bold text-[var(--accent-red)] opacity-70"
+              className="shrink-0 text-[11px] font-bold text-[var(--accent-red)] opacity-70"
               title={gitStatus ? `${gitStatus.branch} — ${gitStatus.modified + gitStatus.untracked} changed` : "git"}
             >
               git
@@ -202,7 +202,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           {/* git changes count */}
           {gitStatus && (gitStatus.modified + gitStatus.untracked + gitStatus.staged) > 0 && (
             <span
-              className="shrink-0 text-[9px] font-medium px-1 py-0.5 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]"
+              className="shrink-0 text-[11px] font-medium px-1 py-0.5 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]"
               title={`${gitStatus.staged} staged, ${gitStatus.modified} modified, ${gitStatus.untracked} untracked`}
             >
               {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
@@ -212,7 +212,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           {/* running indicator */}
           {runningCount > 0 && (
             <Loader2
-              size={14}
+              size={16}
               className="shrink-0 animate-spin text-[var(--accent-blue)]"
             />
           )}
@@ -226,7 +226,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
             title="Open board"
           >
-            <LayoutGrid size={12} />
+            <LayoutGrid size={14} />
           </button>
           <button
             onClick={(e) => {
@@ -236,7 +236,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
             title="New terminal"
           >
-            <Plus size={12} />
+            <Plus size={14} />
           </button>
         </div>
 
@@ -246,13 +246,13 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             {/* Board tab */}
             <div
               onClick={() => handleOpenBoard()}
-              className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-colors duration-150 ${
+              className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-all duration-150 ${
                 isBoardActive
-                  ? "text-[var(--accent-blue)]"
+                  ? "text-[var(--accent-blue)] glow-active bg-[var(--accent-blue)]/8"
                   : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
               }`}
             >
-              <LayoutGrid size={12} className="shrink-0" />
+              <LayoutGrid size={14} className="shrink-0" />
               <span className="text-xs truncate flex-1">Board</span>
             </div>
 
@@ -260,16 +260,16 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             {hasGit && (
               <div
                 onClick={() => handleOpenGitView()}
-                className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-colors duration-150 ${
+                className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-all duration-150 ${
                   isGitViewActive
-                    ? "text-[var(--accent-blue)]"
+                    ? "text-[var(--accent-blue)] glow-active bg-[var(--accent-blue)]/8"
                     : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}
               >
-                <GitBranch size={12} className="shrink-0" />
+                <GitBranch size={14} className="shrink-0" />
                 <span className="text-xs truncate flex-1">Changes</span>
                 {gitStatus && (gitStatus.modified + gitStatus.untracked + gitStatus.staged) > 0 && (
-                  <span className="text-[9px] font-medium px-1 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]">
+                  <span className="text-[11px] font-medium px-1 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]">
                     {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
                   </span>
                 )}
@@ -297,7 +297,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             }}
             className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <LayoutGrid size={12} />
+            <LayoutGrid size={14} />
             Create Board
           </button>
           <button
@@ -307,7 +307,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             }}
             className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Terminal size={12} />
+            <Terminal size={14} />
             Create Terminal
           </button>
           <button
@@ -317,7 +317,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             }}
             className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Code2 size={12} />
+            <Code2 size={14} />
             Open in VS Code
           </button>
           <button
@@ -328,13 +328,13 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             }}
             className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Pencil size={12} />
+            <Pencil size={14} />
             Rename
           </button>
           <div className="my-1 border-t border-[var(--border-color)]" />
           {/* Folder color picker */}
           <div className="px-3 py-1.5">
-            <span className="text-[10px] text-[var(--text-secondary)] mb-1 block">Folder Color</span>
+            <span className="text-xs text-[var(--text-secondary)] mb-1 block">Folder Color</span>
             <div className="flex items-center gap-1">
               {FOLDER_COLORS.map((c) => (
                 <button
@@ -344,7 +344,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
                     setProjectColor(project.id, c.value);
                     setCtxMenu(null);
                   }}
-                  className={`w-4 h-4 rounded-full border-2 transition-transform hover:scale-125 ${
+                  className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-125 ${
                     (project.color || undefined) === c.value ? "scale-125 ring-1 ring-offset-1 ring-[var(--accent-blue)]" : ""
                   }`}
                   style={{
@@ -364,7 +364,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             }}
             className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
           >
-            <Trash2 size={12} />
+            <Trash2 size={14} />
             Delete Project
           </button>
         </div>

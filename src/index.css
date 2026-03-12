@@ -13,6 +13,7 @@
   --accent-blue: #4a8ff5;
   --accent-green: #1aad8a;
   --accent-red: #e94e4e;
+  --glow-color: rgba(74, 143, 245, 0.15);
   --diff-add-bg: #dafbe1;
   --diff-add-border: #2da44e;
   --diff-del-bg: #ffebe9;
@@ -33,6 +34,7 @@
   --accent-blue: #6ba1f1;
   --accent-green: #5ec4a8;
   --accent-red: #f06f6f;
+  --glow-color: rgba(107, 161, 241, 0.3);
   --diff-add-bg: #0d2f1e;
   --diff-add-border: #3fb950;
   --diff-del-bg: #3a1520;
@@ -48,6 +50,12 @@ body {
   color: var(--text-primary);
   margin: 0;
   overflow: hidden;
+}
+
+/* Active item glow in sidebar */
+.glow-active {
+  box-shadow: 0 0 8px var(--glow-color);
+  border-radius: 4px;
 }
 
 /* Ensure xterm's hidden textarea can receive IME composition events in WKWebView.

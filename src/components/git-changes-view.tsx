@@ -288,7 +288,7 @@ export function GitChangesView() {
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-2 min-w-0">
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--accent-blue)]/10 min-w-0">
-              <GitBranch size={13} className="shrink-0 text-[var(--accent-blue)]" />
+              <GitBranch size={15} className="shrink-0 text-[var(--accent-blue)]" />
               <span className="text-xs font-semibold text-[var(--accent-blue)] truncate" title={status?.branch}>
                 {status?.branch ?? "—"}
               </span>
@@ -300,7 +300,7 @@ export function GitChangesView() {
             className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
             title="Refresh"
           >
-            <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
         </div>
 
@@ -349,7 +349,7 @@ export function GitChangesView() {
 
         {/* Summary footer */}
         {status && (
-          <div className="px-3 py-1.5 border-t border-[var(--border-color)] text-[10px] text-[var(--text-secondary)]">
+          <div className="px-3 py-1.5 border-t border-[var(--border-color)] text-xs text-[var(--text-secondary)]">
             {status.staged > 0 && <span className="text-[var(--accent-green)]">{status.staged} staged</span>}
             {status.staged > 0 && (status.modified > 0 || status.untracked > 0) && " · "}
             {status.modified > 0 && <span className="text-[var(--accent-blue)]">{status.modified} modified</span>}
@@ -362,15 +362,15 @@ export function GitChangesView() {
         <div className="border-t border-[var(--border-color)] p-2 space-y-1.5">
           {/* Success toast */}
           {successMsg && (
-            <div className="text-[10px] text-[var(--accent-green)] bg-[var(--accent-green)]/10 rounded px-2 py-1 flex items-center gap-1">
-              <Check size={10} />
+            <div className="text-xs text-[var(--accent-green)] bg-[var(--accent-green)]/10 rounded px-2 py-1 flex items-center gap-1">
+              <Check size={12} />
               {successMsg}
             </div>
           )}
 
           {/* Error message */}
           {actionError && (
-            <div className="text-[10px] text-[var(--accent-red)] bg-[var(--accent-red)]/10 rounded px-2 py-1 break-words">
+            <div className="text-xs text-[var(--accent-red)] bg-[var(--accent-red)]/10 rounded px-2 py-1 break-words">
               {actionError}
             </div>
           )}
@@ -392,27 +392,27 @@ export function GitChangesView() {
             <button
               onClick={handleCommit}
               disabled={committing || !commitMsg.trim() || !status?.staged}
-              className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded transition-colors ${
                 committing
                   ? "bg-[var(--accent-blue)]/25 text-[var(--accent-blue)] cursor-wait"
                   : "bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25 disabled:opacity-40 disabled:cursor-not-allowed"
               }`}
               title="Commit staged changes"
             >
-              {committing ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
+              {committing ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
               {committing ? "Committing..." : "Commit"}
             </button>
             <button
               onClick={handlePush}
               disabled={!hasUnpushed || pushing}
-              className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded transition-colors ${
                 pushing
                   ? "bg-[var(--accent-red)]/25 text-[var(--accent-red)] cursor-wait"
                   : "bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25 disabled:opacity-40 disabled:cursor-not-allowed"
               }`}
               title="Push to remote"
             >
-              {pushing ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />}
+              {pushing ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
               {pushing ? "Pushing..." : "Push"}
             </button>
           </div>
@@ -422,10 +422,10 @@ export function GitChangesView() {
             <button
               onClick={handleUndoCommit}
               disabled={undoing}
-              className="w-full flex items-center justify-center gap-1 text-[10px] font-medium px-2 py-1.5 rounded bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               title="Undo last commit (git reset --soft HEAD~1) — changes stay staged"
             >
-              {undoing ? <Loader2 size={10} className="animate-spin" /> : <Undo2 size={10} />}
+              {undoing ? <Loader2 size={12} className="animate-spin" /> : <Undo2 size={12} />}
               Undo Last Commit
             </button>
           )}
@@ -536,7 +536,7 @@ function FileSection({
     <div>
       {/* Section header with bulk actions */}
       <div className="flex items-center justify-between px-3 py-1">
-        <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+        <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
           {title} ({files.length})
         </span>
         <div className="flex items-center gap-0.5">
@@ -548,7 +548,7 @@ function FileSection({
               className="p-0.5 rounded hover:bg-[var(--accent-red)]/15 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-colors disabled:opacity-40"
               title="Discard all changes"
             >
-              <Undo2 size={12} />
+              <Undo2 size={14} />
             </button>
           )}
           {/* Stage/Unstage all button */}
@@ -558,7 +558,7 @@ function FileSection({
             className="p-0.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
             title={sectionActionTitle}
           >
-            {actionIcon === "stage" ? <Plus size={12} /> : <Minus size={12} />}
+            {actionIcon === "stage" ? <Plus size={14} /> : <Minus size={14} />}
           </button>
         </div>
       </div>
@@ -569,9 +569,9 @@ function FileSection({
         return (
           <div
             key={`${f.staged ? "s" : "u"}-${f.path}`}
-            className={`group flex items-center gap-1 px-1.5 py-0.5 transition-colors ${
+            className={`group flex items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-all ${
               isSelected
-                ? "bg-[var(--bg-active)] text-[var(--text-primary)]"
+                ? "bg-[var(--bg-active)] text-[var(--text-primary)] shadow-[inset_0_0_0_1px_var(--accent-blue)] rounded"
                 : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
             }`}
           >
@@ -582,7 +582,7 @@ function FileSection({
               className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-active)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-40"
               title={actionIcon === "stage" ? `Stage ${f.path}` : `Unstage ${f.path}`}
             >
-              {actionIcon === "stage" ? <Plus size={10} /> : <Minus size={10} />}
+              {actionIcon === "stage" ? <Plus size={12} /> : <Minus size={12} />}
             </button>
 
             {/* Revert button */}
@@ -593,16 +593,16 @@ function FileSection({
                 className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--accent-red)]/15 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-all disabled:opacity-40"
                 title={`Discard changes: ${f.path}`}
               >
-                <Undo2 size={10} />
+                <Undo2 size={12} />
               </button>
             )}
 
             {/* File row — clickable to view diff */}
             <button
               onClick={() => onSelect({ path: f.path, staged: f.staged })}
-              className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-xs min-w-0"
+              className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-xs min-w-0 cursor-pointer"
             >
-              <FileText size={12} className="shrink-0" />
+              <FileText size={14} className="shrink-0" />
               <span className="truncate flex-1">{f.path}</span>
               <StatusBadge status={f.status} />
             </button>
@@ -624,7 +624,7 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <span className={`text-[10px] font-bold shrink-0 ${colors[status] ?? "text-[var(--text-secondary)]"}`}>
+    <span className={`text-xs font-bold shrink-0 ${colors[status] ?? "text-[var(--text-secondary)]"}`}>
       {status}
     </span>
   );

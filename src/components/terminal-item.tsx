@@ -86,13 +86,13 @@ export function TerminalItem({ terminal }: Props) {
         onClick={() => setActiveTerminal(terminal.id)}
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
-        className={`group flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-colors duration-150 ${
+        className={`group flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-all duration-150 ${
           isActive
-            ? "text-[var(--accent-blue)]"
+            ? "text-[var(--accent-blue)] glow-active bg-[var(--accent-blue)]/8"
             : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
         }`}
       >
-        <Terminal size={12} className="shrink-0" />
+        <Terminal size={14} className="shrink-0" />
 
         {editing ? (
           <input
@@ -110,7 +110,7 @@ export function TerminalItem({ terminal }: Props) {
 
         {terminal.isRunning && (
           <Loader2
-            size={12}
+            size={14}
             className="shrink-0 animate-spin text-[var(--accent-blue)]"
           />
         )}
@@ -123,7 +123,7 @@ export function TerminalItem({ terminal }: Props) {
           className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
           title="Kill terminal"
         >
-          <X size={10} />
+          <X size={12} />
         </button>
       </div>
 

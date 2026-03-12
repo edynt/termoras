@@ -63,7 +63,7 @@ export function KanbanColumn({ column, cards }: Props) {
         )}
 
         {/* Card count badge */}
-        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-[var(--bg-hover)] text-[var(--text-secondary)]">
           {cards.length}
         </span>
 
@@ -72,7 +72,7 @@ export function KanbanColumn({ column, cards }: Props) {
           onClick={() => setShowMenu(!showMenu)}
           className="p-0.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
         >
-          <MoreHorizontal size={14} />
+          <MoreHorizontal size={16} />
         </button>
 
         {showMenu && (
@@ -83,14 +83,14 @@ export function KanbanColumn({ column, cards }: Props) {
                 onClick={() => { setShowMenu(false); setIsEditingTitle(true); }}
                 className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
               >
-                <Pencil size={12} />
+                <Pencil size={14} />
                 Rename
               </button>
               <button
                 onClick={() => { setShowMenu(false); setConfirmDelete(true); }}
                 className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
               >
-                <Trash2 size={12} />
+                <Trash2 size={14} />
                 Delete
               </button>
             </div>
@@ -129,7 +129,7 @@ export function KanbanColumn({ column, cards }: Props) {
           onClick={() => setIsAddingCard(true)}
           className="flex items-center justify-center gap-1.5 mx-2 mb-2 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-hover)]/50 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
         >
-          <Plus size={14} />
+          <Plus size={16} />
           Add card
         </button>
       )}

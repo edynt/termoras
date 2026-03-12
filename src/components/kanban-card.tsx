@@ -152,12 +152,12 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                 <>
                   <span className="w-2 h-2 rounded-full" style={typeStyle.bar} />
                   {currentTag?.label ?? card.type}
-                  <ChevronDown size={10} />
+                  <ChevronDown size={12} />
                 </>
               ) : (
                 <>
-                  <Tag size={10} />
-                  <ChevronDown size={10} />
+                  <Tag size={12} />
+                  <ChevronDown size={12} />
                 </>
               )}
             </button>
@@ -187,7 +187,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                       <span className="w-2 h-2 rounded-full" style={s.bar} />
                       <span>{tag.label}</span>
                       {isSelected && (
-                        <Check size={10} className="ml-auto text-[var(--accent-blue)]" />
+                        <Check size={12} className="ml-auto text-[var(--accent-blue)]" />
                       )}
                     </button>
                   );
@@ -212,11 +212,11 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                 title="Run in terminal"
               >
                 {runState === "running" ? (
-                  <Loader2 size={14} className="animate-spin" />
+                  <Loader2 size={16} className="animate-spin" />
                 ) : runState === "done" ? (
-                  <Check size={14} />
+                  <Check size={16} />
                 ) : (
-                  <Play size={14} />
+                  <Play size={16} />
                 )}
               </button>
             )}
@@ -226,9 +226,9 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
               title="Copy command"
             >
               {copied ? (
-                <Check size={14} className="text-[var(--accent-green)]" />
+                <Check size={16} className="text-[var(--accent-green)]" />
               ) : (
-                <Copy size={14} />
+                <Copy size={16} />
               )}
             </button>
             <button
@@ -239,14 +239,14 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
               className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               title="Edit card"
             >
-              <Pencil size={14} />
+              <Pencil size={16} />
             </button>
             <button
               onClick={handleDelete}
               className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-colors"
               title="Delete card"
             >
-              <Trash2 size={14} />
+              <Trash2 size={16} />
             </button>
           </div>
         </div>
@@ -269,7 +269,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
         {/* Command preview — monospace chip */}
         {card.content && (
           <div className="flex">
-            <span className="inline-block text-[11px] font-mono px-2 py-1 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
+            <span className="inline-block text-xs font-mono px-2 py-1 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
               {tagPrefix ? `${tagPrefix} ` : ""}{card.content.length > 40 ? card.content.slice(0, 40) + "…" : card.content}
             </span>
           </div>
