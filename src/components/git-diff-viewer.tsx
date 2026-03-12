@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Columns2, Rows3 } from "lucide-react";
 
 type DiffViewMode = "split" | "unified";
@@ -220,32 +220,69 @@ function UnifiedDiffRow({ line }: { line: ParsedLine }) {
   );
 }
 
-/* ─── Split (side-by-side) view ─── */
+/* ─── Split (side-by-side) view with synced horizontal scroll ─── */
 
 function SplitDiffTable({ rows }: { rows: SplitRow[] }) {
+  const leftRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+  const syncing = useRef(false);
+
+  const syncScroll = useCallback((source: "left" | "right") => {
+    if (syncing.current) return;
+    syncing.current = true;
+    const src = source === "left" ? leftRef.current : rightRef.current;
+    const tgt = source === "left" ? rightRef.current : leftRef.current;
+    if (src && tgt) tgt.scrollLeft = src.scrollLeft;
+    requestAnimationFrame(() => { syncing.current = false; });
+  }, []);
+
   return (
-    <table className="w-full text-[12px] leading-[20px] font-mono border-collapse table-fixed">
+    <div className="flex w-full">
+      {/* Left (old) panel */}
+      <div
+        ref={leftRef}
+        className="w-1/2 overflow-x-auto"
+        onScroll={() => syncScroll("left")}
+      >
+        <SplitHalfTable rows={rows} side="old" />
+      </div>
+      {/* Divider */}
+      <div className="w-[2px] shrink-0 bg-[var(--border-color)]" />
+      {/* Right (new) panel */}
+      <div
+        ref={rightRef}
+        className="w-1/2 overflow-x-auto"
+        onScroll={() => syncScroll("right")}
+      >
+        <SplitHalfTable rows={rows} side="new" />
+      </div>
+    </div>
+  );
+}
+
+/** Table for one side of the split view */
+function SplitHalfTable({ rows, side }: { rows: SplitRow[]; side: "old" | "new" }) {
+  return (
+    <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
       <colgroup>
-        <col style={{ width: 40 }} />
-        <col />
-        <col style={{ width: 1 }} />
         <col style={{ width: 40 }} />
         <col />
       </colgroup>
       <tbody>
         {rows.map((row, i) => (
-          <SplitDiffRow key={i} row={row} />
+          <SplitHalfRow key={i} row={row} side={side} />
         ))}
       </tbody>
     </table>
   );
 }
 
-function SplitDiffRow({ row }: { row: SplitRow }) {
+/** Renders a single row for one side of the split view */
+function SplitHalfRow({ row, side }: { row: SplitRow; side: "old" | "new" }) {
   if (row.type === "meta") {
     return (
       <tr>
-        <td colSpan={5} className="px-3 py-0 text-[var(--text-secondary)] font-bold whitespace-pre select-none overflow-hidden">
+        <td colSpan={2} className="px-3 py-0 text-[var(--text-secondary)] font-bold whitespace-pre select-none">
           {row.raw}
         </td>
       </tr>
@@ -257,7 +294,7 @@ function SplitDiffRow({ row }: { row: SplitRow }) {
     const hunkTag = (row.raw ?? "").match(/@@ .+? @@/)?.[0];
     return (
       <tr className="bg-[var(--diff-hunk-bg)]">
-        <td colSpan={5} className="px-3 py-0 text-[var(--diff-hunk-text)] whitespace-pre overflow-hidden">
+        <td colSpan={2} className="px-3 py-0 text-[var(--diff-hunk-text)] whitespace-pre">
           <span className="text-[11px]">{hunkTag}</span>
           {readable && <span className="ml-2 text-[var(--diff-hunk-text)]/70">{readable}</span>}
         </td>
@@ -265,35 +302,27 @@ function SplitDiffRow({ row }: { row: SplitRow }) {
     );
   }
 
-  const { left, right } = row;
-
+  const line = side === "old" ? row.left : row.right;
   return (
     <tr className="hover:brightness-95">
-      {/* Left side (old) */}
-      <SplitCell line={left} side="old" />
-      {/* Divider */}
-      <td className="w-[1px] border-l-2 border-[var(--border-color)]" />
-      {/* Right side (new) */}
-      <SplitCell line={right} side="new" />
+      <SplitCell line={line} side={side} />
     </tr>
   );
 }
 
-/** Renders one half of a split row: line number + marker + content */
+/** Renders line number + content cells for one half of a split row */
 function SplitCell({ line, side }: { line: ParsedLine | null; side: "old" | "new" }) {
   if (!line) {
-    // Empty cell (no corresponding line on this side)
     return (
       <>
         <td className="w-[40px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 bg-[var(--bg-hover)]/50" />
-        <td className="py-0 whitespace-pre overflow-hidden bg-[var(--bg-hover)]/50" />
+        <td className="py-0 bg-[var(--bg-hover)]/50" />
       </>
     );
   }
 
   const isDel = line.type === "del";
   const isAdd = line.type === "add";
-  const isContext = line.type === "context";
 
   const bg = isDel ? "bg-[var(--diff-del-bg)]" : isAdd ? "bg-[var(--diff-add-bg)]" : "";
   const numClass = isDel ? "text-[var(--diff-del-border)]/60" : isAdd ? "text-[var(--diff-add-border)]/60" : "text-[var(--text-secondary)]/30";
@@ -306,7 +335,7 @@ function SplitCell({ line, side }: { line: ParsedLine | null; side: "old" | "new
       <td className={`w-[40px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 ${numClass} ${bg}`}>
         {lineNum ?? ""}
       </td>
-      <td className={`px-0 py-0 whitespace-pre overflow-hidden text-[var(--text-primary)] ${bg}`}>
+      <td className={`px-0 py-0 whitespace-pre text-[var(--text-primary)] ${bg}`}>
         <span className={`inline-block w-5 text-center select-none font-bold ${markerColor}`}>{marker}</span>
         {line.content}
       </td>

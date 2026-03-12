@@ -395,9 +395,11 @@ export function GitChangesView() {
               className={`flex-1 flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded transition-colors ${
                 committing
                   ? "bg-[var(--accent-blue)]/25 text-[var(--accent-blue)] cursor-wait"
-                  : "bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                  : committing || !commitMsg.trim() || !status?.staged
+                    ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
+                    : "bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25"
               }`}
-              title="Commit staged changes"
+              title={!status?.staged ? "No staged files" : !commitMsg.trim() ? "Enter a commit message" : "Commit staged changes"}
             >
               {committing ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
               {committing ? "Committing..." : "Commit"}
@@ -408,9 +410,11 @@ export function GitChangesView() {
               className={`flex-1 flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded transition-colors ${
                 pushing
                   ? "bg-[var(--accent-red)]/25 text-[var(--accent-red)] cursor-wait"
-                  : "bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                  : !hasUnpushed
+                    ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
+                    : "bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25"
               }`}
-              title="Push to remote"
+              title={!hasUnpushed ? "No unpushed commits" : "Push to remote"}
             >
               {pushing ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
               {pushing ? "Pushing..." : "Push"}
@@ -422,7 +426,11 @@ export function GitChangesView() {
             <button
               onClick={handleUndoCommit}
               disabled={undoing}
-              className="w-full flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className={`w-full flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded transition-colors ${
+                undoing
+                  ? "bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] cursor-wait"
+                  : "bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20"
+              }`}
               title="Undo last commit (git reset --soft HEAD~1) — changes stay staged"
             >
               {undoing ? <Loader2 size={12} className="animate-spin" /> : <Undo2 size={12} />}
