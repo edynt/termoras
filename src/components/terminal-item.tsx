@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Terminal, X } from "lucide-react";
 import type { TerminalSession } from "../types";
 import { useAppStore } from "../stores/app-store";
-import { killTerminal, getTerminalProcessName } from "../lib/tauri-commands";
+import { killTerminal } from "../lib/tauri-commands";
 
 interface Props {
   terminal: TerminalSession;
@@ -23,24 +23,6 @@ export function TerminalItem({ terminal }: Props) {
   const renameTerminal = useAppStore((s) => s.renameTerminal);
 
   const isActive = activeTerminalId === terminal.id;
-
-  // Poll foreground process name — active terminal every 2s, others every 10s
-  const [processName, setProcessName] = useState<string | null>(null);
-  useEffect(() => {
-    if (!terminal.isRunning) {
-      setProcessName(null);
-      return;
-    }
-    let alive = true;
-    const poll = () => {
-      getTerminalProcessName(terminal.id)
-        .then((name) => { if (alive) setProcessName(name); })
-        .catch(() => { if (alive) setProcessName(null); });
-    };
-    poll();
-    const interval = setInterval(poll, isActive ? 2000 : 10000);
-    return () => { alive = false; clearInterval(interval); };
-  }, [terminal.isRunning, terminal.id, isActive]);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -133,13 +115,6 @@ export function TerminalItem({ terminal }: Props) {
           />
         ) : (
           <span className="text-xs truncate flex-1">{terminal.name}</span>
-        )}
-
-        {/* Foreground process name badge */}
-        {processName && (
-          <span className="shrink-0 text-[10px] px-1 py-0 rounded bg-[var(--accent-blue)]/10 text-[var(--accent-blue)] truncate max-w-[60px]">
-            {processName}
-          </span>
         )}
 
         <button
