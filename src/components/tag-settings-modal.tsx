@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, ChevronRight } from "lucide-react";
 import { useTagStore } from "../stores/tag-store";
 import { COLOR_PALETTE, getTagStyles, randomColor } from "../lib/tag-colors";
 import type { TagDefinition } from "../types/kanban";
@@ -89,6 +89,7 @@ function TagRow({
   onUpdate: (updates: Partial<Omit<TagDefinition, "id">>) => void;
   onDelete: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [label, setLabel] = useState(tag.label);
   const [description, setDescription] = useState(tag.description ?? "");
   const [command, setCommand] = useState(tag.command ?? "");
@@ -118,7 +119,18 @@ function TagRow({
 
   return (
     <>
-      <div className="flex items-center gap-2 py-1.5 group">
+      <div className="flex items-center gap-1 py-1.5 group">
+        {/* Expand/collapse chevron */}
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="p-0.5 rounded text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"
+          title={expanded ? "Collapse" : "Expand"}
+        >
+          <ChevronRight
+            size={12}
+            className={`transition-transform duration-150 ${expanded ? "rotate-90" : ""}`}
+          />
+        </button>
         {/* Color dot — clickable */}
         <button
           onClick={onTogglePalette}
@@ -151,34 +163,36 @@ function TagRow({
         </button>
       </div>
 
-      {/* Description + command fields — always visible */}
-      <div className="pl-7 pr-2 pb-2 space-y-1.5">
-        <input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          onBlur={handleDescriptionBlur}
-          maxLength={100}
-          placeholder="Description..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-          }}
-          className="w-full text-[11px] text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
-        />
-        <input
-          value={command}
-          onChange={(e) => setCommand(e.target.value)}
-          onBlur={handleCommandBlur}
-          maxLength={100}
-          placeholder="Command (e.g. /cook)..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-          }}
-          className="w-full text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
-        />
-      </div>
+      {/* Description + command fields — visible when expanded */}
+      {expanded && (
+        <div className="pl-8 pr-2 pb-2 space-y-1.5">
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={handleDescriptionBlur}
+            maxLength={100}
+            placeholder="Description..."
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+            className="w-full text-[11px] text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
+          />
+          <input
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            onBlur={handleCommandBlur}
+            maxLength={100}
+            placeholder="Command (e.g. /cook)..."
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+            className="w-full text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
+          />
+        </div>
+      )}
 
-      {/* Color palette — inline below row */}
-      {isPaletteOpen && (
+      {/* Color palette — inline below row, only when expanded */}
+      {expanded && isPaletteOpen && (
         <div className="grid grid-cols-6 gap-1.5 py-2 px-8">
           {COLOR_PALETTE.map((c) => (
             <button
