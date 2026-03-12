@@ -1,4 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Columns2, Rows3 } from "lucide-react";
+
+type DiffViewMode = "split" | "unified";
+const VIEW_MODE_KEY = "termoras-diff-view-mode";
 
 interface Props {
   diff: string;
@@ -12,6 +16,14 @@ interface ParsedLine {
   newNum: number | null;
 }
 
+/** A row in split view: left side (old) and right side (new) */
+interface SplitRow {
+  type: "context" | "change" | "hunk" | "meta";
+  left: ParsedLine | null;
+  right: ParsedLine | null;
+  raw?: string; // for hunk/meta
+}
+
 /** Parse unified diff into structured lines with line numbers */
 function parseDiff(diff: string): ParsedLine[] {
   const raw = diff.split("\n");
@@ -21,7 +33,6 @@ function parseDiff(diff: string): ParsedLine[] {
 
   for (const line of raw) {
     if (line.startsWith("@@")) {
-      // Parse hunk header: @@ -oldStart,count +newStart,count @@
       const match = line.match(/@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
       if (match) {
         oldLine = parseInt(match[1], 10);
@@ -37,7 +48,6 @@ function parseDiff(diff: string): ParsedLine[] {
       result.push({ type: "del", content: line.slice(1), oldNum: oldLine, newNum: null });
       oldLine++;
     } else {
-      // Context line (starts with space or is empty)
       const content = line.startsWith(" ") ? line.slice(1) : line;
       if (oldLine > 0 || newLine > 0) {
         result.push({ type: "context", content, oldNum: oldLine, newNum: newLine });
@@ -49,9 +59,69 @@ function parseDiff(diff: string): ParsedLine[] {
   return result;
 }
 
-/** Render git diff with GitHub-style line numbers and colors */
+/** Convert parsed lines into side-by-side rows by pairing del/add blocks */
+function buildSplitRows(lines: ParsedLine[]): SplitRow[] {
+  const rows: SplitRow[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (line.type === "meta") {
+      rows.push({ type: "meta", left: null, right: null, raw: line.content });
+      i++;
+    } else if (line.type === "hunk") {
+      rows.push({ type: "hunk", left: null, right: null, raw: line.content });
+      i++;
+    } else if (line.type === "context") {
+      rows.push({ type: "context", left: line, right: line });
+      i++;
+    } else if (line.type === "del" || line.type === "add") {
+      // Collect consecutive del then add lines as a change block
+      const dels: ParsedLine[] = [];
+      const adds: ParsedLine[] = [];
+      while (i < lines.length && lines[i].type === "del") {
+        dels.push(lines[i]);
+        i++;
+      }
+      while (i < lines.length && lines[i].type === "add") {
+        adds.push(lines[i]);
+        i++;
+      }
+      const maxLen = Math.max(dels.length, adds.length);
+      for (let j = 0; j < maxLen; j++) {
+        rows.push({
+          type: "change",
+          left: dels[j] ?? null,
+          right: adds[j] ?? null,
+        });
+      }
+    } else {
+      i++;
+    }
+  }
+  return rows;
+}
+
+/** Render git diff with toggle between split and unified views */
 export function GitDiffViewer({ diff, filePath }: Props) {
+  const [viewMode, setViewMode] = useState<DiffViewMode>(() => {
+    try {
+      const saved = localStorage.getItem(VIEW_MODE_KEY);
+      return saved === "unified" ? "unified" : "split";
+    } catch {
+      return "split";
+    }
+  });
+
   const lines = useMemo(() => parseDiff(diff), [diff]);
+  const splitRows = useMemo(() => buildSplitRows(lines), [lines]);
+
+  function toggleMode() {
+    const next = viewMode === "split" ? "unified" : "split";
+    setViewMode(next);
+    localStorage.setItem(VIEW_MODE_KEY, next);
+  }
 
   if (!diff) {
     return (
@@ -63,27 +133,46 @@ export function GitDiffViewer({ diff, filePath }: Props) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* File header */}
-      <div className="px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-sidebar)]">
+      {/* File header with view mode toggle */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-sidebar)]">
         <span className="text-xs font-mono font-medium">{filePath}</span>
+        <button
+          onClick={toggleMode}
+          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          title={viewMode === "split" ? "Switch to unified view" : "Switch to split view"}
+        >
+          {viewMode === "split" ? <Rows3 size={13} /> : <Columns2 size={13} />}
+          {viewMode === "split" ? "Unified" : "Split"}
+        </button>
       </div>
 
-      {/* Diff table */}
+      {/* Diff content */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
-          <tbody>
-            {lines.map((line, i) => (
-              <DiffRow key={i} line={line} />
-            ))}
-          </tbody>
-        </table>
+        {viewMode === "unified" ? (
+          <UnifiedDiffTable lines={lines} />
+        ) : (
+          <SplitDiffTable rows={splitRows} />
+        )}
       </div>
     </div>
   );
 }
 
-/** Single diff row — GitHub-style with dual line numbers + colored gutter */
-function DiffRow({ line }: { line: ParsedLine }) {
+/* ─── Unified view (original) ─── */
+
+function UnifiedDiffTable({ lines }: { lines: ParsedLine[] }) {
+  return (
+    <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
+      <tbody>
+        {lines.map((line, i) => (
+          <UnifiedDiffRow key={i} line={line} />
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function UnifiedDiffRow({ line }: { line: ParsedLine }) {
   if (line.type === "meta") {
     return (
       <tr>
@@ -95,16 +184,11 @@ function DiffRow({ line }: { line: ParsedLine }) {
   }
 
   if (line.type === "hunk") {
-    // Extract the readable part after @@...@@
     const readable = line.content.replace(/^@@.*?@@/, "").trim();
     return (
       <tr className="bg-[var(--diff-hunk-bg)]">
-        <td className="w-[1px] px-2 py-0 text-right text-[var(--diff-hunk-text)]/50 select-none border-r border-[var(--border-color)]">
-          ···
-        </td>
-        <td className="w-[1px] px-2 py-0 text-right text-[var(--diff-hunk-text)]/50 select-none border-r border-[var(--border-color)]">
-          ···
-        </td>
+        <td className="w-[1px] px-2 py-0 text-right text-[var(--diff-hunk-text)]/50 select-none border-r border-[var(--border-color)]">···</td>
+        <td className="w-[1px] px-2 py-0 text-right text-[var(--diff-hunk-text)]/50 select-none border-r border-[var(--border-color)]">···</td>
         <td className="px-3 py-0 text-[var(--diff-hunk-text)] whitespace-pre">
           <span className="text-[11px]">{line.content.match(/@@ .+? @@/)?.[0]}</span>
           {readable && <span className="ml-2 text-[var(--diff-hunk-text)]/70">{readable}</span>}
@@ -115,44 +199,117 @@ function DiffRow({ line }: { line: ParsedLine }) {
 
   const isAdd = line.type === "add";
   const isDel = line.type === "del";
-
-  // Row background
-  const rowBg = isAdd
-    ? "bg-[var(--diff-add-bg)]"
-    : isDel
-    ? "bg-[var(--diff-del-bg)]"
-    : "";
-
-  // Line number styling
-  const numClass = isAdd
-    ? "text-[var(--diff-add-border)]/60"
-    : isDel
-    ? "text-[var(--diff-del-border)]/60"
-    : "text-[var(--text-secondary)]/30";
-
-  // Gutter marker
+  const rowBg = isAdd ? "bg-[var(--diff-add-bg)]" : isDel ? "bg-[var(--diff-del-bg)]" : "";
+  const numClass = isAdd ? "text-[var(--diff-add-border)]/60" : isDel ? "text-[var(--diff-del-border)]/60" : "text-[var(--text-secondary)]/30";
   const marker = isAdd ? "+" : isDel ? "−" : " ";
-  const markerColor = isAdd
-    ? "text-[var(--diff-add-border)]"
-    : isDel
-    ? "text-[var(--diff-del-border)]"
-    : "text-transparent";
+  const markerColor = isAdd ? "text-[var(--diff-add-border)]" : isDel ? "text-[var(--diff-del-border)]" : "text-transparent";
 
   return (
     <tr className={`${rowBg} hover:brightness-95`}>
-      {/* Old line number */}
       <td className={`w-[1px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 ${numClass}`}>
         {line.oldNum ?? ""}
       </td>
-      {/* New line number */}
       <td className={`w-[1px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 ${numClass}`}>
         {line.newNum ?? ""}
       </td>
-      {/* Content */}
       <td className="px-0 py-0 whitespace-pre text-[var(--text-primary)]">
         <span className={`inline-block w-5 text-center select-none font-bold ${markerColor}`}>{marker}</span>
         {line.content}
       </td>
     </tr>
+  );
+}
+
+/* ─── Split (side-by-side) view ─── */
+
+function SplitDiffTable({ rows }: { rows: SplitRow[] }) {
+  return (
+    <table className="w-full text-[12px] leading-[20px] font-mono border-collapse table-fixed">
+      <colgroup>
+        <col style={{ width: 40 }} />
+        <col />
+        <col style={{ width: 1 }} />
+        <col style={{ width: 40 }} />
+        <col />
+      </colgroup>
+      <tbody>
+        {rows.map((row, i) => (
+          <SplitDiffRow key={i} row={row} />
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function SplitDiffRow({ row }: { row: SplitRow }) {
+  if (row.type === "meta") {
+    return (
+      <tr>
+        <td colSpan={5} className="px-3 py-0 text-[var(--text-secondary)] font-bold whitespace-pre select-none overflow-hidden">
+          {row.raw}
+        </td>
+      </tr>
+    );
+  }
+
+  if (row.type === "hunk") {
+    const readable = (row.raw ?? "").replace(/^@@.*?@@/, "").trim();
+    const hunkTag = (row.raw ?? "").match(/@@ .+? @@/)?.[0];
+    return (
+      <tr className="bg-[var(--diff-hunk-bg)]">
+        <td colSpan={5} className="px-3 py-0 text-[var(--diff-hunk-text)] whitespace-pre overflow-hidden">
+          <span className="text-[11px]">{hunkTag}</span>
+          {readable && <span className="ml-2 text-[var(--diff-hunk-text)]/70">{readable}</span>}
+        </td>
+      </tr>
+    );
+  }
+
+  const { left, right } = row;
+
+  return (
+    <tr className="hover:brightness-95">
+      {/* Left side (old) */}
+      <SplitCell line={left} side="old" />
+      {/* Divider */}
+      <td className="w-[1px] border-l-2 border-[var(--border-color)]" />
+      {/* Right side (new) */}
+      <SplitCell line={right} side="new" />
+    </tr>
+  );
+}
+
+/** Renders one half of a split row: line number + marker + content */
+function SplitCell({ line, side }: { line: ParsedLine | null; side: "old" | "new" }) {
+  if (!line) {
+    // Empty cell (no corresponding line on this side)
+    return (
+      <>
+        <td className="w-[40px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 bg-[var(--bg-hover)]/50" />
+        <td className="py-0 whitespace-pre overflow-hidden bg-[var(--bg-hover)]/50" />
+      </>
+    );
+  }
+
+  const isDel = line.type === "del";
+  const isAdd = line.type === "add";
+  const isContext = line.type === "context";
+
+  const bg = isDel ? "bg-[var(--diff-del-bg)]" : isAdd ? "bg-[var(--diff-add-bg)]" : "";
+  const numClass = isDel ? "text-[var(--diff-del-border)]/60" : isAdd ? "text-[var(--diff-add-border)]/60" : "text-[var(--text-secondary)]/30";
+  const lineNum = side === "old" ? line.oldNum : line.newNum;
+  const marker = isDel ? "−" : isAdd ? "+" : " ";
+  const markerColor = isDel ? "text-[var(--diff-del-border)]" : isAdd ? "text-[var(--diff-add-border)]" : "text-transparent";
+
+  return (
+    <>
+      <td className={`w-[40px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 ${numClass} ${bg}`}>
+        {lineNum ?? ""}
+      </td>
+      <td className={`px-0 py-0 whitespace-pre overflow-hidden text-[var(--text-primary)] ${bg}`}>
+        <span className={`inline-block w-5 text-center select-none font-bold ${markerColor}`}>{marker}</span>
+        {line.content}
+      </td>
+    </>
   );
 }
