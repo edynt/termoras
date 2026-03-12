@@ -303,9 +303,9 @@ export function GitChangesView() {
         {/* Header — branch badge */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--accent-blue)]/10 min-w-0">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--accent-blue)]/10 min-w-0" title={status?.branch ?? ""}>
               <GitBranch size={15} className="shrink-0 text-[var(--accent-blue)]" />
-              <span className="text-xs font-semibold text-[var(--accent-blue)] truncate" title={status?.branch}>
+              <span className="text-xs font-semibold text-[var(--accent-blue)] truncate">
                 {status?.branch ?? "—"}
               </span>
             </div>
