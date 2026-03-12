@@ -102,6 +102,11 @@ export async function gitUndoCommit(path: string): Promise<string> {
   return invoke<string>("git_undo_commit", { path });
 }
 
+/** Revert (discard) changes for a single file */
+export async function gitRevertFile(path: string, filePath: string, status: string): Promise<string> {
+  return invoke<string>("git_revert_file", { path, filePath, status });
+}
+
 /** Push to remote */
 export async function gitPush(path: string): Promise<string> {
   return invoke<string>("git_push", { path });

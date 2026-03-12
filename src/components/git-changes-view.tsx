@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, FileText, GitBranch, Upload, Check, Loader2, Undo2, Plus, Minus } from "lucide-react";
+import { RefreshCw, FileText, GitBranch, Upload, Check, Loader2, Undo2, Plus, Minus, X } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import {
   gitChangedFiles,
@@ -12,6 +12,7 @@ import {
   gitCommit,
   gitHasUnpushed,
   gitUndoCommit,
+  gitRevertFile,
   gitPush,
   type GitChangedFile,
   type GitStatusSummary,
@@ -41,6 +42,11 @@ export function GitChangesView() {
   const [hasUnpushed, setHasUnpushed] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [confirmRevert, setConfirmRevert] = useState<
+    | { type: "file"; path: string; status: string; staged: boolean }
+    | { type: "all"; files: GitChangedFile[] }
+    | null
+  >(null);
 
   // Resizable panel
   const [panelWidth, setPanelWidth] = useState(() => {
@@ -208,6 +214,49 @@ export function GitChangesView() {
     setUndoing(false);
   }
 
+  /** Revert (discard) a single file's changes */
+  async function handleRevertFile(filePath: string, status: string) {
+    if (!project) return;
+    setActionError(null);
+    try {
+      const msg = await gitRevertFile(project.path, filePath, status);
+      if (selectedFile?.path === filePath) setSelectedFile(null);
+      await refresh();
+      setSuccessMsg(msg);
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e) {
+      setActionError(`Revert failed: ${e}`);
+    }
+    setConfirmRevert(null);
+  }
+
+  /** Revert (discard) all files in a list */
+  async function handleRevertAll(filesToRevert: GitChangedFile[]) {
+    if (!project || filesToRevert.length === 0) return;
+    setActionError(null);
+    try {
+      let errors = 0;
+      for (const f of filesToRevert) {
+        try {
+          await gitRevertFile(project.path, f.path, f.status);
+        } catch {
+          errors++;
+        }
+      }
+      setSelectedFile(null);
+      await refresh();
+      if (errors > 0) {
+        setActionError(`Reverted with ${errors} error(s)`);
+      } else {
+        setSuccessMsg(`Reverted ${filesToRevert.length} file(s)`);
+        setTimeout(() => setSuccessMsg(null), 3000);
+      }
+    } catch (e) {
+      setActionError(`Revert failed: ${e}`);
+    }
+    setConfirmRevert(null);
+  }
+
   // Load diff when a file is selected
   useEffect(() => {
     if (!project || !selectedFile) {
@@ -275,6 +324,8 @@ export function GitChangesView() {
               onSectionAction={handleUnstageAll}
               sectionActionTitle="Unstage all"
               disabled={staging}
+              onRevertFile={(f) => setConfirmRevert({ type: "file", ...f })}
+              onRevertAll={() => setConfirmRevert({ type: "all", files: stagedFiles })}
             />
           )}
 
@@ -290,6 +341,8 @@ export function GitChangesView() {
               onSectionAction={handleStageAll}
               sectionActionTitle="Stage all"
               disabled={staging}
+              onRevertFile={(f) => setConfirmRevert({ type: "file", ...f })}
+              onRevertAll={() => setConfirmRevert({ type: "all", files: unstagedFiles })}
             />
           )}
         </div>
@@ -395,6 +448,60 @@ export function GitChangesView() {
           </div>
         )}
       </div>
+
+      {/* Revert confirmation dialog */}
+      {confirmRevert && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setConfirmRevert(null)}
+        >
+          <div
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[320px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold mb-1">Discard Changes</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-4">
+              {confirmRevert.type === "file" ? (
+                <>
+                  Discard all changes to{" "}
+                  <span className="font-medium text-[var(--text-primary)] break-all">
+                    {confirmRevert.path}
+                  </span>
+                  ? This cannot be undone.
+                </>
+              ) : (
+                <>
+                  Discard changes to{" "}
+                  <span className="font-medium text-[var(--text-primary)]">
+                    {confirmRevert.files.length} file(s)
+                  </span>
+                  ? This cannot be undone.
+                </>
+              )}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmRevert(null)}
+                className="text-xs px-3 py-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (confirmRevert.type === "file") {
+                    handleRevertFile(confirmRevert.path, confirmRevert.status);
+                  } else {
+                    handleRevertAll(confirmRevert.files);
+                  }
+                }}
+                className="text-xs px-3 py-1.5 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -410,6 +517,8 @@ function FileSection({
   onSectionAction,
   sectionActionTitle,
   disabled,
+  onRevertFile,
+  onRevertAll,
 }: {
   title: string;
   files: GitChangedFile[];
@@ -420,22 +529,38 @@ function FileSection({
   onSectionAction: () => void;
   sectionActionTitle: string;
   disabled: boolean;
+  onRevertFile?: (f: { path: string; status: string; staged: boolean }) => void;
+  onRevertAll?: () => void;
 }) {
   return (
     <div>
-      {/* Section header with bulk action */}
+      {/* Section header with bulk actions */}
       <div className="flex items-center justify-between px-3 py-1">
         <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
           {title} ({files.length})
         </span>
-        <button
-          onClick={(e) => { e.stopPropagation(); onSectionAction(); }}
-          disabled={disabled}
-          className="p-0.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
-          title={sectionActionTitle}
-        >
-          {actionIcon === "stage" ? <Plus size={12} /> : <Minus size={12} />}
-        </button>
+        <div className="flex items-center gap-0.5">
+          {/* Revert all button */}
+          {onRevertAll && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRevertAll(); }}
+              disabled={disabled}
+              className="p-0.5 rounded hover:bg-[var(--accent-red)]/15 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-colors disabled:opacity-40"
+              title="Discard all changes"
+            >
+              <Undo2 size={12} />
+            </button>
+          )}
+          {/* Stage/Unstage all button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onSectionAction(); }}
+            disabled={disabled}
+            className="p-0.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
+            title={sectionActionTitle}
+          >
+            {actionIcon === "stage" ? <Plus size={12} /> : <Minus size={12} />}
+          </button>
+        </div>
       </div>
 
       {/* File rows */}
@@ -450,7 +575,7 @@ function FileSection({
                 : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
             }`}
           >
-            {/* Stage/Unstage button for this file */}
+            {/* Stage/Unstage button */}
             <button
               onClick={(e) => { e.stopPropagation(); onFileAction(f.path); }}
               disabled={disabled}
@@ -459,6 +584,18 @@ function FileSection({
             >
               {actionIcon === "stage" ? <Plus size={10} /> : <Minus size={10} />}
             </button>
+
+            {/* Revert button */}
+            {onRevertFile && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onRevertFile({ path: f.path, status: f.status, staged: f.staged }); }}
+                disabled={disabled}
+                className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--accent-red)]/15 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-all disabled:opacity-40"
+                title={`Discard changes: ${f.path}`}
+              >
+                <Undo2 size={10} />
+              </button>
+            )}
 
             {/* File row — clickable to view diff */}
             <button

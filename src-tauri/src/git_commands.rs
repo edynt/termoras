@@ -269,6 +269,54 @@ pub fn git_undo_commit(path: String) -> Result<String, String> {
     Ok("Commit undone. Changes are back in staging.".to_string())
 }
 
+/// Revert (discard) changes for a single file.
+/// - Untracked ("?"): deletes the file from disk
+/// - Tracked (M/D/A): restores from HEAD; newly-added staged files use git rm -f
+#[tauri::command]
+pub fn git_revert_file(path: String, file_path: String, status: String) -> Result<String, String> {
+    let repo_path = Path::new(&path);
+
+    // Untracked file — just delete
+    if status == "?" {
+        let full = repo_path.join(&file_path);
+        if full.is_dir() {
+            std::fs::remove_dir_all(&full)
+                .map_err(|e| format!("Failed to delete: {}", e))?;
+        } else {
+            std::fs::remove_file(&full)
+                .map_err(|e| format!("Failed to delete: {}", e))?;
+        }
+        return Ok(format!("Deleted {}", file_path));
+    }
+
+    // Tracked file — restore from HEAD
+    let output = Command::new("git")
+        .args(["checkout", "HEAD", "--", &file_path])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git: {}", e))?;
+
+    if output.status.success() {
+        return Ok(format!("Reverted {}", file_path));
+    }
+
+    // Fallback for staged new files (status "A") — remove from index + working tree
+    let output2 = Command::new("git")
+        .args(["rm", "-f", "--", &file_path])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git rm: {}", e))?;
+
+    if output2.status.success() {
+        return Ok(format!("Removed {}", file_path));
+    }
+
+    Err(format!(
+        "Failed to revert: {}",
+        String::from_utf8_lossy(&output.stderr)
+    ))
+}
+
 /// Push to remote (git push) — async fn so Tauri v2 runs it on the
 /// tokio thread pool instead of blocking the main/UI thread.
 #[tauri::command]
