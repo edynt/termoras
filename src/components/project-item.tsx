@@ -4,7 +4,6 @@ import {
   ChevronDown,
   Folder,
   Plus,
-  Loader2,
   LayoutGrid,
   Terminal,
   Trash2,
@@ -63,7 +62,6 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
   const activeView = useAppStore((s) => s.activeView);
   const setActiveView = useAppStore((s) => s.setActiveView);
 
-  const runningCount = projectTerminals.filter((t) => t.isRunning).length;
   const isActive = activeProjectId === project.id;
   const isBoardActive = isActive && activeView === "kanban";
   const isGitViewActive = isActive && activeView === "git";
@@ -208,14 +206,6 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             >
               {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
             </span>
-          )}
-
-          {/* running indicator */}
-          {runningCount > 0 && (
-            <Loader2
-              size={16}
-              className="shrink-0 animate-spin text-[var(--accent-blue)]"
-            />
           )}
 
           {/* quick actions (show on hover) */}

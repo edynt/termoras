@@ -4,6 +4,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Channel } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { Paperclip } from "lucide-react";
 import { getTerminalTheme } from "../lib/terminal-theme";
 import { attachMacKeybindings } from "../lib/terminal-keybindings";
@@ -95,10 +96,22 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       term.write(new Uint8Array(data));
     };
 
+    // Listen for PTY exit BEFORE creating the PTY — prevents race where
+    // shell exits instantly and the event fires before listener is registered.
+    let cancelled = false;
+    let unlisten: (() => void) | null = null;
+    listen<string>("terminal-exited", (event) => {
+      if (event.payload === terminalId && !cancelled) {
+        setTerminalRunning(terminalId, false);
+      }
+    }).then((fn) => {
+      if (cancelled) fn(); // Component already unmounted — clean up immediately
+      else unlisten = fn;
+    });
+
     // Wait for web fonts + container layout before fitting and creating PTY.
     // Without this, fitAddon calculates wrong cols/rows from fallback font metrics
     // or zero-size container → text layout breaks on first open.
-    let cancelled = false;
     document.fonts.ready.then(() => {
       if (cancelled) return;
       const connectPty = () => {
@@ -112,6 +125,9 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
         fitAddon.fit();
         const { cols, rows } = term;
         createTerminal(terminalId, projectPath, rows, cols, channel)
+          .then(() => {
+            if (!cancelled) setTerminalRunning(terminalId, true);
+          })
           .catch((err) => {
             if (!cancelled) {
               term.write(`\r\n\x1b[31m[Error: ${err}]\x1b[0m\r\n`);
@@ -210,6 +226,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
     return () => {
       cancelled = true;
+      unlisten?.();
       container?.removeEventListener("paste", blockPaste, true);
       container?.removeEventListener("beforeinput", blockBeforeInput as EventListener, true);
       observer.disconnect();

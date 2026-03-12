@@ -4,7 +4,7 @@ use std::io::Read;
 use std::process::Command;
 use std::thread;
 use tauri::ipc::Channel;
-use tauri::State;
+use tauri::{Emitter, State};
 
 /// Create a new PTY terminal session. Accepts frontend-generated ID.
 #[tauri::command]
@@ -15,6 +15,7 @@ pub fn create_terminal(
     cols: u16,
     on_data: Channel<Vec<u8>>,
     state: State<AppState>,
+    app_handle: tauri::AppHandle,
 ) -> Result<String, String> {
 
     // Detect default shell
@@ -61,8 +62,11 @@ pub fn create_terminal(
         .take_writer()
         .map_err(|e| format!("Failed to get writer: {}", e))?;
 
-    // Spawn a thread to read PTY output and send via channel
+    // Spawn a thread to read PTY output and send via channel.
+    // When PTY exits (EOF or error), emit "terminal-exited" so frontend
+    // can update the running state indicator.
     let session_id = id.clone();
+    let app = app_handle.clone();
     thread::spawn(move || {
         let mut buf = [0u8; 4096];
         loop {
@@ -79,6 +83,7 @@ pub fn create_terminal(
                 }
             }
         }
+        let _ = app.emit("terminal-exited", &session_id);
     });
 
     let session = PtySession {
@@ -200,6 +205,61 @@ pub fn save_temp_image(data: String, extension: String) -> Result<String, String
         .map_err(|e| format!("Failed to write file: {}", e))?;
 
     Ok(path.to_string_lossy().to_string())
+}
+
+/// Get the foreground process name running inside a terminal's shell.
+/// Returns None if the shell is idle (no child process).
+#[tauri::command]
+pub fn get_terminal_process_name(
+    id: String,
+    state: State<AppState>,
+) -> Result<Option<String>, String> {
+    // Get shell PID while holding lock briefly, then release
+    let shell_pid = {
+        let sessions = state
+            .sessions
+            .lock()
+            .map_err(|e| format!("Lock error: {}", e))?;
+        match sessions.get(&id) {
+            Some(session) => match session.child.process_id() {
+                Some(pid) => pid,
+                None => return Ok(None),
+            },
+            None => return Ok(None), // Session already removed
+        }
+    };
+
+    // Find child processes of the shell (lock-free, safe to be slow)
+    let output = Command::new("pgrep")
+        .args(["-P", &shell_pid.to_string()])
+        .output()
+        .ok();
+    let pids_str = match output {
+        Some(ref o) => String::from_utf8_lossy(&o.stdout).to_string(),
+        None => return Ok(None),
+    };
+    let first_pid = match pids_str.lines().next() {
+        Some(pid) if !pid.trim().is_empty() => pid.trim().to_string(),
+        _ => return Ok(None), // No child processes — shell is idle
+    };
+
+    // Get process name from PID
+    let output = Command::new("ps")
+        .args(["-p", &first_pid, "-o", "comm="])
+        .output()
+        .ok();
+    let name = match output {
+        Some(ref o) => String::from_utf8_lossy(&o.stdout).trim().to_string(),
+        None => return Ok(None),
+    };
+    if name.is_empty() {
+        return Ok(None);
+    }
+
+    // Extract just the binary name (strip path prefix like /usr/bin/node → node)
+    Ok(Some(
+        name.rsplit('/').next().unwrap_or(&name).to_string(),
+    ))
 }
 
 /// Open a directory in VS Code

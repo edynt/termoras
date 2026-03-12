@@ -124,6 +124,13 @@ export async function openInVscode(path: string): Promise<void> {
   return invoke("open_in_vscode", { path });
 }
 
+/** Get the foreground process name running inside a terminal's shell. */
+export async function getTerminalProcessName(
+  id: string,
+): Promise<string | null> {
+  return invoke<string | null>("get_terminal_process_name", { id });
+}
+
 /** Open native folder picker. Returns path or null. */
 export async function pickProjectFolder(): Promise<string | null> {
   const selected = await open({

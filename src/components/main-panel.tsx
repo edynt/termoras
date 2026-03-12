@@ -1,7 +1,8 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { X, Terminal } from "lucide-react";
+import { X, Terminal, Plus } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useAppStore } from "../stores/app-store";
+import type { TerminalSession } from "../types";
 import { TerminalPanel } from "./terminal-panel";
 import { KanbanBoard } from "./kanban-board";
 import { GitChangesView } from "./git-changes-view";
@@ -23,6 +24,9 @@ function loadSavedHeight(): number {
 
 export function MainPanel() {
   const activeView = useAppStore((s) => s.activeView);
+  const activeProjectId = useAppStore((s) => s.activeProjectId);
+  const terminals = useAppStore((s) => s.terminals);
+  const addTerminal = useAppStore((s) => s.addTerminal);
   const [terminalHeight, setTerminalHeight] = useState(loadSavedHeight);
   const [terminalOpen, setTerminalOpen] = useState(() => {
     try { return localStorage.getItem(OPEN_KEY) !== "false"; }
@@ -31,14 +35,33 @@ export function MainPanel() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
+  // Check if the active project has any terminals
+  const hasTerminals = activeProjectId
+    ? terminals.some((t) => t.projectId === activeProjectId)
+    : false;
+
   const toggleTerminal = useCallback(() => {
     setTerminalOpen((prev) => {
       const next = !prev;
       localStorage.setItem(OPEN_KEY, String(next));
-      // ResizeObserver in TerminalInstance handles refit automatically
       return next;
     });
   }, []);
+
+  /** Create a new terminal for the active project and open the panel */
+  const handleCreateTerminal = useCallback(() => {
+    if (!activeProjectId) return;
+    const count = terminals.filter((t) => t.projectId === activeProjectId).length;
+    const terminal: TerminalSession = {
+      id: crypto.randomUUID(),
+      projectId: activeProjectId,
+      name: `Terminal ${count + 1}`,
+      isRunning: false,
+    };
+    addTerminal(terminal);
+    setTerminalOpen(true);
+    localStorage.setItem(OPEN_KEY, "true");
+  }, [activeProjectId, terminals, addTerminal]);
 
   /* Ctrl+` to toggle terminal panel in kanban view (like VS Code) */
   useEffect(() => {
@@ -132,7 +155,7 @@ export function MainPanel() {
                 <X size={12} />
               </button>
             </>
-          ) : (
+          ) : hasTerminals ? (
             <button
               onClick={toggleTerminal}
               className="w-full h-6 flex items-center justify-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
@@ -140,6 +163,15 @@ export function MainPanel() {
             >
               <Terminal size={12} />
               <span>Terminal</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleCreateTerminal}
+              className="w-full h-6 flex items-center justify-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--accent-blue)] hover:bg-[var(--bg-hover)] transition-colors"
+              title="Create a new terminal"
+            >
+              <Plus size={12} />
+              <span>New Terminal</span>
             </button>
           )}
         </div>
