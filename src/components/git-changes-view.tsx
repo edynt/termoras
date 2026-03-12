@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { RefreshCw, FileText, GitBranch, Upload, Check, Loader2, Undo2, Plus, Minus } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import {
@@ -18,6 +18,11 @@ import {
 } from "../lib/tauri-commands";
 import { GitDiffViewer } from "./git-diff-viewer";
 
+const MIN_PANEL = 200;
+const MAX_PANEL = 500;
+const DEFAULT_PANEL = 260;
+const PANEL_STORAGE_KEY = "termoras-git-panel-width";
+
 export function GitChangesView() {
   const activeProjectId = useAppStore((s) => s.activeProjectId);
   const projects = useAppStore((s) => s.projects);
@@ -36,6 +41,39 @@ export function GitChangesView() {
   const [hasUnpushed, setHasUnpushed] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Resizable panel
+  const [panelWidth, setPanelWidth] = useState(() => {
+    const stored = localStorage.getItem(PANEL_STORAGE_KEY);
+    return stored ? Math.min(MAX_PANEL, Math.max(MIN_PANEL, Number(stored))) : DEFAULT_PANEL;
+  });
+  const draggingPanel = useRef(false);
+
+  const handlePanelResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingPanel.current = true;
+    const containerLeft = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect().left;
+    const onMove = (ev: MouseEvent) => {
+      if (!draggingPanel.current) return;
+      const w = Math.min(MAX_PANEL, Math.max(MIN_PANEL, ev.clientX - containerLeft));
+      setPanelWidth(w);
+    };
+    const onUp = () => {
+      draggingPanel.current = false;
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      setPanelWidth((w) => {
+        localStorage.setItem(PANEL_STORAGE_KEY, String(w));
+        return w;
+      });
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }, []);
 
   const refresh = useCallback(async () => {
     if (!project) return;
@@ -194,21 +232,23 @@ export function GitChangesView() {
   const unstagedFiles = files.filter((f) => !f.staged);
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full relative">
       {/* File list sidebar */}
-      <div className="w-[260px] shrink-0 border-r border-[var(--border-color)] flex flex-col bg-[var(--bg-sidebar)]">
-        {/* Header */}
+      <div className="shrink-0 border-r border-[var(--border-color)] flex flex-col bg-[var(--bg-sidebar)]" style={{ width: panelWidth }}>
+        {/* Header — branch badge */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
-          <div className="flex items-center gap-1.5">
-            <GitBranch size={14} className="text-[var(--accent-blue)]" />
-            <span className="text-xs font-semibold">
-              {status?.branch ?? "—"}
-            </span>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--accent-blue)]/10 min-w-0">
+              <GitBranch size={13} className="shrink-0 text-[var(--accent-blue)]" />
+              <span className="text-xs font-semibold text-[var(--accent-blue)] truncate" title={status?.branch}>
+                {status?.branch ?? "—"}
+              </span>
+            </div>
           </div>
           <button
             onClick={refresh}
             disabled={loading}
-            className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+            className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
             title="Refresh"
           >
             <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
@@ -338,6 +378,12 @@ export function GitChangesView() {
           )}
         </div>
       </div>
+
+      {/* Resize handle */}
+      <div
+        onMouseDown={handlePanelResize}
+        className="w-1 shrink-0 cursor-col-resize hover:bg-[var(--accent-blue)]/30 active:bg-[var(--accent-blue)]/50 transition-colors"
+      />
 
       {/* Diff viewer */}
       <div className="flex-1 min-w-0 overflow-auto bg-[var(--bg-primary)]">

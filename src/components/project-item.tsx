@@ -11,6 +11,7 @@ import {
   GitBranch,
   Code2,
   Pencil,
+  GripVertical,
 } from "lucide-react";
 import type { Project } from "../types";
 import { useAppStore } from "../stores/app-store";
@@ -19,9 +20,13 @@ import { TerminalItem } from "./terminal-item";
 
 interface Props {
   project: Project;
+  index: number;
+  isDragOver: boolean;
+  isDragging: boolean;
+  onGripPointerDown: () => void;
 }
 
-export function ProjectItem({ project }: Props) {
+export function ProjectItem({ project, index, isDragOver, isDragging, onGripPointerDown }: Props) {
   const activeProjectId = useAppStore((s) => s.activeProjectId);
   const terminals = useAppStore((s) => s.terminals);
   const projectTerminals = terminals.filter(
@@ -123,7 +128,7 @@ export function ProjectItem({ project }: Props) {
 
   return (
     <>
-      <div>
+      <div data-project-index={index}>
         {/* project row */}
         <div
           onClick={handleClick}
@@ -132,8 +137,14 @@ export function ProjectItem({ project }: Props) {
             isActive
               ? "bg-[var(--bg-active)] border-l-3 border-l-[var(--accent-blue)]"
               : "hover:bg-[var(--bg-hover)] border-l-3 border-l-transparent"
-          }`}
+          } ${isDragOver ? "border-t-2 border-t-[var(--accent-blue)]" : "border-t-2 border-t-transparent"} ${isDragging ? "opacity-40" : ""}`}
         >
+          {/* Drag handle — pointer-based */}
+          <GripVertical
+            size={12}
+            className="shrink-0 opacity-0 group-hover:opacity-40 cursor-grab active:cursor-grabbing transition-opacity"
+            onPointerDown={(e) => { e.stopPropagation(); onGripPointerDown(); }}
+          />
           {expanded ? (
             <ChevronDown size={14} className="shrink-0" />
           ) : (
@@ -216,7 +227,7 @@ export function ProjectItem({ project }: Props) {
 
         {/* expanded items: board tab + terminal list */}
         {expanded && (
-          <div className="ml-5">
+          <div className="ml-13">
             {/* Board tab */}
             <div
               onClick={() => handleOpenBoard()}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { FolderPlus, Settings } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useAppStore } from "../stores/app-store";
@@ -9,7 +9,52 @@ import { TagSettingsModal } from "./tag-settings-modal";
 export function Sidebar() {
   const projects = useAppStore((s) => s.projects);
   const addProject = useAppStore((s) => s.addProject);
+  const reorderProjects = useAppStore((s) => s.reorderProjects);
   const [showTagSettings, setShowTagSettings] = useState(false);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const dragFromRef = useRef<number | null>(null);
+  const dragToRef = useRef<number | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const startDrag = useCallback((index: number) => {
+    dragFromRef.current = index;
+    dragToRef.current = null;
+    setDraggingIndex(index);
+    setDropTargetIndex(null);
+
+    function onMove(e: PointerEvent) {
+      if (!listRef.current) return;
+      const items = listRef.current.querySelectorAll<HTMLElement>("[data-project-index]");
+      let target: number | null = null;
+      for (const item of items) {
+        const rect = item.getBoundingClientRect();
+        if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          target = parseInt(item.dataset.projectIndex!, 10);
+          break;
+        }
+      }
+      dragToRef.current = target;
+      setDropTargetIndex(target);
+    }
+
+    function onUp() {
+      const from = dragFromRef.current;
+      const to = dragToRef.current;
+      if (from !== null && to !== null && from !== to) {
+        reorderProjects(from, to);
+      }
+      dragFromRef.current = null;
+      dragToRef.current = null;
+      setDraggingIndex(null);
+      setDropTargetIndex(null);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }, [reorderProjects]);
 
   return (
     <aside className="flex flex-col h-screen border-r border-[var(--border-color)] bg-[var(--bg-sidebar)] select-none">
@@ -37,7 +82,7 @@ export function Sidebar() {
       </div>
 
       {/* project list */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={listRef} className="flex-1 overflow-y-auto">
         {projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full px-4 text-center">
             <FolderPlus
@@ -49,7 +94,16 @@ export function Sidebar() {
             </p>
           </div>
         ) : (
-          projects.map((p) => <ProjectItem key={p.id} project={p} />)
+          projects.map((p, i) => (
+            <ProjectItem
+              key={p.id}
+              project={p}
+              index={i}
+              isDragOver={dropTargetIndex === i && draggingIndex !== i}
+              isDragging={draggingIndex === i}
+              onGripPointerDown={() => startDrag(i)}
+            />
+          ))
         )}
       </div>
 

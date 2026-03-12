@@ -26,6 +26,7 @@ interface AppStore {
   addProject: () => Promise<void>;
   removeProject: (id: string) => Promise<void>;
   renameProject: (id: string, name: string) => void;
+  reorderProjects: (fromIndex: number, toIndex: number) => void;
   setActiveProject: (id: string) => void;
 
   // view actions
@@ -144,6 +145,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
   renameProject: (id, name) => {
     const { projects } = get();
     const updated = projects.map((p) => (p.id === id ? { ...p, name } : p));
+    set({ projects: updated });
+    saveProjects(updated);
+  },
+
+  reorderProjects: (fromIndex, toIndex) => {
+    const { projects } = get();
+    if (fromIndex === toIndex) return;
+    const updated = [...projects];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
     set({ projects: updated });
     saveProjects(updated);
   },

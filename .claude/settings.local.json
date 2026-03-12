@@ -43,7 +43,15 @@
       "Bash(find /Users/tringuyen/github.com/edynt/termoras/src-tauri/target -name \"*.dmg\" 2>/dev/null | head -5)",
       "Bash(convert -size 660x400 xc:'#1a1a2e' /Users/tringuyen/github.com/edynt/termoras/src-tauri/icons/dmg-background.png 2>&1)",
       "Bash(npm ls:*)",
-      "WebFetch(domain:v2.tauri.app)"
+      "WebFetch(domain:v2.tauri.app)",
+      "Bash(grep -n \"className.*ml-\\\\|className.*pl-\\\\|className.*indent\" /Users/tringuyen/Downloads/termoras/termoras/src/components/*.tsx)",
+      "Bash(grep -r \"project.*file\\\\|file.*structure\\\\|folder.*tree\\\\|directory.*tree\" /Users/tringuyen/Downloads/termoras/termoras/src --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | head -20)",
+      "Bash(grep -n \"ml-\\\\|pl-\\\\|padding\\\\|margin\\\\|indent\" /Users/tringuyen/Downloads/termoras/termoras/src/components/*.tsx)",
+      "Bash(find /Users/tringuyen/Downloads/termoras/termoras -name \"*tree*\" -o -name \"*file*\" -o -name \"*explorer*\" -o -name \"*structure*\" 2>/dev/null | grep -v node_modules)",
+      "Bash(grep -rn \"render.*children\\\\|recursive\\\\|depth\\\\|level\\\\|leaf\\\\|node\\\\|parent\" /Users/tringuyen/Downloads/termoras/termoras/src --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | grep -i \"file\\\\|tree\\\\|folder\")",
+      "Bash(ls /Users/tringuyen/Downloads/termoras/termoras/src/*.ts* /Users/tringuyen/Downloads/termoras/termoras/src/**/*.ts* 2>/dev/null)",
+      "Bash(grep -n \"renderFile\\\\|renderFolder\\\\|renderTree\\\\|renderNode\\\\|renderStructure\" /Users/tringuyen/Downloads/termoras/termoras/src/components/*.tsx /Users/tringuyen/Downloads/termoras/termoras/src/lib/*.ts)",
+      "Bash(grep -n \"className.*map\\\\|map.*file\\\\|FileRow\\\\|map.*terminal\" /Users/tringuyen/Downloads/termoras/termoras/src/components/*.tsx)"
     ]
   }
 }
