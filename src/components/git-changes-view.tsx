@@ -170,11 +170,13 @@ export function GitChangesView() {
     setStaging(false);
   }
 
+  /** Commit: auto-stage all changes first, then commit */
   async function handleCommit() {
-    if (!project || !commitMsg.trim()) return;
+    if (!project || !commitMsg.trim() || files.length === 0) return;
     setCommitting(true);
     setActionError(null);
     try {
+      await gitStageAll(project.path);
       await gitCommit(project.path, commitMsg.trim());
       setCommitMsg("");
       await refresh();
@@ -395,7 +397,7 @@ export function GitChangesView() {
             value={commitMsg}
             onChange={(e) => setCommitMsg(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && commitMsg.trim()) handleCommit();
+              if (e.key === "Enter" && commitMsg.trim() && files.length > 0) handleCommit();
             }}
             placeholder="Commit message..."
             className="w-full text-xs px-2 py-1.5 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:border-[var(--accent-blue)]"
@@ -405,15 +407,15 @@ export function GitChangesView() {
           <div className="flex gap-1.5">
             <button
               onClick={handleCommit}
-              disabled={committing || !commitMsg.trim() || !status?.staged}
+              disabled={committing || !commitMsg.trim() || files.length === 0}
               className={`flex-1 flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded transition-colors ${
                 committing
                   ? "bg-[var(--accent-blue)]/25 text-[var(--accent-blue)] cursor-wait"
-                  : committing || !commitMsg.trim() || !status?.staged
+                  : !commitMsg.trim() || files.length === 0
                     ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
                     : "bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25"
               }`}
-              title={!status?.staged ? "No staged files" : !commitMsg.trim() ? "Enter a commit message" : "Commit staged changes"}
+              title={files.length === 0 ? "No changes" : !commitMsg.trim() ? "Enter a commit message" : "Stage all and commit"}
             >
               {committing ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
               {committing ? "Committing..." : "Commit"}
