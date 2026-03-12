@@ -82,7 +82,7 @@ export function KanbanCardEditor({ card, columnId, onClose, onCardAdded }: Props
         onChange={(e) => setContent(e.target.value)}
         placeholder="Content / command..."
         rows={2}
-        className="w-full text-[13px] bg-[var(--bg-hover)] rounded-md p-2.5 border-none outline-none resize-none mb-3 placeholder:text-[var(--text-secondary)]/60 leading-relaxed max-h-[40vh] overflow-y-auto"
+        className="w-full text-sm bg-[var(--bg-hover)] rounded-md p-2.5 border-none outline-none resize-none mb-3 placeholder:text-[var(--text-secondary)]/60 leading-relaxed max-h-[40vh] overflow-y-auto"
       />
 
       {/* Type selector — pill buttons (click to toggle) */}
@@ -95,7 +95,7 @@ export function KanbanCardEditor({ card, columnId, onClose, onCardAdded }: Props
               key={tag.id}
               onClick={() => setType(isActive ? null : tag.id)}
               title={tag.description ? `${tag.command ?? `/${tag.id}`} — ${tag.description}` : (tag.command ?? `/${tag.id}`)}
-              className={`text-xs font-semibold px-2.5 py-1 rounded-md transition-all ${
+              className={`text-sm font-semibold px-2.5 py-1 rounded-md transition-all ${
                 isActive
                   ? ""
                   : "bg-transparent text-[var(--text-secondary)] ring-1 ring-inset ring-[var(--border-color)] hover:ring-[var(--text-secondary)]/40"
@@ -110,19 +110,19 @@ export function KanbanCardEditor({ card, columnId, onClose, onCardAdded }: Props
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-[var(--text-secondary)]/60">
+        <span className="text-sm text-[var(--text-secondary)]/60">
           Enter to save
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={onClose}
-            className="text-[13px] px-3 py-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+            className="text-sm px-3 py-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="text-[13px] px-3.5 py-1.5 rounded-md bg-[var(--accent-blue)] text-white hover:opacity-90 font-medium transition-opacity"
+            className="text-sm px-3.5 py-1.5 rounded-md bg-[var(--accent-blue)] text-white hover:opacity-90 font-medium transition-opacity"
           >
             {card ? "Save" : "Add"}
           </button>

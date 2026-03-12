@@ -27,13 +27,13 @@ export function TagSettingsModal({ onClose }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-color)]">
-          <h2 className="text-sm font-semibold">Tag Settings</h2>
+          <h2 className="text-base font-semibold">Tag Settings</h2>
           <button
             onClick={onClose}
             className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
             title="Close"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
@@ -62,9 +62,9 @@ export function TagSettingsModal({ onClose }: Props) {
         <div className="px-4 py-3 border-t border-[var(--border-color)]">
           <button
             onClick={() => addTag("New Tag", randomColor())}
-            className="flex items-center gap-1.5 w-full justify-center py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-hover)]/50 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
+            className="flex items-center gap-1.5 w-full justify-center py-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-hover)]/50 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
           >
-            <Plus size={14} />
+            <Plus size={16} />
             Add Tag
           </button>
         </div>
@@ -127,14 +127,14 @@ function TagRow({
           title={expanded ? "Collapse" : "Expand"}
         >
           <ChevronRight
-            size={12}
+            size={14}
             className={`transition-transform duration-150 ${expanded ? "rotate-90" : ""}`}
           />
         </button>
         {/* Color dot — clickable */}
         <button
           onClick={onTogglePalette}
-          className="w-5 h-5 rounded-full shrink-0 hover:ring-2 hover:ring-offset-1 hover:ring-[var(--text-secondary)]/30 transition-all cursor-pointer"
+          className="w-7 h-7 rounded-full shrink-0 hover:ring-2 hover:ring-offset-1 hover:ring-[var(--text-secondary)]/30 transition-all cursor-pointer"
           style={styles.bar}
           title="Change color"
         />
@@ -151,7 +151,7 @@ function TagRow({
               (e.target as HTMLInputElement).blur();
             }
           }}
-          className="flex-1 text-xs font-medium bg-transparent border-none outline-none px-1 py-0.5 rounded hover:bg-[var(--bg-hover)] focus:bg-[var(--bg-hover)] transition-colors"
+          className="flex-1 text-sm font-medium bg-transparent border-none outline-none px-1 py-0.5 rounded hover:bg-[var(--bg-hover)] focus:bg-[var(--bg-hover)] transition-colors"
         />
         {/* Delete button */}
         <button
@@ -159,7 +159,7 @@ function TagRow({
           className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-all"
           title="Delete tag"
         >
-          <Trash2 size={12} />
+          <Trash2 size={14} />
         </button>
       </div>
 
@@ -175,7 +175,7 @@ function TagRow({
             onKeyDown={(e) => {
               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
             }}
-            className="w-full text-[11px] text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
+            className="w-full text-xs text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
           />
           <input
             value={command}
@@ -186,7 +186,7 @@ function TagRow({
             onKeyDown={(e) => {
               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
             }}
-            className="w-full text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
+            className="w-full text-xs font-mono text-[var(--text-secondary)] bg-[var(--bg-hover)]/50 rounded px-2 py-1 border-none outline-none placeholder:text-[var(--text-secondary)]/40 focus:bg-[var(--bg-hover)] transition-colors"
           />
         </div>
       )}
@@ -198,7 +198,7 @@ function TagRow({
             <button
               key={c.hex}
               onClick={() => onUpdate({ color: c.hex })}
-              className={`w-6 h-6 rounded-full hover:scale-110 transition-transform ${
+              className={`w-7 h-7 rounded-full hover:scale-110 transition-transform ${
                 tag.color === c.hex ? "ring-2 ring-offset-1 ring-[var(--text-primary)]" : ""
               }`}
               style={{ backgroundColor: c.hex }}

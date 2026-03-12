@@ -146,13 +146,13 @@ export function KanbanBoard() {
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-[var(--border-color)] shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-[var(--accent-blue)]/15 flex items-center justify-center">
-            <LayoutGrid size={13} className="text-[var(--accent-blue)]" />
+            <LayoutGrid size={15} className="text-[var(--accent-blue)]" />
           </div>
           <div>
             <span className="text-sm font-semibold">
               {activeProject?.name ?? "Board"}
             </span>
-            <span className="text-[10px] text-[var(--text-secondary)] ml-2">
+            <span className="text-xs text-[var(--text-secondary)] ml-2">
               {board.columns.length} columns · {totalCards} cards
             </span>
           </div>
@@ -160,9 +160,9 @@ export function KanbanBoard() {
         <div className="flex-1" />
         <button
           onClick={() => addColumn("New Column")}
-          className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >
-          <Plus size={13} />
+          <Plus size={15} />
           Column
         </button>
       </div>
@@ -191,7 +191,7 @@ export function KanbanBoard() {
             {board.columns.length === 0 && (
               <div className="flex flex-col items-center justify-center w-full gap-3 text-[var(--text-secondary)]">
                 <Columns3 size={32} strokeWidth={1.5} />
-                <p className="text-xs">No columns yet. Add one to get started.</p>
+                <p className="text-sm">No columns yet. Add one to get started.</p>
               </div>
             )}
           </div>

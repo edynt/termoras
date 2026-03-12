@@ -129,7 +129,7 @@ export function GitDiffViewer({ diff, filePath, isNewFile }: Props) {
 
   if (!diff) {
     return (
-      <div className="flex items-center justify-center h-full text-xs text-[var(--text-secondary)]">
+      <div className="flex items-center justify-center h-full text-sm text-[var(--text-secondary)]">
         No diff available (file may be untracked or binary)
       </div>
     );
@@ -142,17 +142,17 @@ export function GitDiffViewer({ diff, filePath, isNewFile }: Props) {
     return (
       <div className="h-full flex flex-col">
         <div className="flex items-center px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-sidebar)]">
-          <span className="text-xs font-mono font-medium">{filePath}</span>
-          <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-[var(--accent-green)]/15 text-[var(--accent-green)] font-medium">
+          <span className="text-sm font-mono font-medium">{filePath}</span>
+          <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-[var(--accent-green)]/15 text-[var(--accent-green)] font-medium">
             New file
           </span>
         </div>
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
+          <table className="w-full text-[13px] leading-[22px] font-mono border-collapse">
             <tbody>
               {highlightedLines.map((html, i) => (
                 <tr key={i} className="hover:bg-[var(--bg-hover)]">
-                  <td className="w-[40px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 text-[var(--text-secondary)]/30">
+                  <td className="w-[40px] min-w-[45px] px-2 py-0 text-right text-[12px] select-none border-r border-[var(--border-color)]/50 text-[var(--text-secondary)]/30">
                     {i + 1}
                   </td>
                   <td className="px-3 py-0 whitespace-pre text-[var(--text-primary)]" dangerouslySetInnerHTML={{ __html: html }} />
@@ -169,13 +169,13 @@ export function GitDiffViewer({ diff, filePath, isNewFile }: Props) {
     <div className="h-full flex flex-col">
       {/* File header with view mode toggle */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-sidebar)]">
-        <span className="text-xs font-mono font-medium">{filePath}</span>
+        <span className="text-sm font-mono font-medium">{filePath}</span>
         <button
           onClick={toggleMode}
-          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="flex items-center gap-1 text-xs px-2 py-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           title={viewMode === "split" ? "Switch to unified view" : "Switch to split view"}
         >
-          {viewMode === "split" ? <Rows3 size={13} /> : <Columns2 size={13} />}
+          {viewMode === "split" ? <Rows3 size={15} /> : <Columns2 size={15} />}
           {viewMode === "split" ? "Unified" : "Split"}
         </button>
       </div>
@@ -196,7 +196,7 @@ export function GitDiffViewer({ diff, filePath, isNewFile }: Props) {
 
 function UnifiedDiffTable({ lines, lang }: { lines: ParsedLine[]; lang: string | null }) {
   return (
-    <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
+    <table className="w-full text-[13px] leading-[22px] font-mono border-collapse">
       <tbody>
         {lines.map((line, i) => (
           <UnifiedDiffRow key={i} line={line} lang={lang} />
@@ -224,7 +224,7 @@ function UnifiedDiffRow({ line, lang }: { line: ParsedLine; lang: string | null 
         <td className="w-[1px] px-2 py-0 text-right text-[var(--diff-hunk-text)]/50 select-none border-r border-[var(--border-color)]">···</td>
         <td className="w-[1px] px-2 py-0 text-right text-[var(--diff-hunk-text)]/50 select-none border-r border-[var(--border-color)]">···</td>
         <td className="px-3 py-0 text-[var(--diff-hunk-text)] whitespace-pre">
-          <span className="text-[11px]">{line.content.match(/@@ .+? @@/)?.[0]}</span>
+          <span className="text-[12px]">{line.content.match(/@@ .+? @@/)?.[0]}</span>
           {readable && <span className="ml-2 text-[var(--diff-hunk-text)]/70">{readable}</span>}
         </td>
       </tr>
@@ -240,10 +240,10 @@ function UnifiedDiffRow({ line, lang }: { line: ParsedLine; lang: string | null 
 
   return (
     <tr className={`${rowBg} hover:brightness-95`}>
-      <td className={`w-[1px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 ${numClass}`}>
+      <td className={`w-[1px] min-w-[45px] px-2 py-0 text-right text-[12px] select-none border-r border-[var(--border-color)]/50 ${numClass}`}>
         {line.oldNum ?? ""}
       </td>
-      <td className={`w-[1px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 ${numClass}`}>
+      <td className={`w-[1px] min-w-[45px] px-2 py-0 text-right text-[12px] select-none border-r border-[var(--border-color)]/50 ${numClass}`}>
         {line.newNum ?? ""}
       </td>
       <td className="px-0 py-0 whitespace-pre text-[var(--text-primary)]">
@@ -297,9 +297,9 @@ function SplitDiffTable({ rows, lang }: { rows: SplitRow[]; lang: string | null 
 /** Table for one side of the split view */
 function SplitHalfTable({ rows, side, lang }: { rows: SplitRow[]; side: "old" | "new"; lang: string | null }) {
   return (
-    <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
+    <table className="w-full text-[13px] leading-[22px] font-mono border-collapse">
       <colgroup>
-        <col style={{ width: 40 }} />
+        <col style={{ width: 45 }} />
         <col />
       </colgroup>
       <tbody>
@@ -329,7 +329,7 @@ function SplitHalfRow({ row, side, lang }: { row: SplitRow; side: "old" | "new";
     return (
       <tr className="bg-[var(--diff-hunk-bg)]">
         <td colSpan={2} className="px-3 py-0 text-[var(--diff-hunk-text)] whitespace-pre">
-          <span className="text-[11px]">{hunkTag}</span>
+          <span className="text-[12px]">{hunkTag}</span>
           {readable && <span className="ml-2 text-[var(--diff-hunk-text)]/70">{readable}</span>}
         </td>
       </tr>
@@ -349,7 +349,7 @@ function SplitCell({ line, side, lang }: { line: ParsedLine | null; side: "old" 
   if (!line) {
     return (
       <>
-        <td className="w-[40px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 bg-[var(--bg-hover)]/50" />
+        <td className="w-[40px] min-w-[45px] px-2 py-0 text-right text-[12px] select-none border-r border-[var(--border-color)]/50 bg-[var(--bg-hover)]/50" />
         <td className="py-0 bg-[var(--bg-hover)]/50" />
       </>
     );
@@ -366,7 +366,7 @@ function SplitCell({ line, side, lang }: { line: ParsedLine | null; side: "old" 
 
   return (
     <>
-      <td className={`w-[40px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 ${numClass} ${bg}`}>
+      <td className={`w-[40px] min-w-[45px] px-2 py-0 text-right text-[12px] select-none border-r border-[var(--border-color)]/50 ${numClass} ${bg}`}>
         {lineNum ?? ""}
       </td>
       <td className={`px-0 py-0 whitespace-pre text-[var(--text-primary)] ${bg}`}>

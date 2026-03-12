@@ -94,14 +94,14 @@ export function TerminalItem({ terminal }: Props) {
       >
         {/* Alive/dead dot indicator */}
         <span
-          className={`shrink-0 w-1.5 h-1.5 rounded-full ${
+          className={`shrink-0 w-2 h-2 rounded-full ${
             terminal.isRunning
               ? "bg-[var(--accent-green,#22c55e)]"
               : "bg-[var(--text-secondary)]/30"
           }`}
           title={terminal.isRunning ? "Running" : "Exited"}
         />
-        <Terminal size={14} className="shrink-0" />
+        <Terminal size={16} className="shrink-0" />
 
         {editing ? (
           <input
@@ -111,10 +111,10 @@ export function TerminalItem({ terminal }: Props) {
             onBlur={commitRename}
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
-            className="text-xs flex-1 bg-[var(--bg-primary)] border border-[var(--accent-blue)] rounded px-1 py-0 outline-none text-[var(--text-primary)]"
+            className="text-sm flex-1 bg-[var(--bg-primary)] border border-[var(--accent-blue)] rounded px-1 py-0 outline-none text-[var(--text-primary)]"
           />
         ) : (
-          <span className="text-xs truncate flex-1">{terminal.name}</span>
+          <span className="text-sm truncate flex-1">{terminal.name}</span>
         )}
 
         <button
@@ -125,7 +125,7 @@ export function TerminalItem({ terminal }: Props) {
           className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
           title="Kill terminal"
         >
-          <X size={12} />
+          <X size={14} />
         </button>
       </div>
 
@@ -140,7 +140,7 @@ export function TerminalItem({ terminal }: Props) {
               setCtxMenu(null);
               startRename();
             }}
-            className="w-full text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+            className="w-full text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
             Rename
           </button>
@@ -149,7 +149,7 @@ export function TerminalItem({ terminal }: Props) {
               setCtxMenu(null);
               setConfirmKill(true);
             }}
-            className="w-full text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
+            className="w-full text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
           >
             Kill
           </button>
@@ -163,11 +163,11 @@ export function TerminalItem({ terminal }: Props) {
           onClick={() => setConfirmKill(false)}
         >
           <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[300px]"
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-sm font-semibold mb-1">Kill Terminal</p>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
+            <p className="text-base font-semibold mb-2">Kill Terminal</p>
+            <p className="text-sm text-[var(--text-secondary)] mb-5">
               Are you sure you want to kill{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {terminal.name}
@@ -177,13 +177,13 @@ export function TerminalItem({ terminal }: Props) {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setConfirmKill(false)}
-                className="text-xs px-3 py-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+                className="text-sm px-4 py-2 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleKill}
-                className="text-xs px-3 py-1.5 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
+                className="text-sm px-4 py-2 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
               >
                 Kill
               </button>

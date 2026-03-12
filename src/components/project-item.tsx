@@ -155,7 +155,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           {/* Drag handle — pointer-based */}
           <span title="Drag to reorder" onPointerDown={(e) => { e.stopPropagation(); onGripPointerDown(); }}>
             <GripVertical
-              size={14}
+              size={16}
               className="shrink-0 opacity-0 group-hover:opacity-40 cursor-grab active:cursor-grabbing transition-opacity"
             />
           </span>
@@ -191,7 +191,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           {/* git indicator */}
           {hasGit && (
             <span
-              className="shrink-0 text-[11px] font-bold text-[var(--accent-red)] opacity-70"
+              className="shrink-0 text-xs font-bold text-[var(--accent-red)] opacity-70"
               title={gitStatus ? `${gitStatus.branch} — ${gitStatus.modified + gitStatus.untracked} changed` : "git"}
             >
               git
@@ -201,7 +201,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           {/* git changes count */}
           {gitStatus && (gitStatus.modified + gitStatus.untracked + gitStatus.staged) > 0 && (
             <span
-              className="shrink-0 text-[11px] font-medium px-1 py-0.5 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]"
+              className="shrink-0 text-xs font-medium px-1 py-0.5 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]"
               title={`${gitStatus.staged} staged, ${gitStatus.modified} modified, ${gitStatus.untracked} untracked`}
             >
               {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
@@ -217,7 +217,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
             title="Open board"
           >
-            <LayoutGrid size={14} />
+            <LayoutGrid size={16} />
           </button>
           <button
             onClick={(e) => {
@@ -227,7 +227,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
             title="New terminal"
           >
-            <Plus size={14} />
+            <Plus size={16} />
           </button>
         </div>
 
@@ -243,8 +243,8 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
                   : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
               }`}
             >
-              <LayoutGrid size={14} className="shrink-0" />
-              <span className="text-xs truncate flex-1">Board</span>
+              <LayoutGrid size={16} className="shrink-0" />
+              <span className="text-sm truncate flex-1">Board</span>
             </div>
 
             {/* Git Changes tab — only if git repo */}
@@ -257,10 +257,10 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
                     : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}
               >
-                <GitBranch size={14} className="shrink-0" />
-                <span className="text-xs truncate flex-1">Changes</span>
+                <GitBranch size={16} className="shrink-0" />
+                <span className="text-sm truncate flex-1">Changes</span>
                 {gitStatus && (gitStatus.modified + gitStatus.untracked + gitStatus.staged) > 0 && (
-                  <span className="text-[11px] font-medium px-1 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]">
+                  <span className="text-xs font-medium px-1 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]">
                     {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
                   </span>
                 )}
@@ -286,9 +286,9 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
               setCtxMenu(null);
               handleOpenBoard();
             }}
-            className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <LayoutGrid size={14} />
+            <LayoutGrid size={16} />
             Create Board
           </button>
           <button
@@ -296,9 +296,9 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
               setCtxMenu(null);
               handleNewTerminal();
             }}
-            className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Terminal size={14} />
+            <Terminal size={16} />
             Create Terminal
           </button>
           <button
@@ -306,9 +306,9 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
               setCtxMenu(null);
               openInVscode(project.path);
             }}
-            className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Code2 size={14} />
+            <Code2 size={16} />
             Open in VS Code
           </button>
           <button
@@ -317,15 +317,15 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
               setRenameName(project.name);
               setRenaming(true);
             }}
-            className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Pencil size={14} />
+            <Pencil size={16} />
             Rename
           </button>
           <div className="my-1 border-t border-[var(--border-color)]" />
           {/* Folder color picker */}
           <div className="px-3 py-1.5">
-            <span className="text-xs text-[var(--text-secondary)] mb-1 block">Folder Color</span>
+            <span className="text-sm text-[var(--text-secondary)] mb-1 block">Folder Color</span>
             <div className="flex items-center gap-1">
               {FOLDER_COLORS.map((c) => (
                 <button
@@ -335,7 +335,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
                     setProjectColor(project.id, c.value);
                     setCtxMenu(null);
                   }}
-                  className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-125 ${
+                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-125 ${
                     (project.color || undefined) === c.value ? "scale-125 ring-1 ring-offset-1 ring-[var(--accent-blue)]" : ""
                   }`}
                   style={{
@@ -353,9 +353,9 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
               setCtxMenu(null);
               setConfirmDelete(true);
             }}
-            className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
           >
-            <Trash2 size={14} />
+            <Trash2 size={16} />
             Delete Project
           </button>
         </div>
@@ -368,11 +368,11 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           onClick={() => setConfirmDelete(false)}
         >
           <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[300px]"
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-sm font-semibold mb-1">Delete Project</p>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
+            <p className="text-base font-semibold mb-2">Delete Project</p>
+            <p className="text-sm text-[var(--text-secondary)] mb-5">
               Are you sure you want to delete{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {project.name}
@@ -382,7 +382,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="text-xs px-3 py-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+                className="text-sm px-4 py-2 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
               >
                 Cancel
               </button>
@@ -391,7 +391,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
                   setConfirmDelete(false);
                   removeProject(project.id);
                 }}
-                className="text-xs px-3 py-1.5 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
+                className="text-sm px-4 py-2 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
               >
                 Delete
               </button>

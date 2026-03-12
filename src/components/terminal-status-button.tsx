@@ -54,19 +54,19 @@ export function TerminalStatusButton() {
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         title={`${totalAlive} of ${totalCount} terminals running`}
       >
-        <Terminal size={16} />
-        <span className="text-xs font-medium">
+        <Terminal size={18} />
+        <span className="text-sm font-medium">
           {totalAlive}/{totalCount}
         </span>
         {totalAlive > 0 && (
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green,#22c55e)]" />
+          <span className="w-2 h-2 rounded-full bg-[var(--accent-green,#22c55e)]" />
         )}
       </button>
 
       {/* Popover with per-project terminal list */}
       {open && groups.length > 0 && (
         <div className="absolute bottom-full left-0 mb-1 w-60 max-h-[300px] overflow-y-auto rounded-md border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-lg py-1 z-50">
-          <div className="px-3 py-1.5 text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+          <div className="px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
             Terminals
           </div>
           {groups.map((g) => (
@@ -78,7 +78,7 @@ export function TerminalStatusButton() {
                   setActiveView("terminal");
                   setOpen(false);
                 }}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-3 py-1.5 text-sm font-semibold hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
               >
                 <span className="truncate text-[var(--text-primary)]">{g.name}</span>
                 <span className="shrink-0 ml-2 text-[var(--text-secondary)]">
@@ -89,11 +89,11 @@ export function TerminalStatusButton() {
               {g.terminals.map((t) => (
                 <div
                   key={t.id}
-                  className="group flex items-center gap-1.5 pl-6 pr-2 py-1 text-xs hover:bg-[var(--bg-hover)] transition-colors"
+                  className="group flex items-center gap-1.5 pl-6 pr-2 py-1 text-sm hover:bg-[var(--bg-hover)] transition-colors"
                 >
                   {/* Running indicator */}
                   <span
-                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    className={`w-2 h-2 rounded-full shrink-0 ${
                       t.isRunning ? "bg-[var(--accent-green,#22c55e)]" : "bg-[var(--text-secondary)]/30"
                     }`}
                   />
@@ -117,7 +117,7 @@ export function TerminalStatusButton() {
                     className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--accent-red)]/15 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-all"
                     title={`Kill ${t.name}`}
                   >
-                    <X size={12} />
+                    <X size={14} />
                   </button>
                 </div>
               ))}
@@ -133,11 +133,11 @@ export function TerminalStatusButton() {
           onClick={() => setConfirmKill(null)}
         >
           <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[300px]"
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-sm font-semibold mb-1">Kill Terminal</p>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
+            <p className="text-base font-semibold mb-2">Kill Terminal</p>
+            <p className="text-sm text-[var(--text-secondary)] mb-5">
               Kill{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {confirmKill.name}
@@ -147,7 +147,7 @@ export function TerminalStatusButton() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setConfirmKill(null)}
-                className="text-xs px-3 py-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+                className="text-sm px-4 py-2 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
               >
                 Cancel
               </button>
@@ -156,7 +156,7 @@ export function TerminalStatusButton() {
                   handleKill(confirmKill.id);
                   setConfirmKill(null);
                 }}
-                className="text-xs px-3 py-1.5 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
+                className="text-sm px-4 py-2 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
               >
                 Kill
               </button>

@@ -162,25 +162,25 @@ export function MainPanel() {
                 className="px-2 h-6 flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
                 title="Hide terminal"
               >
-                <X size={12} />
+                <X size={14} />
               </button>
             </>
           ) : hasTerminals ? (
             <button
               onClick={toggleTerminal}
-              className="w-full h-6 flex items-center justify-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+              className="w-full h-6 flex items-center justify-center gap-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
               title="Show terminal"
             >
-              <Terminal size={12} />
+              <Terminal size={14} />
               <span>Terminal</span>
             </button>
           ) : (
             <button
               onClick={handleCreateTerminal}
-              className="w-full h-6 flex items-center justify-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--accent-blue)] hover:bg-[var(--bg-hover)] transition-colors"
+              className="w-full h-6 flex items-center justify-center gap-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--accent-blue)] hover:bg-[var(--bg-hover)] transition-colors"
               title="Create a new terminal"
             >
-              <Plus size={12} />
+              <Plus size={14} />
               <span>New Terminal</span>
             </button>
           )}

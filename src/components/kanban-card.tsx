@@ -146,7 +146,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                   setShowTypeMenu(true);
                 }
               }}
-              className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+              className="inline-flex items-center gap-1 text-sm font-semibold px-2 py-1 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
               style={typeStyle.badge}
               title="Change type"
             >
@@ -154,12 +154,12 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                 <>
                   <span className="w-2 h-2 rounded-full" style={typeStyle.bar} />
                   {currentTag?.label ?? card.type}
-                  <ChevronDown size={12} />
+                  <ChevronDown size={14} />
                 </>
               ) : (
                 <>
-                  <Tag size={12} />
-                  <ChevronDown size={12} />
+                  <Tag size={14} />
+                  <ChevronDown size={14} />
                 </>
               )}
             </button>
@@ -182,14 +182,14 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                         setShowTypeMenu(false);
                       }}
                       title={tag.description ?? ""}
-                      className={`w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] transition-colors ${
+                      className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] transition-colors ${
                         isSelected ? "font-semibold" : ""
                       }`}
                     >
                       <span className="w-2 h-2 rounded-full" style={s.bar} />
                       <span>{tag.label}</span>
                       {isSelected && (
-                        <Check size={12} className="ml-auto text-[var(--accent-blue)]" />
+                        <Check size={14} className="ml-auto text-[var(--accent-blue)]" />
                       )}
                     </button>
                   );
@@ -214,11 +214,11 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                 title="Run in terminal"
               >
                 {runState === "running" ? (
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin" />
                 ) : runState === "done" ? (
-                  <Check size={16} />
+                  <Check size={18} />
                 ) : (
-                  <Play size={16} />
+                  <Play size={18} />
                 )}
               </button>
             )}
@@ -228,9 +228,9 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
               title="Copy command"
             >
               {copied ? (
-                <Check size={16} className="text-[var(--accent-green)]" />
+                <Check size={18} className="text-[var(--accent-green)]" />
               ) : (
-                <Copy size={16} />
+                <Copy size={18} />
               )}
             </button>
             <button
@@ -241,14 +241,14 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
               className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               title="Edit card"
             >
-              <Pencil size={16} />
+              <Pencil size={18} />
             </button>
             <button
               onClick={handleDelete}
               className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-colors"
               title="Delete card"
             >
-              <Trash2 size={16} />
+              <Trash2 size={18} />
             </button>
           </div>
         </div>
@@ -262,7 +262,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
         {card.content && (
           <p
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-            className={`text-xs text-[var(--text-secondary)] leading-relaxed mb-2 cursor-pointer ${expanded ? "" : "line-clamp-3"}`}
+            className={`text-sm text-[var(--text-secondary)] leading-relaxed mb-2 cursor-pointer ${expanded ? "" : "line-clamp-3"}`}
           >
             {card.content}
           </p>
@@ -271,28 +271,28 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
         {/* Command preview — monospace chip */}
         {card.content && (
           <div className="flex items-center gap-2">
-            <span className="inline-block text-xs font-mono px-2 py-1 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
+            <span className="inline-block text-sm font-mono px-2 py-1 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
               {tagPrefix ? `${tagPrefix} ` : ""}{card.content.length > 40 ? card.content.slice(0, 40) + "…" : card.content}
             </span>
             {/* Auto-run status badge */}
             {autoRunStatus === "pending" && (
-              <span className="shrink-0 flex items-center gap-1 text-[10px] text-[var(--text-secondary)] bg-[var(--bg-hover)] px-1.5 py-0.5 rounded" title="Queued">
-                <Clock size={10} /> Queue
+              <span className="shrink-0 flex items-center gap-1 text-xs text-[var(--text-secondary)] bg-[var(--bg-hover)] px-1.5 py-0.5 rounded" title="Queued">
+                <Clock size={12} /> Queue
               </span>
             )}
             {autoRunStatus === "running" && (
-              <span className="shrink-0 flex items-center gap-1 text-[10px] text-[var(--accent-blue)] bg-[var(--accent-blue)]/10 px-1.5 py-0.5 rounded" title="Running">
-                <Loader2 size={10} className="animate-spin" /> Running
+              <span className="shrink-0 flex items-center gap-1 text-xs text-[var(--accent-blue)] bg-[var(--accent-blue)]/10 px-1.5 py-0.5 rounded" title="Running">
+                <Loader2 size={12} className="animate-spin" /> Running
               </span>
             )}
             {autoRunStatus === "done" && (
-              <span className="shrink-0 flex items-center gap-1 text-[10px] text-[var(--accent-green)] bg-[var(--accent-green)]/10 px-1.5 py-0.5 rounded" title="Done">
-                <Check size={10} /> Done
+              <span className="shrink-0 flex items-center gap-1 text-xs text-[var(--accent-green)] bg-[var(--accent-green)]/10 px-1.5 py-0.5 rounded" title="Done">
+                <Check size={12} /> Done
               </span>
             )}
             {autoRunStatus === "error" && (
-              <span className="shrink-0 flex items-center gap-1 text-[10px] text-[var(--accent-red)] bg-[var(--accent-red)]/10 px-1.5 py-0.5 rounded" title="Error">
-                <AlertCircle size={10} /> Error
+              <span className="shrink-0 flex items-center gap-1 text-xs text-[var(--accent-red)] bg-[var(--accent-red)]/10 px-1.5 py-0.5 rounded" title="Error">
+                <AlertCircle size={12} /> Error
               </span>
             )}
           </div>
@@ -306,11 +306,11 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
           onClick={() => setConfirmDelete(false)}
         >
           <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[300px]"
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-sm font-semibold mb-1">Delete Card</p>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
+            <p className="text-base font-semibold mb-2">Delete Card</p>
+            <p className="text-sm text-[var(--text-secondary)] mb-5">
               Are you sure you want to delete{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {card.title}
@@ -320,7 +320,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="px-3 py-1.5 text-xs rounded-md border border-[var(--border-color)] hover:bg-[var(--bg-hover)] transition-colors"
+                className="px-4 py-2 text-sm rounded-md border border-[var(--border-color)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 Cancel
               </button>
@@ -329,7 +329,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
                   setConfirmDelete(false);
                   removeCard(card.id);
                 }}
-                className="px-3 py-1.5 text-xs rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+                className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 Delete
               </button>

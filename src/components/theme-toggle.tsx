@@ -25,7 +25,7 @@ export function ThemeToggle() {
           }`}
           title={label}
         >
-          <Icon size={12} />
+          <Icon size={14} />
         </button>
       ))}
     </div>

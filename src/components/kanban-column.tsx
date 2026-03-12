@@ -68,7 +68,7 @@ export function KanbanColumn({ column, cards }: Props) {
         {/* Auto-run indicator */}
         {column.autoRun && (
           <span className="text-[var(--accent-green)]" title="Auto-run enabled">
-            <Zap size={13} />
+            <Zap size={15} />
           </span>
         )}
 
@@ -83,7 +83,7 @@ export function KanbanColumn({ column, cards }: Props) {
           className="p-0.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
           title="Column menu"
         >
-          <MoreHorizontal size={16} />
+          <MoreHorizontal size={18} />
         </button>
 
         {showMenu && (
@@ -92,25 +92,25 @@ export function KanbanColumn({ column, cards }: Props) {
             <div className="absolute right-2 top-9 z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1">
               <button
                 onClick={() => { setShowMenu(false); toggleAutoRun(column.id); }}
-                className={`w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] ${
+                className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] ${
                   column.autoRun ? "text-[var(--accent-green)]" : "text-[var(--text-primary)]"
                 }`}
               >
-                <Zap size={14} />
+                <Zap size={16} />
                 {column.autoRun ? "Auto-run ON" : "Auto-run"}
               </button>
               <button
                 onClick={() => { setShowMenu(false); setIsEditingTitle(true); }}
-                className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+                className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
               >
-                <Pencil size={14} />
+                <Pencil size={16} />
                 Rename
               </button>
               <button
                 onClick={() => { setShowMenu(false); setConfirmDelete(true); }}
-                className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
+                className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
               >
-                <Trash2 size={14} />
+                <Trash2 size={16} />
                 Delete
               </button>
             </div>
@@ -150,9 +150,9 @@ export function KanbanColumn({ column, cards }: Props) {
       {!isAddingCard && (
         <button
           onClick={() => setIsAddingCard(true)}
-          className="flex items-center justify-center gap-1.5 mx-2 mb-2 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-hover)]/50 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
+          className="flex items-center justify-center gap-1.5 mx-2 mb-2 py-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-hover)]/50 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
         >
-          <Plus size={16} />
+          <Plus size={18} />
           Add card
         </button>
       )}
@@ -165,11 +165,11 @@ export function KanbanColumn({ column, cards }: Props) {
         onClick={() => setConfirmDelete(false)}
       >
         <div
-          className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-4 w-[300px]"
+          className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-sm font-semibold mb-1">Delete Column</p>
-          <p className="text-xs text-[var(--text-secondary)] mb-4">
+          <p className="text-base font-semibold mb-2">Delete Column</p>
+          <p className="text-sm text-[var(--text-secondary)] mb-5">
             Are you sure you want to delete{" "}
             <span className="font-medium text-[var(--text-primary)]">
               {column.title}
@@ -179,7 +179,7 @@ export function KanbanColumn({ column, cards }: Props) {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setConfirmDelete(false)}
-              className="text-xs px-3 py-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+              className="text-sm px-4 py-2 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
             >
               Cancel
             </button>
@@ -188,7 +188,7 @@ export function KanbanColumn({ column, cards }: Props) {
                 setConfirmDelete(false);
                 removeColumn(column.id);
               }}
-              className="text-xs px-3 py-1.5 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
+              className="text-sm px-4 py-2 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
             >
               Delete
             </button>
