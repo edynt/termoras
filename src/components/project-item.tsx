@@ -155,11 +155,12 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           style={isActive ? { borderLeftColor: project.color || "var(--accent-blue)" } : undefined}
         >
           {/* Drag handle — pointer-based */}
-          <GripVertical
-            size={14}
-            className="shrink-0 opacity-0 group-hover:opacity-40 cursor-grab active:cursor-grabbing transition-opacity"
-            onPointerDown={(e) => { e.stopPropagation(); onGripPointerDown(); }}
-          />
+          <span title="Drag to reorder" onPointerDown={(e) => { e.stopPropagation(); onGripPointerDown(); }}>
+            <GripVertical
+              size={14}
+              className="shrink-0 opacity-0 group-hover:opacity-40 cursor-grab active:cursor-grabbing transition-opacity"
+            />
+          </span>
           {expanded ? (
             <ChevronDown size={16} className="shrink-0" />
           ) : (

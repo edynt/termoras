@@ -71,6 +71,7 @@ export function KanbanColumn({ column, cards }: Props) {
         <button
           onClick={() => setShowMenu(!showMenu)}
           className="p-0.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+          title="Column menu"
         >
           <MoreHorizontal size={16} />
         </button>

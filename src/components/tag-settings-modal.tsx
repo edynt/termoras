@@ -31,6 +31,7 @@ export function TagSettingsModal({ onClose }: Props) {
           <button
             onClick={onClose}
             className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+            title="Close"
           >
             <X size={16} />
           </button>
