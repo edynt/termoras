@@ -4,6 +4,7 @@ import { useAppStore } from "../stores/app-store";
 import {
   gitChangedFiles,
   gitFileDiff,
+  readFileContent,
   gitStatusSummary,
   gitLastCommitMessage,
   gitStageAll,
@@ -31,8 +32,10 @@ export function GitChangesView() {
 
   const [files, setFiles] = useState<GitChangedFile[]>([]);
   const [status, setStatus] = useState<GitStatusSummary | null>(null);
-  const [selectedFile, setSelectedFile] = useState<{ path: string; staged: boolean } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ path: string; staged: boolean; status?: string } | null>(null);
   const [diff, setDiff] = useState<string>("");
+  /** True when viewing a new/untracked file (raw content, not diff) */
+  const [isNewFile, setIsNewFile] = useState(false);
   const [loading, setLoading] = useState(false);
   const [commitMsg, setCommitMsg] = useState("");
   const [staging, setStaging] = useState(false);
@@ -257,15 +260,26 @@ export function GitChangesView() {
     setConfirmRevert(null);
   }
 
-  // Load diff when a file is selected
+  // Load diff (or raw content for new files) when a file is selected
   useEffect(() => {
     if (!project || !selectedFile) {
       setDiff("");
+      setIsNewFile(false);
       return;
     }
-    gitFileDiff(project.path, selectedFile.path, selectedFile.staged)
-      .then(setDiff)
-      .catch(() => setDiff(""));
+    // New/untracked files have no diff — load raw content instead
+    const isUntracked = selectedFile.status === "?" || (selectedFile.status === "A" && !selectedFile.staged);
+    if (isUntracked) {
+      setIsNewFile(true);
+      readFileContent(project.path, selectedFile.path)
+        .then(setDiff)
+        .catch(() => setDiff(""));
+    } else {
+      setIsNewFile(false);
+      gitFileDiff(project.path, selectedFile.path, selectedFile.staged)
+        .then(setDiff)
+        .catch(() => setDiff(""));
+    }
   }, [project, selectedFile]);
 
   if (!project) {
@@ -446,10 +460,10 @@ export function GitChangesView() {
         className="w-1 shrink-0 cursor-col-resize hover:bg-[var(--accent-blue)]/30 active:bg-[var(--accent-blue)]/50 transition-colors"
       />
 
-      {/* Diff viewer */}
+      {/* Diff viewer / File content viewer */}
       <div className="flex-1 min-w-0 overflow-auto bg-[var(--bg-primary)]">
         {selectedFile ? (
-          <GitDiffViewer diff={diff} filePath={selectedFile.path} />
+          <GitDiffViewer diff={diff} filePath={selectedFile.path} isNewFile={isNewFile} />
         ) : (
           <div className="flex items-center justify-center h-full text-xs text-[var(--text-secondary)]">
             Select a file to view changes
@@ -530,8 +544,8 @@ function FileSection({
 }: {
   title: string;
   files: GitChangedFile[];
-  selectedFile: { path: string; staged: boolean } | null;
-  onSelect: (f: { path: string; staged: boolean }) => void;
+  selectedFile: { path: string; staged: boolean; status?: string } | null;
+  onSelect: (f: { path: string; staged: boolean; status?: string }) => void;
   actionIcon: "stage" | "unstage";
   onFileAction: (filePath: string) => void;
   onSectionAction: () => void;
@@ -607,7 +621,7 @@ function FileSection({
 
             {/* File row — clickable to view diff */}
             <button
-              onClick={() => onSelect({ path: f.path, staged: f.staged })}
+              onClick={() => onSelect({ path: f.path, staged: f.staged, status: f.status })}
               className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-xs min-w-0 cursor-pointer"
             >
               <FileText size={14} className="shrink-0" />
@@ -621,19 +635,20 @@ function FileSection({
   );
 }
 
-/** Small colored badge for file status */
+/** Colored tag badge for file status */
 function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    M: "text-[var(--accent-blue)]",
-    A: "text-[var(--accent-green)]",
-    D: "text-[var(--accent-red)]",
-    R: "text-[var(--accent-blue)]",
-    "?": "text-[var(--text-secondary)]",
+  const config: Record<string, { label: string; color: string; bg: string }> = {
+    M: { label: "Modified", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
+    A: { label: "Added", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
+    D: { label: "Deleted", color: "text-[var(--accent-red)]", bg: "bg-[var(--accent-red)]/12" },
+    R: { label: "Renamed", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
+    "?": { label: "New", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
   };
+  const { label, color, bg } = config[status] ?? { label: status, color: "text-[var(--text-secondary)]", bg: "bg-[var(--text-secondary)]/10" };
 
   return (
-    <span className={`text-xs font-bold shrink-0 ${colors[status] ?? "text-[var(--text-secondary)]"}`}>
-      {status}
+    <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ${color} ${bg}`}>
+      {label}
     </span>
   );
 }

@@ -62,6 +62,11 @@ export async function gitChangedFiles(path: string): Promise<GitChangedFile[]> {
   return invoke<GitChangedFile[]>("git_changed_files", { path });
 }
 
+/** Read raw file content (for new/untracked files) */
+export async function readFileContent(path: string, filePath: string): Promise<string> {
+  return invoke<string>("read_file_content", { path, filePath });
+}
+
 /** Get diff for a specific file */
 export async function gitFileDiff(path: string, filePath: string, staged: boolean): Promise<string> {
   return invoke<string>("git_file_diff", { path, filePath, staged });

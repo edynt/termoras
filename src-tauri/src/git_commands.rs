@@ -128,6 +128,14 @@ pub fn git_changed_files(path: String) -> Result<Vec<GitChangedFile>, String> {
     Ok(files)
 }
 
+/// Read raw file content (for new/untracked files that have no diff)
+#[tauri::command]
+pub fn read_file_content(path: String, file_path: String) -> Result<String, String> {
+    let full = Path::new(&path).join(&file_path);
+    std::fs::read_to_string(&full)
+        .map_err(|e| format!("Failed to read file: {}", e))
+}
+
 /// Get diff for a specific file
 #[tauri::command]
 pub fn git_file_diff(path: String, file_path: String, staged: bool) -> Result<String, String> {

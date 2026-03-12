@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Columns2, Rows3 } from "lucide-react";
+import { detectLanguage, highlightCode, highlightLine } from "../lib/syntax-highlight";
 
 type DiffViewMode = "split" | "unified";
 const VIEW_MODE_KEY = "termoras-diff-view-mode";
@@ -7,6 +8,8 @@ const VIEW_MODE_KEY = "termoras-diff-view-mode";
 interface Props {
   diff: string;
   filePath: string;
+  /** When true, `diff` contains raw file content (not a unified diff) */
+  isNewFile?: boolean;
 }
 
 interface ParsedLine {
@@ -104,7 +107,7 @@ function buildSplitRows(lines: ParsedLine[]): SplitRow[] {
 }
 
 /** Render git diff with toggle between split and unified views */
-export function GitDiffViewer({ diff, filePath }: Props) {
+export function GitDiffViewer({ diff, filePath, isNewFile }: Props) {
   const [viewMode, setViewMode] = useState<DiffViewMode>(() => {
     try {
       const saved = localStorage.getItem(VIEW_MODE_KEY);
@@ -114,6 +117,7 @@ export function GitDiffViewer({ diff, filePath }: Props) {
     }
   });
 
+  const lang = useMemo(() => detectLanguage(filePath), [filePath]);
   const lines = useMemo(() => parseDiff(diff), [diff]);
   const splitRows = useMemo(() => buildSplitRows(lines), [lines]);
 
@@ -127,6 +131,36 @@ export function GitDiffViewer({ diff, filePath }: Props) {
     return (
       <div className="flex items-center justify-center h-full text-xs text-[var(--text-secondary)]">
         No diff available (file may be untracked or binary)
+      </div>
+    );
+  }
+
+  // New/untracked files: show raw content with syntax highlighting (no split/diff view)
+  if (isNewFile) {
+    const lang = detectLanguage(filePath);
+    const highlightedLines = highlightCode(diff, lang);
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center px-4 py-2 border-b border-[var(--border-color)] bg-[var(--bg-sidebar)]">
+          <span className="text-xs font-mono font-medium">{filePath}</span>
+          <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-[var(--accent-green)]/15 text-[var(--accent-green)] font-medium">
+            New file
+          </span>
+        </div>
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
+            <tbody>
+              {highlightedLines.map((html, i) => (
+                <tr key={i} className="hover:bg-[var(--bg-hover)]">
+                  <td className="w-[40px] min-w-[40px] px-2 py-0 text-right text-[11px] select-none border-r border-[var(--border-color)]/50 text-[var(--text-secondary)]/30">
+                    {i + 1}
+                  </td>
+                  <td className="px-3 py-0 whitespace-pre text-[var(--text-primary)]" dangerouslySetInnerHTML={{ __html: html }} />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
@@ -149,9 +183,9 @@ export function GitDiffViewer({ diff, filePath }: Props) {
       {/* Diff content */}
       <div className="flex-1 overflow-auto">
         {viewMode === "unified" ? (
-          <UnifiedDiffTable lines={lines} />
+          <UnifiedDiffTable lines={lines} lang={lang} />
         ) : (
-          <SplitDiffTable rows={splitRows} />
+          <SplitDiffTable rows={splitRows} lang={lang} />
         )}
       </div>
     </div>
@@ -160,19 +194,19 @@ export function GitDiffViewer({ diff, filePath }: Props) {
 
 /* ─── Unified view (original) ─── */
 
-function UnifiedDiffTable({ lines }: { lines: ParsedLine[] }) {
+function UnifiedDiffTable({ lines, lang }: { lines: ParsedLine[]; lang: string | null }) {
   return (
     <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
       <tbody>
         {lines.map((line, i) => (
-          <UnifiedDiffRow key={i} line={line} />
+          <UnifiedDiffRow key={i} line={line} lang={lang} />
         ))}
       </tbody>
     </table>
   );
 }
 
-function UnifiedDiffRow({ line }: { line: ParsedLine }) {
+function UnifiedDiffRow({ line, lang }: { line: ParsedLine; lang: string | null }) {
   if (line.type === "meta") {
     return (
       <tr>
@@ -214,7 +248,7 @@ function UnifiedDiffRow({ line }: { line: ParsedLine }) {
       </td>
       <td className="px-0 py-0 whitespace-pre text-[var(--text-primary)]">
         <span className={`inline-block w-5 text-center select-none font-bold ${markerColor}`}>{marker}</span>
-        {line.content}
+        <span dangerouslySetInnerHTML={{ __html: highlightLine(line.content, lang) }} />
       </td>
     </tr>
   );
@@ -222,7 +256,7 @@ function UnifiedDiffRow({ line }: { line: ParsedLine }) {
 
 /* ─── Split (side-by-side) view with synced horizontal scroll ─── */
 
-function SplitDiffTable({ rows }: { rows: SplitRow[] }) {
+function SplitDiffTable({ rows, lang }: { rows: SplitRow[]; lang: string | null }) {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
   const syncing = useRef(false);
@@ -244,7 +278,7 @@ function SplitDiffTable({ rows }: { rows: SplitRow[] }) {
         className="w-1/2 overflow-x-auto"
         onScroll={() => syncScroll("left")}
       >
-        <SplitHalfTable rows={rows} side="old" />
+        <SplitHalfTable rows={rows} side="old" lang={lang} />
       </div>
       {/* Divider */}
       <div className="w-[2px] shrink-0 bg-[var(--border-color)]" />
@@ -254,14 +288,14 @@ function SplitDiffTable({ rows }: { rows: SplitRow[] }) {
         className="w-1/2 overflow-x-auto"
         onScroll={() => syncScroll("right")}
       >
-        <SplitHalfTable rows={rows} side="new" />
+        <SplitHalfTable rows={rows} side="new" lang={lang} />
       </div>
     </div>
   );
 }
 
 /** Table for one side of the split view */
-function SplitHalfTable({ rows, side }: { rows: SplitRow[]; side: "old" | "new" }) {
+function SplitHalfTable({ rows, side, lang }: { rows: SplitRow[]; side: "old" | "new"; lang: string | null }) {
   return (
     <table className="w-full text-[12px] leading-[20px] font-mono border-collapse">
       <colgroup>
@@ -270,7 +304,7 @@ function SplitHalfTable({ rows, side }: { rows: SplitRow[]; side: "old" | "new" 
       </colgroup>
       <tbody>
         {rows.map((row, i) => (
-          <SplitHalfRow key={i} row={row} side={side} />
+          <SplitHalfRow key={i} row={row} side={side} lang={lang} />
         ))}
       </tbody>
     </table>
@@ -278,7 +312,7 @@ function SplitHalfTable({ rows, side }: { rows: SplitRow[]; side: "old" | "new" 
 }
 
 /** Renders a single row for one side of the split view */
-function SplitHalfRow({ row, side }: { row: SplitRow; side: "old" | "new" }) {
+function SplitHalfRow({ row, side, lang }: { row: SplitRow; side: "old" | "new"; lang: string | null }) {
   if (row.type === "meta") {
     return (
       <tr>
@@ -305,13 +339,13 @@ function SplitHalfRow({ row, side }: { row: SplitRow; side: "old" | "new" }) {
   const line = side === "old" ? row.left : row.right;
   return (
     <tr className="hover:brightness-95">
-      <SplitCell line={line} side={side} />
+      <SplitCell line={line} side={side} lang={lang} />
     </tr>
   );
 }
 
 /** Renders line number + content cells for one half of a split row */
-function SplitCell({ line, side }: { line: ParsedLine | null; side: "old" | "new" }) {
+function SplitCell({ line, side, lang }: { line: ParsedLine | null; side: "old" | "new"; lang: string | null }) {
   if (!line) {
     return (
       <>
@@ -337,7 +371,7 @@ function SplitCell({ line, side }: { line: ParsedLine | null; side: "old" | "new
       </td>
       <td className={`px-0 py-0 whitespace-pre text-[var(--text-primary)] ${bg}`}>
         <span className={`inline-block w-5 text-center select-none font-bold ${markerColor}`}>{marker}</span>
-        {line.content}
+        <span dangerouslySetInnerHTML={{ __html: highlightLine(line.content, lang) }} />
       </td>
     </>
   );

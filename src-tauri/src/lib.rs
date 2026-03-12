@@ -52,6 +52,7 @@ pub fn run() {
             git_commands::is_git_repo,
             git_commands::git_status_summary,
             git_commands::git_changed_files,
+            git_commands::read_file_content,
             git_commands::git_file_diff,
             git_commands::git_last_commit_message,
             git_commands::git_stage_all,

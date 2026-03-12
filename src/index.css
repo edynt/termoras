@@ -43,6 +43,67 @@
   --diff-hunk-text: #79c0ff;
 }
 
+/* ─── highlight.js syntax colors (CSS variables for theme-aware) ─── */
+:root,
+[data-theme="light"] {
+  --hljs-keyword: #d73a49;
+  --hljs-string: #22863a;
+  --hljs-number: #005cc5;
+  --hljs-comment: #6a737d;
+  --hljs-function: #6f42c1;
+  --hljs-type: #e36209;
+  --hljs-tag: #22863a;
+  --hljs-attr: #6f42c1;
+  --hljs-built-in: #005cc5;
+  --hljs-literal: #005cc5;
+  --hljs-meta: #6a737d;
+  --hljs-punctuation: #24292e;
+}
+
+[data-theme="dark"] {
+  --hljs-keyword: #ff7b72;
+  --hljs-string: #a5d6ff;
+  --hljs-number: #79c0ff;
+  --hljs-comment: #8b949e;
+  --hljs-function: #d2a8ff;
+  --hljs-type: #ffa657;
+  --hljs-tag: #7ee787;
+  --hljs-attr: #d2a8ff;
+  --hljs-built-in: #79c0ff;
+  --hljs-literal: #79c0ff;
+  --hljs-meta: #8b949e;
+  --hljs-punctuation: #c9d1d9;
+}
+
+/* highlight.js class → CSS variable mapping */
+.hljs-keyword,
+.hljs-selector-tag { color: var(--hljs-keyword); }
+.hljs-string,
+.hljs-template-variable,
+.hljs-addition { color: var(--hljs-string); }
+.hljs-number { color: var(--hljs-number); }
+.hljs-comment,
+.hljs-quote { color: var(--hljs-comment); font-style: italic; }
+.hljs-title.function_,
+.hljs-title { color: var(--hljs-function); }
+.hljs-type,
+.hljs-class .hljs-title { color: var(--hljs-type); }
+.hljs-tag { color: var(--hljs-tag); }
+.hljs-attr,
+.hljs-attribute { color: var(--hljs-attr); }
+.hljs-built_in { color: var(--hljs-built-in); }
+.hljs-literal,
+.hljs-symbol { color: var(--hljs-literal); }
+.hljs-meta,
+.hljs-meta .hljs-keyword { color: var(--hljs-meta); }
+.hljs-punctuation { color: var(--hljs-punctuation); }
+.hljs-deletion { color: var(--hljs-keyword); }
+.hljs-regexp { color: var(--hljs-string); }
+.hljs-variable,
+.hljs-params { color: var(--text-primary); }
+.hljs-selector-class,
+.hljs-selector-id { color: var(--hljs-function); }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
     sans-serif;
