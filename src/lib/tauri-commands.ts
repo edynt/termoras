@@ -5,9 +5,11 @@ import { open } from "@tauri-apps/plugin-dialog";
 export async function createTerminal(
   id: string,
   projectPath: string,
+  rows: number,
+  cols: number,
   onData: Channel<number[]>,
 ): Promise<string> {
-  return invoke<string>("create_terminal", { id, projectPath, onData });
+  return invoke<string>("create_terminal", { id, projectPath, rows, cols, onData });
 }
 
 /** Write user input to terminal PTY stdin */

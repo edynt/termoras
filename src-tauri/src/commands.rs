@@ -11,6 +11,8 @@ use tauri::State;
 pub fn create_terminal(
     id: String,
     project_path: String,
+    rows: u16,
+    cols: u16,
     on_data: Channel<Vec<u8>>,
     state: State<AppState>,
 ) -> Result<String, String> {
@@ -22,8 +24,8 @@ pub fn create_terminal(
 
     let pair = pty_system
         .openpty(PtySize {
-            rows: 24,
-            cols: 80,
+            rows: if rows > 0 { rows } else { 24 },
+            cols: if cols > 0 { cols } else { 80 },
             pixel_width: 0,
             pixel_height: 0,
         })

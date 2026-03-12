@@ -30,6 +30,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+  const webglRef = useRef<WebglAddon | null>(null);
   const writeToPtyRef = useRef<((data: string) => void) | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const setTerminalRunning = useAppStore((s) => s.setTerminalRunning);
@@ -61,12 +62,19 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
     // Try WebGL addon for GPU-accelerated rendering
     try {
-      term.loadAddon(new WebglAddon());
+      const webgl = new WebglAddon();
+      // When parent goes display:none, WebGL context is lost. Dispose and
+      // re-create the addon so the terminal falls back to canvas until
+      // we reload WebGL on next visibility change.
+      webgl.onContextLoss(() => {
+        webgl.dispose();
+        webglRef.current = null;
+      });
+      term.loadAddon(webgl);
+      webglRef.current = webgl;
     } catch {
       // Canvas renderer is the fallback — works fine
     }
-
-    fitAddon.fit();
 
     // PTY write helper — shared by keybindings, onData, and image upload
     const writeToPty = (data: string) => {
@@ -87,17 +95,32 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       term.write(new Uint8Array(data));
     };
 
-    // Connect to Rust PTY backend
-    createTerminal(terminalId, projectPath, channel)
-      .then(() => {
-        // PTY connected — send initial resize to sync dimensions
+    // Wait for web fonts + container layout before fitting and creating PTY.
+    // Without this, fitAddon calculates wrong cols/rows from fallback font metrics
+    // or zero-size container → text layout breaks on first open.
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      if (cancelled) return;
+      const connectPty = () => {
+        if (cancelled) return;
+        const el = containerRef.current;
+        // Poll until container has real dimensions (may be display:none initially)
+        if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) {
+          requestAnimationFrame(connectPty);
+          return;
+        }
+        fitAddon.fit();
         const { cols, rows } = term;
-        resizeTerminal(terminalId, rows, cols).catch(() => {});
-      })
-      .catch((err) => {
-        term.write(`\r\n\x1b[31m[Error: ${err}]\x1b[0m\r\n`);
-        setTerminalRunning(terminalId, false);
-      });
+        createTerminal(terminalId, projectPath, rows, cols, channel)
+          .catch((err) => {
+            if (!cancelled) {
+              term.write(`\r\n\x1b[31m[Error: ${err}]\x1b[0m\r\n`);
+              setTerminalRunning(terminalId, false);
+            }
+          });
+      };
+      requestAnimationFrame(connectPty);
+    });
 
     // Block WebKit's native "Paste" confirmation button by intercepting paste
     // at the capture phase on the container. All paste is handled via Cmd+V
@@ -177,18 +200,20 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     });
 
     // Observe container size changes (sidebar drag, view switch, window resize, etc.)
-    let resizeTimer: ReturnType<typeof setTimeout>;
+    // Use rAF instead of setTimeout for faster, frame-aligned fitting
+    let resizeRaf = 0;
     const observer = new ResizeObserver(() => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => fitAddon.fit(), 50);
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => fitAddon.fit());
     });
     if (containerRef.current) observer.observe(containerRef.current);
 
     return () => {
+      cancelled = true;
       container?.removeEventListener("paste", blockPaste, true);
       container?.removeEventListener("beforeinput", blockBeforeInput as EventListener, true);
       observer.disconnect();
-      clearTimeout(resizeTimer);
+      cancelAnimationFrame(resizeRaf);
       killTerminal(terminalId).catch(() => {});
       term.dispose();
       termRef.current = null;
@@ -203,16 +228,48 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     }
   }, [isDark]);
 
-  // Re-fit when this terminal becomes visible
+  // Re-fit when this terminal becomes visible (tab switch OR view switch).
+  // Polls until container has real dimensions (handles display:none → visible),
+  // then forces PTY resize + full re-render to fix any stale layout.
   const activeTerminalId = useAppStore((s) => s.activeTerminalId);
+  const activeView = useAppStore((s) => s.activeView);
   useEffect(() => {
-    if (activeTerminalId === terminalId && fitRef.current) {
-      requestAnimationFrame(() => {
-        fitRef.current?.fit();
-        termRef.current?.focus();
-      });
-    }
-  }, [activeTerminalId, terminalId]);
+    if (activeTerminalId !== terminalId || !fitRef.current || !termRef.current) return;
+    let rafId = 0;
+    const refit = () => {
+      const el = containerRef.current;
+      if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) {
+        // Container not laid out yet (display:none → visible transition), retry
+        rafId = requestAnimationFrame(refit);
+        return;
+      }
+      // Re-attach WebGL if context was lost (display:none kills it)
+      if (!webglRef.current && termRef.current) {
+        try {
+          const webgl = new WebglAddon();
+          webgl.onContextLoss(() => {
+            webgl.dispose();
+            webglRef.current = null;
+          });
+          termRef.current.loadAddon(webgl);
+          webglRef.current = webgl;
+        } catch {
+          // Canvas fallback is fine
+        }
+      }
+      fitRef.current?.fit();
+      const term = termRef.current;
+      if (term) {
+        // Force PTY resize even if xterm dimensions unchanged — ensures shell
+        // gets SIGWINCH and re-draws prompt at correct width
+        resizeTerminal(terminalId, term.rows, term.cols).catch(() => {});
+        term.refresh(0, term.rows - 1);
+        term.focus();
+      }
+    };
+    rafId = requestAnimationFrame(refit);
+    return () => cancelAnimationFrame(rafId);
+  }, [activeTerminalId, terminalId, activeView]);
 
   // Drag-and-drop handlers for image upload
   const handleDragOver = useCallback((e: React.DragEvent) => {
