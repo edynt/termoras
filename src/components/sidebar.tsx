@@ -6,6 +6,7 @@ import { ProjectItem } from "./project-item";
 import { ThemeToggle } from "./theme-toggle";
 import { TerminalStatusButton } from "./terminal-status-button";
 import { TagSettingsModal } from "./tag-settings-modal";
+import { UpdateButton } from "./update-button";
 
 export function Sidebar() {
   const projects = useAppStore((s) => s.projects);
@@ -112,6 +113,7 @@ export function Sidebar() {
       <div className="flex items-center justify-center gap-1 p-2 border-t border-[var(--border-color)]">
         <TerminalStatusButton />
         <ThemeToggle />
+        <UpdateButton />
         <button
           onClick={() => setShowTagSettings(true)}
           className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"

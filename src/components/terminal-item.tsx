@@ -17,12 +17,13 @@ export function TerminalItem({ terminal }: Props) {
   const [confirmKill, setConfirmKill] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const activeTerminalId = useAppStore((s) => s.activeTerminalId);
+  const activeView = useAppStore((s) => s.activeView);
   const setActiveTerminal = useAppStore((s) => s.setActiveTerminal);
   const removeTerminal = useAppStore((s) => s.removeTerminal);
   const setTerminalRunning = useAppStore((s) => s.setTerminalRunning);
   const renameTerminal = useAppStore((s) => s.renameTerminal);
 
-  const isActive = activeTerminalId === terminal.id;
+  const isActive = activeTerminalId === terminal.id && activeView === "terminal";
 
   // Focus input when editing starts
   useEffect(() => {
