@@ -18,6 +18,19 @@ import { useAppStore } from "../stores/app-store";
 import { isGitRepo, gitStatusSummary, openInVscode, type GitStatusSummary } from "../lib/tauri-commands";
 import { TerminalItem } from "./terminal-item";
 
+/** Outline color presets for folder icons */
+const FOLDER_COLORS = [
+  { value: undefined, label: "Default" },
+  { value: "#e94e4e", label: "Red" },
+  { value: "#e88a3e", label: "Orange" },
+  { value: "#d4b035", label: "Yellow" },
+  { value: "#1aad8a", label: "Green" },
+  { value: "#3ab5c2", label: "Teal" },
+  { value: "#4a8ff5", label: "Blue" },
+  { value: "#9b6fef", label: "Purple" },
+  { value: "#e06aa0", label: "Pink" },
+];
+
 interface Props {
   project: Project;
   index: number;
@@ -44,6 +57,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
   const renameRef = useRef<HTMLInputElement>(null);
   const removeProject = useAppStore((s) => s.removeProject);
   const renameProject = useAppStore((s) => s.renameProject);
+  const setProjectColor = useAppStore((s) => s.setProjectColor);
   const setActiveProject = useAppStore((s) => s.setActiveProject);
   const addTerminal = useAppStore((s) => s.addTerminal);
   const activeView = useAppStore((s) => s.activeView);
@@ -135,9 +149,10 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           onContextMenu={handleContextMenu}
           className={`group flex items-center gap-1.5 px-2 py-1.5 cursor-pointer transition-colors duration-150 ${
             isActive
-              ? "bg-[var(--bg-active)] border-l-3 border-l-[var(--accent-blue)]"
+              ? "bg-[var(--bg-active)] border-l-3"
               : "hover:bg-[var(--bg-hover)] border-l-3 border-l-transparent"
           } ${isDragOver ? "border-t-2 border-t-[var(--accent-blue)]" : "border-t-2 border-t-transparent"} ${isDragging ? "opacity-40" : ""}`}
+          style={isActive ? { borderLeftColor: project.color || "var(--accent-blue)" } : undefined}
         >
           {/* Drag handle — pointer-based */}
           <GripVertical
@@ -150,7 +165,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           ) : (
             <ChevronRight size={14} className="shrink-0" />
           )}
-          <Folder size={14} className="shrink-0 text-[var(--accent-blue)]" />
+          <Folder size={14} className="shrink-0" color={project.color || "var(--accent-blue)"} />
           {renaming ? (
             <input
               ref={renameRef}
@@ -316,6 +331,31 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             <Pencil size={12} />
             Rename
           </button>
+          <div className="my-1 border-t border-[var(--border-color)]" />
+          {/* Folder color picker */}
+          <div className="px-3 py-1.5">
+            <span className="text-[10px] text-[var(--text-secondary)] mb-1 block">Folder Color</span>
+            <div className="flex items-center gap-1">
+              {FOLDER_COLORS.map((c) => (
+                <button
+                  key={c.label}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setProjectColor(project.id, c.value);
+                    setCtxMenu(null);
+                  }}
+                  className={`w-4 h-4 rounded-full border-2 transition-transform hover:scale-125 ${
+                    (project.color || undefined) === c.value ? "scale-125 ring-1 ring-offset-1 ring-[var(--accent-blue)]" : ""
+                  }`}
+                  style={{
+                    borderColor: c.value || "var(--text-secondary)",
+                    background: "transparent",
+                  }}
+                  title={c.label}
+                />
+              ))}
+            </div>
+          </div>
           <div className="my-1 border-t border-[var(--border-color)]" />
           <button
             onClick={() => {
