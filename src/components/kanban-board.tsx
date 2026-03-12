@@ -16,6 +16,7 @@ import { Plus, LayoutGrid, Columns3 } from "lucide-react";
 import { useKanbanStore } from "../stores/kanban-store";
 import { useAppStore } from "../stores/app-store";
 import { useTagStore } from "../stores/tag-store";
+import { useAutoRunStore } from "../stores/auto-run-store";
 import { KanbanColumn } from "./kanban-column";
 import { KanbanCard } from "./kanban-card";
 
@@ -29,6 +30,9 @@ export function KanbanBoard() {
   const addColumn = useKanbanStore((s) => s.addColumn);
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  /** Track which column the card was dragged FROM to detect auto-run column entry */
+  const [dragSourceColId, setDragSourceColId] = useState<string | null>(null);
+  const enqueue = useAutoRunStore((s) => s.enqueue);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
@@ -41,10 +45,11 @@ export function KanbanBoard() {
     }
   }, [tagLoaded]);
 
-  // Load board when project changes
+  // Load board when project changes — clear auto-run queue
   useEffect(() => {
     if (activeProjectId && activeProjectId !== projectId) {
       loadBoard(activeProjectId);
+      useAutoRunStore.getState().clearAll();
     }
   }, [activeProjectId, projectId, loadBoard]);
 
@@ -60,7 +65,11 @@ export function KanbanBoard() {
   }
 
   function handleDragStart(event: DragStartEvent) {
-    setActiveCardId(event.active.id as string);
+    const cardId = event.active.id as string;
+    setActiveCardId(cardId);
+    // Remember source column for auto-run detection on drop
+    const sourceCol = findColumnByCardId(cardId);
+    setDragSourceColId(sourceCol?.id ?? null);
   }
 
   function handleDragOver(event: DragOverEvent) {
@@ -86,23 +95,30 @@ export function KanbanBoard() {
   function handleDragEnd(event: DragEndEvent) {
     if (!board) return;
     const { active, over } = event;
+    const cardId = active.id as string;
+    const sourceColId = dragSourceColId;
     setActiveCardId(null);
+    setDragSourceColId(null);
     if (!over) return;
 
-    const activeId = active.id as string;
     const overId = over.id as string;
-    if (activeId === overId) return;
+    if (cardId === overId) return;
 
-    const col = findColumnByCardId(activeId);
+    const col = findColumnByCardId(cardId);
     if (!col) return;
 
     if (col.cardIds.includes(overId)) {
-      const oldIndex = col.cardIds.indexOf(activeId);
+      const oldIndex = col.cardIds.indexOf(cardId);
       const newIndex = col.cardIds.indexOf(overId);
       if (oldIndex !== newIndex) {
         const newOrder = arrayMove(col.cardIds, oldIndex, newIndex);
-        moveCard(activeId, col.id, col.id, newOrder.indexOf(activeId));
+        moveCard(cardId, col.id, col.id, newOrder.indexOf(cardId));
       }
+    }
+
+    // Auto-run: if card landed in a different auto-run column, enqueue it
+    if (sourceColId && col.id !== sourceColId && col.autoRun) {
+      enqueue(cardId);
     }
   }
 

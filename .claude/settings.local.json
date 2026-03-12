@@ -55,7 +55,8 @@
       "Bash(ls -la /Users/tringuyen/Downloads/termoras/termoras/src-tauri/ | grep -E \"\\\\.\\(rs|toml\\)$\")",
       "Bash(find /Users/tringuyen/Downloads/termoras/termoras/src-tauri -name \"*store*\" -o -name \"*sidebar*\" 2>/dev/null | head -20)",
       "Bash(find /Users/tringuyen/Downloads/termoras/termoras -name \"app-store.ts\" -o -name \"*sidebar*\" 2>/dev/null | grep -v node_modules | grep -v target)",
-      "Bash(echo \"DATE: $CK_PLAN_DATE_FORMAT\" && date +%y%m%d)"
+      "Bash(echo \"DATE: $CK_PLAN_DATE_FORMAT\" && date +%y%m%d)",
+      "Bash(git status:*)"
     ]
   }
 }

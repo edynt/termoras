@@ -210,10 +210,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   addTerminal: (terminal: TerminalSession) => {
+    const { activeView } = get();
     const updated = [...get().terminals, terminal];
-    set({ terminals: updated, activeTerminalId: terminal.id, activeView: "terminal" });
+    // Keep current view — don't force switch to terminal tab
+    set({ terminals: updated, activeTerminalId: terminal.id });
     persistTerminals(updated);
-    persistActiveIds(get().activeProjectId, terminal.id, "terminal");
+    persistActiveIds(get().activeProjectId, terminal.id, activeView);
+    // Notify MainPanel to open the terminal panel (for split view)
+    window.dispatchEvent(new CustomEvent("termoras:open-terminal-panel"));
   },
 
   removeTerminal: (id: string) => {

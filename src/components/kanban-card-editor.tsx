@@ -9,9 +9,11 @@ interface Props {
   card?: KanbanCard;
   columnId?: string;
   onClose: () => void;
+  /** Called with the new card ID after creation (not on edit) */
+  onCardAdded?: (cardId: string) => void;
 }
 
-export function KanbanCardEditor({ card, columnId, onClose }: Props) {
+export function KanbanCardEditor({ card, columnId, onClose, onCardAdded }: Props) {
   const [title, setTitle] = useState(card?.title ?? "");
   const [content, setContent] = useState(card?.content ?? "");
   const [type, setType] = useState<string | null>(card?.type ?? null);
@@ -42,7 +44,8 @@ export function KanbanCardEditor({ card, columnId, onClose }: Props) {
     if (card) {
       updateCard(card.id, { title: trimmedTitle, content: content.trim(), type });
     } else if (columnId) {
-      addCard(columnId, trimmedTitle, content.trim(), type);
+      const newId = addCard(columnId, trimmedTitle, content.trim(), type);
+      if (newId) onCardAdded?.(newId);
     }
     onClose();
   }

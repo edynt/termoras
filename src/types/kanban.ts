@@ -18,6 +18,7 @@ export interface KanbanColumn {
   id: string;
   title: string;
   cardIds: string[];
+  autoRun?: boolean;
 }
 
 export interface KanbanBoard {

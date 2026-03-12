@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
-import { Plus, MoreHorizontal, Trash2, Pencil } from "lucide-react";
+import { Plus, MoreHorizontal, Trash2, Pencil, Zap } from "lucide-react";
 import type { KanbanColumn as KanbanColumnType, KanbanCard as KanbanCardType } from "../types/kanban";
 import { useKanbanStore } from "../stores/kanban-store";
+import { useAutoRunStore } from "../stores/auto-run-store";
 import { KanbanCard } from "./kanban-card";
 import { KanbanCardEditor } from "./kanban-card-editor";
 
@@ -20,6 +21,8 @@ export function KanbanColumn({ column, cards }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const renameColumn = useKanbanStore((s) => s.renameColumn);
   const removeColumn = useKanbanStore((s) => s.removeColumn);
+  const toggleAutoRun = useKanbanStore((s) => s.toggleAutoRun);
+  const enqueue = useAutoRunStore((s) => s.enqueue);
 
   const { setNodeRef } = useDroppable({ id: column.id });
 
@@ -62,6 +65,13 @@ export function KanbanColumn({ column, cards }: Props) {
           </span>
         )}
 
+        {/* Auto-run indicator */}
+        {column.autoRun && (
+          <span className="text-[var(--accent-green)]" title="Auto-run enabled">
+            <Zap size={13} />
+          </span>
+        )}
+
         {/* Card count badge */}
         <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-[var(--bg-hover)] text-[var(--text-secondary)]">
           {cards.length}
@@ -80,6 +90,15 @@ export function KanbanColumn({ column, cards }: Props) {
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
             <div className="absolute right-2 top-9 z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1">
+              <button
+                onClick={() => { setShowMenu(false); toggleAutoRun(column.id); }}
+                className={`w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] ${
+                  column.autoRun ? "text-[var(--accent-green)]" : "text-[var(--text-primary)]"
+                }`}
+              >
+                <Zap size={14} />
+                {column.autoRun ? "Auto-run ON" : "Auto-run"}
+              </button>
               <button
                 onClick={() => { setShowMenu(false); setIsEditingTitle(true); }}
                 className="w-full flex items-center gap-2 text-left text-xs px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
@@ -120,6 +139,9 @@ export function KanbanColumn({ column, cards }: Props) {
           <KanbanCardEditor
             columnId={column.id}
             onClose={() => setIsAddingCard(false)}
+            onCardAdded={(cardId) => {
+              if (column.autoRun) enqueue(cardId);
+            }}
           />
         )}
       </div>

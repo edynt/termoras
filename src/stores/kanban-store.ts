@@ -19,8 +19,8 @@ interface KanbanStore {
 
   loadBoard: (projectId: string) => Promise<void>;
 
-  // Card actions
-  addCard: (columnId: string, title: string, content: string, type: string | null) => void;
+  // Card actions — addCard returns new card ID
+  addCard: (columnId: string, title: string, content: string, type: string | null) => string | null;
   updateCard: (cardId: string, updates: Partial<Omit<KanbanCard, "id">>) => void;
   removeCard: (cardId: string) => void;
   moveCard: (cardId: string, fromColId: string, toColId: string, newIndex: number) => void;
@@ -29,6 +29,7 @@ interface KanbanStore {
   addColumn: (title: string) => void;
   removeColumn: (colId: string) => void;
   renameColumn: (colId: string, title: string) => void;
+  toggleAutoRun: (colId: string) => void;
 }
 
 function persist(state: KanbanStore) {
@@ -52,7 +53,7 @@ export const useKanbanStore = create<KanbanStore>((set, get) => ({
 
   addCard: (columnId, title, content, type) => {
     const { board } = get();
-    if (!board) return;
+    if (!board) return null;
 
     const card: KanbanCard = {
       id: crypto.randomUUID(),
@@ -71,6 +72,7 @@ export const useKanbanStore = create<KanbanStore>((set, get) => ({
     };
     set({ board: newBoard });
     persist(get());
+    return card.id;
   },
 
   updateCard: (cardId, updates) => {
@@ -174,6 +176,20 @@ export const useKanbanStore = create<KanbanStore>((set, get) => ({
       ...board,
       columns: board.columns.map((col) =>
         col.id === colId ? { ...col, title } : col,
+      ),
+    };
+    set({ board: newBoard });
+    persist(get());
+  },
+
+  toggleAutoRun: (colId) => {
+    const { board } = get();
+    if (!board) return;
+
+    const newBoard: KanbanBoard = {
+      ...board,
+      columns: board.columns.map((col) =>
+        col.id === colId ? { ...col, autoRun: !col.autoRun } : col,
       ),
     };
     set({ board: newBoard });

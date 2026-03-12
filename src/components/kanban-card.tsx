@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, Pencil, Trash2, Check, ChevronDown, Play, Tag, Loader2 } from "lucide-react";
+import { Copy, Pencil, Trash2, Check, ChevronDown, Play, Tag, Loader2, Clock, AlertCircle } from "lucide-react";
 import type { KanbanCard as KanbanCardType } from "../types/kanban";
 import { useKanbanStore } from "../stores/kanban-store";
 import { useAppStore } from "../stores/app-store";
 import { useTagStore } from "../stores/tag-store";
 import { getTagStyles, UNTAGGED_STYLES } from "../lib/tag-colors";
 import { writeTerminal } from "../lib/tauri-commands";
+import { useAutoRunStore } from "../stores/auto-run-store";
 import { KanbanCardEditor } from "./kanban-card-editor";
 
 
@@ -27,6 +28,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const tagBtnRef = useRef<HTMLButtonElement>(null);
   const removeCard = useKanbanStore((s) => s.removeCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
+  const autoRunStatus = useAutoRunStore((s) => s.cardStatus[card.id]);
   const terminals = useAppStore((s) => s.terminals);
   const activeProjectId = useAppStore((s) => s.activeProjectId);
   const setActiveTerminal = useAppStore((s) => s.setActiveTerminal);
@@ -268,10 +270,31 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
 
         {/* Command preview — monospace chip */}
         {card.content && (
-          <div className="flex">
+          <div className="flex items-center gap-2">
             <span className="inline-block text-xs font-mono px-2 py-1 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
               {tagPrefix ? `${tagPrefix} ` : ""}{card.content.length > 40 ? card.content.slice(0, 40) + "…" : card.content}
             </span>
+            {/* Auto-run status badge */}
+            {autoRunStatus === "pending" && (
+              <span className="shrink-0 flex items-center gap-1 text-[10px] text-[var(--text-secondary)] bg-[var(--bg-hover)] px-1.5 py-0.5 rounded" title="Queued">
+                <Clock size={10} /> Queue
+              </span>
+            )}
+            {autoRunStatus === "running" && (
+              <span className="shrink-0 flex items-center gap-1 text-[10px] text-[var(--accent-blue)] bg-[var(--accent-blue)]/10 px-1.5 py-0.5 rounded" title="Running">
+                <Loader2 size={10} className="animate-spin" /> Running
+              </span>
+            )}
+            {autoRunStatus === "done" && (
+              <span className="shrink-0 flex items-center gap-1 text-[10px] text-[var(--accent-green)] bg-[var(--accent-green)]/10 px-1.5 py-0.5 rounded" title="Done">
+                <Check size={10} /> Done
+              </span>
+            )}
+            {autoRunStatus === "error" && (
+              <span className="shrink-0 flex items-center gap-1 text-[10px] text-[var(--accent-red)] bg-[var(--accent-red)]/10 px-1.5 py-0.5 rounded" title="Error">
+                <AlertCircle size={10} /> Error
+              </span>
+            )}
           </div>
         )}
       </div>

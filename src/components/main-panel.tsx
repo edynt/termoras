@@ -75,6 +75,16 @@ export function MainPanel() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeView, toggleTerminal]);
 
+  /* Open terminal panel when a new terminal is created (from sidebar etc.) */
+  useEffect(() => {
+    const handleOpen = () => {
+      setTerminalOpen(true);
+      localStorage.setItem(OPEN_KEY, "true");
+    };
+    window.addEventListener("termoras:open-terminal-panel", handleOpen);
+    return () => window.removeEventListener("termoras:open-terminal-panel", handleOpen);
+  }, []);
+
   /* No synthetic resize dispatch needed — ResizeObserver in TerminalInstance handles it */
 
   /* Divider drag handler */
