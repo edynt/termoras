@@ -51,7 +51,8 @@
       "Bash(grep -rn \"render.*children\\\\|recursive\\\\|depth\\\\|level\\\\|leaf\\\\|node\\\\|parent\" /Users/tringuyen/Downloads/termoras/termoras/src --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | grep -i \"file\\\\|tree\\\\|folder\")",
       "Bash(ls /Users/tringuyen/Downloads/termoras/termoras/src/*.ts* /Users/tringuyen/Downloads/termoras/termoras/src/**/*.ts* 2>/dev/null)",
       "Bash(grep -n \"renderFile\\\\|renderFolder\\\\|renderTree\\\\|renderNode\\\\|renderStructure\" /Users/tringuyen/Downloads/termoras/termoras/src/components/*.tsx /Users/tringuyen/Downloads/termoras/termoras/src/lib/*.ts)",
-      "Bash(grep -n \"className.*map\\\\|map.*file\\\\|FileRow\\\\|map.*terminal\" /Users/tringuyen/Downloads/termoras/termoras/src/components/*.tsx)"
+      "Bash(grep -n \"className.*map\\\\|map.*file\\\\|FileRow\\\\|map.*terminal\" /Users/tringuyen/Downloads/termoras/termoras/src/components/*.tsx)",
+      "Bash(ls -la /Users/tringuyen/Downloads/termoras/termoras/src-tauri/ | grep -E \"\\\\.\\(rs|toml\\)$\")"
     ]
   }
 }

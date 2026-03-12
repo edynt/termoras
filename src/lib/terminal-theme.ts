@@ -11,19 +11,19 @@ export const lightTheme: ITheme = {
   black: "#1e1e1e",
   red: "#cd3131",
   green: "#00bc7c",
-  yellow: "#e5e510",
+  yellow: "#b5a000",
   blue: "#2472c8",
   magenta: "#bc3fbc",
   cyan: "#11a8cd",
-  white: "#e5e5e5",
+  white: "#424242",
   brightBlack: "#666666",
   brightRed: "#f14c4c",
   brightGreen: "#23d18b",
-  brightYellow: "#f5f543",
+  brightYellow: "#c4a500",
   brightBlue: "#3b8eea",
   brightMagenta: "#d670d6",
   brightCyan: "#29b8db",
-  brightWhite: "#e5e5e5",
+  brightWhite: "#525252",
 };
 
 /** Dark theme for xterm.js — deep teal-navy aesthetic */

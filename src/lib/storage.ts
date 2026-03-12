@@ -85,6 +85,28 @@ export async function saveActiveIds(ids: ActiveIds): Promise<void> {
   }
 }
 
+// --- Last Terminal per Project ---
+
+export async function loadLastTerminalMap(): Promise<Record<string, string>> {
+  try {
+    const store = await getStore();
+    const map = await store.get<Record<string, string>>("lastTerminalByProject");
+    return map ?? {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveLastTerminalMap(map: Record<string, string>): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set("lastTerminalByProject", map);
+    await store.save();
+  } catch (err) {
+    console.error("Failed to save last terminal map:", err);
+  }
+}
+
 export async function loadThemeMode(): Promise<ThemeMode> {
   try {
     const store = await getStore();

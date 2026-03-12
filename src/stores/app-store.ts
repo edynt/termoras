@@ -8,6 +8,8 @@ import {
   saveTerminals,
   loadActiveIds,
   saveActiveIds,
+  loadLastTerminalMap,
+  saveLastTerminalMap,
 } from "../lib/storage";
 
 interface AppStore {
@@ -17,6 +19,7 @@ interface AppStore {
   activeProjectId: string | null;
   activeTerminalId: string | null;
   activeView: "terminal" | "kanban" | "git";
+  lastTerminalByProject: Record<string, string>;
   vietnameseInput: boolean;
 
   // app init
@@ -49,6 +52,11 @@ function persistTerminals(terminals: TerminalSession[]) {
   saveTerminals(terminals);
 }
 
+/** Persist last-terminal-per-project map (fire-and-forget) */
+function persistLastTerminalMap(map: Record<string, string>) {
+  saveLastTerminalMap(map);
+}
+
 /** Persist active IDs to disk (fire-and-forget) */
 function persistActiveIds(
   activeProjectId: string | null,
@@ -64,13 +72,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
   activeProjectId: null,
   activeTerminalId: null,
   activeView: "terminal",
+  lastTerminalByProject: {},
   vietnameseInput: (() => { try { return localStorage.getItem("termoras:vi-input") === "true"; } catch { return false; } })(),
 
   init: async () => {
-    const [projects, terminals, activeIds] = await Promise.all([
+    const [projects, terminals, activeIds, lastTerminalByProject] = await Promise.all([
       loadProjects(),
       loadTerminals(),
       loadActiveIds(),
+      loadLastTerminalMap(),
     ]);
     set({
       projects,
@@ -78,6 +88,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       activeProjectId: activeIds.activeProjectId,
       activeTerminalId: activeIds.activeTerminalId,
       activeView: activeIds.activeView ?? "terminal",
+      lastTerminalByProject,
     });
   },
 
@@ -132,14 +143,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
       activeTerminalId && removedTerminalIds.includes(activeTerminalId)
         ? null
         : activeTerminalId;
+    // Clean up remembered terminal for deleted project
+    const { lastTerminalByProject } = get();
+    const updatedMap = { ...lastTerminalByProject };
+    delete updatedMap[id];
     set({
       projects: updatedProjects,
       terminals: updatedTerminals,
       activeProjectId: newActiveProjectId,
       activeTerminalId: newActiveTerminalId,
+      lastTerminalByProject: updatedMap,
     });
     await saveProjects(updatedProjects);
     persistTerminals(updatedTerminals);
+    persistLastTerminalMap(updatedMap);
     persistActiveIds(newActiveProjectId, newActiveTerminalId, get().activeView);
   },
 
@@ -168,8 +185,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   setActiveProject: (id: string) => {
-    set({ activeProjectId: id });
-    persistActiveIds(id, get().activeTerminalId, get().activeView);
+    const { terminals, lastTerminalByProject, activeTerminalId, activeView } = get();
+    // Restore last-used terminal for this project, fallback to first terminal
+    const remembered = lastTerminalByProject[id];
+    const terminalExists = remembered && terminals.some((t) => t.id === remembered);
+    const fallback = terminals.find((t) => t.projectId === id)?.id ?? null;
+    const newTerminalId = terminalExists ? remembered : fallback;
+    set({ activeProjectId: id, activeTerminalId: newTerminalId });
+    persistActiveIds(id, newTerminalId, activeView);
   },
 
   setActiveView: (view) => {
@@ -194,23 +217,47 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   removeTerminal: (id: string) => {
-    const { terminals, activeTerminalId, activeProjectId, activeView } = get();
+    const { terminals, activeTerminalId, activeProjectId, activeView, lastTerminalByProject } = get();
+    const removed = terminals.find((t) => t.id === id);
     const updated = terminals.filter((t) => t.id !== id);
     const newActiveTerminalId =
       activeTerminalId === id ? null : activeTerminalId;
-    set({ terminals: updated, activeTerminalId: newActiveTerminalId });
+    // Clean up remembered terminal if it was the deleted one
+    const updatedMap = { ...lastTerminalByProject };
+    if (removed && updatedMap[removed.projectId] === id) {
+      const fallback = updated.find((t) => t.projectId === removed.projectId)?.id;
+      if (fallback) updatedMap[removed.projectId] = fallback;
+      else delete updatedMap[removed.projectId];
+      persistLastTerminalMap(updatedMap);
+    }
+    set({ terminals: updated, activeTerminalId: newActiveTerminalId, lastTerminalByProject: updatedMap });
     persistTerminals(updated);
     persistActiveIds(activeProjectId, newActiveTerminalId, activeView);
   },
 
   setActiveTerminal: (id: string) => {
-    set({ activeTerminalId: id, activeView: "terminal" });
+    const { terminals, lastTerminalByProject } = get();
+    const terminal = terminals.find((t) => t.id === id);
+    if (terminal) {
+      const updated = { ...lastTerminalByProject, [terminal.projectId]: id };
+      set({ activeTerminalId: id, activeView: "terminal", lastTerminalByProject: updated });
+      persistLastTerminalMap(updated);
+    } else {
+      set({ activeTerminalId: id, activeView: "terminal" });
+    }
     persistActiveIds(get().activeProjectId, id, "terminal");
   },
 
   setActiveTerminalInPlace: (id: string) => {
-    const { activeView } = get();
-    set({ activeTerminalId: id });
+    const { terminals, lastTerminalByProject, activeView } = get();
+    const terminal = terminals.find((t) => t.id === id);
+    if (terminal) {
+      const updated = { ...lastTerminalByProject, [terminal.projectId]: id };
+      set({ activeTerminalId: id, lastTerminalByProject: updated });
+      persistLastTerminalMap(updated);
+    } else {
+      set({ activeTerminalId: id });
+    }
     persistActiveIds(get().activeProjectId, id, activeView);
   },
 
