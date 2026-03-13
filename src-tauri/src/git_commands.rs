@@ -497,6 +497,154 @@ pub fn git_merge_abort(path: String) -> Result<String, String> {
     Ok("Merge aborted.".to_string())
 }
 
+// ── Git Stash Commands ──────────────────────────────────────────────
+
+/// Stash entry returned by git_stash_list
+#[derive(serde::Serialize)]
+pub struct StashEntry {
+    pub index: usize,
+    pub branch: String,
+    pub message: String,
+}
+
+/// List all git stashes
+#[tauri::command]
+pub fn git_stash_list(path: String) -> Result<Vec<StashEntry>, String> {
+    let output = Command::new("git")
+        .args(["stash", "list"])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git stash list: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+
+    let text = String::from_utf8_lossy(&output.stdout);
+    let mut entries: Vec<StashEntry> = Vec::new();
+
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        // Format: "stash@{N}: On <branch>: <message>"
+        // or:     "stash@{N}: WIP on <branch>: <message>"
+        let index = match trimmed.find('{').and_then(|start| {
+            trimmed[start + 1..]
+                .find('}')
+                .and_then(|end| trimmed[start + 1..start + 1 + end].parse::<usize>().ok())
+        }) {
+            Some(i) => i,
+            None => continue, // skip malformed lines
+        };
+
+        // Everything after "}: "
+        let rest = trimmed
+            .find("}: ")
+            .map(|i| &trimmed[i + 3..])
+            .unwrap_or("");
+
+        // Parse "On <branch>: <message>" or "WIP on <branch>: <message>"
+        let (branch, message) = if let Some(stripped) = rest.strip_prefix("On ") {
+            match stripped.find(": ") {
+                Some(i) => (stripped[..i].to_string(), stripped[i + 2..].to_string()),
+                None => (stripped.to_string(), String::new()),
+            }
+        } else if let Some(stripped) = rest.strip_prefix("WIP on ") {
+            match stripped.find(": ") {
+                Some(i) => (stripped[..i].to_string(), stripped[i + 2..].to_string()),
+                None => (stripped.to_string(), String::new()),
+            }
+        } else {
+            (String::new(), rest.to_string())
+        };
+
+        entries.push(StashEntry { index, branch, message });
+    }
+
+    Ok(entries)
+}
+
+/// Stash all changes with a custom message
+#[tauri::command]
+pub fn git_stash_save(path: String, message: String) -> Result<String, String> {
+    let output = Command::new("git")
+        .args(["stash", "push", "--include-untracked", "-m", &message])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git stash: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+/// Apply a stash without removing it
+#[tauri::command]
+pub fn git_stash_apply(path: String, index: usize) -> Result<String, String> {
+    let stash_ref = format!("stash@{{{}}}", index);
+    let output = Command::new("git")
+        .args(["stash", "apply", &stash_ref])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git stash apply: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+/// Apply and remove a stash
+#[tauri::command]
+pub fn git_stash_pop(path: String, index: usize) -> Result<String, String> {
+    let stash_ref = format!("stash@{{{}}}", index);
+    let output = Command::new("git")
+        .args(["stash", "pop", &stash_ref])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git stash pop: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+/// Delete a stash
+#[tauri::command]
+pub fn git_stash_drop(path: String, index: usize) -> Result<String, String> {
+    let stash_ref = format!("stash@{{{}}}", index);
+    let output = Command::new("git")
+        .args(["stash", "drop", &stash_ref])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git stash drop: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+/// Get diff for a stash entry (preview)
+#[tauri::command]
+pub fn git_stash_diff(path: String, index: usize) -> Result<String, String> {
+    let stash_ref = format!("stash@{{{}}}", index);
+    let output = Command::new("git")
+        .args(["stash", "show", "-p", &stash_ref])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git stash show: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
 /// Fetch from remote (git fetch)
 #[tauri::command]
 pub async fn git_fetch(path: String) -> Result<String, String> {

@@ -142,6 +142,12 @@ pub fn run() {
             git_commands::git_merge,
             git_commands::git_merge_abort,
             git_commands::git_fetch,
+            git_commands::git_stash_list,
+            git_commands::git_stash_save,
+            git_commands::git_stash_apply,
+            git_commands::git_stash_pop,
+            git_commands::git_stash_drop,
+            git_commands::git_stash_diff,
         ])
         .on_window_event(|window, event| {
             match event {

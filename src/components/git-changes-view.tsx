@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, FileText, GitBranch, GitMerge, Upload, Check, Loader2, Undo2, Plus, Minus, X, ChevronDown, AlertTriangle, ExternalLink, Download } from "lucide-react";
+import { RefreshCw, FileText, GitBranch, GitMerge, Upload, Check, Loader2, Undo2, Plus, Minus, X, ChevronDown, AlertTriangle, ExternalLink, Download, Package } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import {
   gitChangedFiles,
@@ -19,13 +19,17 @@ import {
   gitMerge,
   gitMergeAbort,
   gitFetch,
+  gitStashList,
+  gitStashSave,
   openInVscode,
   type GitChangedFile,
   type GitStatusSummary,
   type BranchInfo,
   type MergeResult,
+  type StashEntry,
 } from "../lib/tauri-commands";
 import { GitDiffViewer } from "./git-diff-viewer";
+import { GitStashSection } from "./git-stash-section";
 
 const MIN_PANEL = 200;
 const MAX_PANEL = 500;
@@ -57,6 +61,14 @@ export function GitChangesView() {
     | { type: "all"; files: GitChangedFile[] }
     | null
   >(null);
+
+  // Stash state
+  const [stashes, setStashes] = useState<StashEntry[]>([]);
+  const [stashMsg, setStashMsg] = useState("");
+  const [showStashInput, setShowStashInput] = useState(false);
+  const [stashing, setStashing] = useState(false);
+  /** When viewing a stash diff (not a file diff) */
+  const [stashDiffPreview, setStashDiffPreview] = useState<string | null>(null);
 
   // Merge state
   const [branches, setBranches] = useState<BranchInfo[]>([]);
@@ -119,20 +131,23 @@ export function GitChangesView() {
     if (!project) return;
     setLoading(true);
     try {
-      const [f, s, unpushed] = await Promise.all([
+      const [f, s, unpushed, stashList] = await Promise.all([
         gitChangedFiles(project.path),
         gitStatusSummary(project.path),
         gitHasUnpushed(project.path).catch(() => false),
+        gitStashList(project.path).catch(() => [] as StashEntry[]),
       ]);
       setFiles(f);
       setStatus(s);
       setHasUnpushed(unpushed);
+      setStashes(stashList);
       // Notify sidebar to sync git badge count
       window.dispatchEvent(new CustomEvent("termoras:git-changed", { detail: { path: project.path, status: s } }));
     } catch {
       setFiles([]);
       setStatus(null);
       setHasUnpushed(false);
+      setStashes([]);
     }
     setLoading(false);
   }, [project]);
@@ -353,6 +368,24 @@ export function GitChangesView() {
     }
   }
 
+  /** Stash all changes with a custom message */
+  async function handleStashSave() {
+    if (!project || !stashMsg.trim()) return;
+    setStashing(true);
+    setActionError(null);
+    try {
+      await gitStashSave(project.path, stashMsg.trim());
+      setStashMsg("");
+      setShowStashInput(false);
+      await refresh();
+      setSuccessMsg("Stashed changes!");
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e) {
+      setActionError(`Stash failed: ${e}`);
+    }
+    setStashing(false);
+  }
+
   /** Open project in VSCode for conflict resolution */
   async function handleOpenVscode() {
     if (!project) return;
@@ -542,7 +575,7 @@ export function GitChangesView() {
               title="Staged"
               files={stagedFiles}
               selectedFile={selectedFile}
-              onSelect={setSelectedFile}
+              onSelect={(f) => { setSelectedFile(f); setStashDiffPreview(null); }}
               actionIcon="unstage"
               onFileAction={handleUnstageFile}
               onSectionAction={handleUnstageAll}
@@ -559,7 +592,7 @@ export function GitChangesView() {
               title="Changes"
               files={unstagedFiles}
               selectedFile={selectedFile}
-              onSelect={setSelectedFile}
+              onSelect={(f) => { setSelectedFile(f); setStashDiffPreview(null); }}
               actionIcon="stage"
               onFileAction={handleStageFile}
               onSectionAction={handleStageAll}
@@ -569,6 +602,18 @@ export function GitChangesView() {
               onRevertAll={() => setConfirmRevert({ type: "all", files: unstagedFiles })}
             />
           )}
+
+          {/* Stash section — always visible so users discover the feature */}
+          <div className="border-t border-[var(--border-color)] mt-1 pt-1">
+            <GitStashSection
+              stashes={stashes}
+              projectPath={project.path}
+              onRefresh={refresh}
+              onSuccess={(msg) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(null), 3000); }}
+              onError={(msg) => setActionError(msg)}
+              onPreviewDiff={(diff) => { setSelectedFile(null); setStashDiffPreview(diff); }}
+            />
+          </div>
         </div>
 
         {/* Summary footer */}
@@ -596,6 +641,37 @@ export function GitChangesView() {
           {actionError && (
             <div className="text-sm text-[var(--accent-red)] bg-[var(--accent-red)]/10 rounded px-2 py-1 break-words">
               {actionError}
+            </div>
+          )}
+
+          {/* Stash input (shown when stash button clicked) */}
+          {showStashInput && (
+            <div className="flex gap-1">
+              <input
+                type="text"
+                value={stashMsg}
+                onChange={(e) => setStashMsg(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && stashMsg.trim()) handleStashSave();
+                  if (e.key === "Escape") { setShowStashInput(false); setStashMsg(""); }
+                }}
+                placeholder="Stash name..."
+                autoFocus
+                className="flex-1 text-sm px-2 py-1.5 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:border-[var(--accent-blue)]"
+              />
+              <button
+                onClick={handleStashSave}
+                disabled={stashing || !stashMsg.trim()}
+                className="shrink-0 text-sm px-2 py-1.5 rounded bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25 transition-colors disabled:opacity-40"
+              >
+                {stashing ? <Loader2 size={14} className="animate-spin" /> : "Save"}
+              </button>
+              <button
+                onClick={() => { setShowStashInput(false); setStashMsg(""); }}
+                className="shrink-0 text-sm px-1.5 py-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+              >
+                <X size={14} />
+              </button>
             </div>
           )}
 
@@ -643,6 +719,19 @@ export function GitChangesView() {
               {pushing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
               {pushing ? "Pushing..." : "Push"}
             </button>
+            <button
+              onClick={() => setShowStashInput(!showStashInput)}
+              disabled={files.length === 0}
+              className={`shrink-0 flex items-center justify-center gap-1 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
+                files.length === 0
+                  ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
+                  : "bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20"
+              }`}
+              title="Stash changes"
+            >
+              <Package size={14} />
+              Stash
+            </button>
           </div>
 
           {/* Undo last commit — only show when there are unpushed commits */}
@@ -670,9 +759,11 @@ export function GitChangesView() {
         className="w-1 shrink-0 cursor-col-resize hover:bg-[var(--accent-blue)]/30 active:bg-[var(--accent-blue)]/50 transition-colors"
       />
 
-      {/* Diff viewer / File content viewer */}
+      {/* Diff viewer / File content viewer / Stash diff preview */}
       <div className="flex-1 min-w-0 overflow-auto bg-[var(--bg-primary)]">
-        {selectedFile ? (
+        {stashDiffPreview != null ? (
+          <GitDiffViewer diff={stashDiffPreview} filePath="Stash Preview" isNewFile={false} />
+        ) : selectedFile ? (
           <GitDiffViewer diff={diff} filePath={selectedFile.path} isNewFile={isNewFile} />
         ) : (
           <div className="flex items-center justify-center h-full text-sm text-[var(--text-secondary)]">

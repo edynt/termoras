@@ -66,7 +66,8 @@
       "Bash(git add:*)",
       "Bash(grep -r \"Cmd\\\\+W\\\\|cmd.*w\\\\|closeTab\" /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -20)",
       "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/docs -type f -name \"*.md\" 2>/dev/null | head -10)",
-      "Bash(echo \"Date format: $CK_PLAN_DATE_FORMAT\" && date +\"%y%m%d\" && ls /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src-tauri/plans/reports/ 2>/dev/null || echo \"reports dir missing\")"
+      "Bash(echo \"Date format: $CK_PLAN_DATE_FORMAT\" && date +\"%y%m%d\" && ls /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src-tauri/plans/reports/ 2>/dev/null || echo \"reports dir missing\")",
+      "Bash(cargo clippy:*)"
     ]
   }
 }

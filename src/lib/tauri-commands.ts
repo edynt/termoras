@@ -158,6 +158,45 @@ export async function gitFetch(path: string): Promise<string> {
   return invoke<string>("git_fetch", { path });
 }
 
+// ── Git Stash Commands ──────────────────────────────────────────────
+
+/** Stash entry from git stash list */
+export interface StashEntry {
+  index: number;
+  branch: string;
+  message: string;
+}
+
+/** List all git stashes */
+export async function gitStashList(path: string): Promise<StashEntry[]> {
+  return invoke<StashEntry[]>("git_stash_list", { path });
+}
+
+/** Stash all changes with a custom message */
+export async function gitStashSave(path: string, message: string): Promise<string> {
+  return invoke<string>("git_stash_save", { path, message });
+}
+
+/** Apply a stash without removing it */
+export async function gitStashApply(path: string, index: number): Promise<string> {
+  return invoke<string>("git_stash_apply", { path, index });
+}
+
+/** Apply and remove a stash */
+export async function gitStashPop(path: string, index: number): Promise<string> {
+  return invoke<string>("git_stash_pop", { path, index });
+}
+
+/** Delete a stash */
+export async function gitStashDrop(path: string, index: number): Promise<string> {
+  return invoke<string>("git_stash_drop", { path, index });
+}
+
+/** Get diff for a stash entry (preview) */
+export async function gitStashDiff(path: string, index: number): Promise<string> {
+  return invoke<string>("git_stash_diff", { path, index });
+}
+
 /** Get the foreground process name running inside a terminal's shell. */
 export async function getTerminalProcessName(
   id: string,
