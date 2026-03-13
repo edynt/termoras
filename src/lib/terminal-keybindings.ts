@@ -129,6 +129,18 @@ export function attachMacKeybindings(
           term.selectAll();
           event.preventDefault();
           return false;
+
+        case "w":
+        case "t":
+          // Cmd+W (close tab) and Cmd+T (new tab) — handled by Tauri menu
+          event.preventDefault();
+          return false;
+
+        case "1": case "2": case "3": case "4": case "5":
+        case "6": case "7": case "8": case "9":
+          // Cmd+1-9 → switch terminal tabs (handled by global keybindings hook)
+          event.preventDefault();
+          return false;
       }
     }
 

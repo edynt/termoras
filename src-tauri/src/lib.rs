@@ -3,13 +3,15 @@ mod git_commands;
 mod pty_manager;
 
 use pty_manager::AppState;
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 
-/// Kill all PTY sessions for the given window
-fn kill_all_sessions(window: &tauri::Window) {
+/// Kill all PTY sessions (accepts Window, WebviewWindow, or AppHandle)
+fn kill_all_sessions(handle: &impl tauri::Manager<tauri::Wry>) {
     let sessions_arc = {
-        let state = window.state::<AppState>();
+        let state = handle.state::<AppState>();
         state.sessions.clone()
     };
     let mut guard = match sessions_arc.lock() {
@@ -41,6 +43,76 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // App submenu (macOS application menu)
+            let app_submenu = Submenu::with_items(
+                app,
+                "Termoras",
+                true,
+                &[
+                    &PredefinedMenuItem::about(app, Some("About Termoras"), None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::services(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::hide(app, None)?,
+                    &PredefinedMenuItem::hide_others(app, None)?,
+                    &PredefinedMenuItem::show_all(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &MenuItem::with_id(app, "quit-app", "Quit Termoras", true, Some("CmdOrCtrl+Q"))?,
+                ],
+            )?;
+
+            // Terminal submenu
+            let close_tab_item =
+                MenuItem::with_id(app, "close-tab", "Close Tab", true, Some("CmdOrCtrl+W"))?;
+            let new_tab_item =
+                MenuItem::with_id(app, "new-tab", "New Tab", true, Some("CmdOrCtrl+T"))?;
+            let terminal_submenu = Submenu::with_items(
+                app,
+                "Terminal",
+                true,
+                &[&close_tab_item, &new_tab_item],
+            )?;
+
+            // Edit submenu
+            let edit_submenu = Submenu::with_items(
+                app,
+                "Edit",
+                true,
+                &[
+                    &PredefinedMenuItem::undo(app, None)?,
+                    &PredefinedMenuItem::redo(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::cut(app, None)?,
+                    &PredefinedMenuItem::copy(app, None)?,
+                    &PredefinedMenuItem::paste(app, None)?,
+                    &PredefinedMenuItem::select_all(app, None)?,
+                ],
+            )?;
+
+            // Window submenu (no close_window — Cmd+W is handled by Terminal > Close Tab)
+            let window_submenu = Submenu::with_items(
+                app,
+                "Window",
+                true,
+                &[
+                    &PredefinedMenuItem::minimize(app, None)?,
+                    &PredefinedMenuItem::fullscreen(app, None)?,
+                ],
+            )?;
+
+            let menu = Menu::with_items(
+                app,
+                &[
+                    &app_submenu,
+                    &terminal_submenu,
+                    &edit_submenu,
+                    &window_submenu,
+                ],
+            )?;
+
+            app.set_menu(menu)?;
+
             Ok(())
         })
         .manage(AppState::new())
@@ -97,6 +169,42 @@ pub fn run() {
                 tauri::WindowEvent::Destroyed => {
                     // Fallback cleanup if window is destroyed without the dialog
                     kill_all_sessions(window);
+                }
+                _ => {}
+            }
+        })
+        .on_menu_event(|app, event| {
+            match event.id().as_ref() {
+                "close-tab" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        window.emit("close-active-terminal", ()).ok();
+                    }
+                }
+                "new-tab" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        window.emit("create-new-terminal", ()).ok();
+                    }
+                }
+                "quit-app" => {
+                    // Show quit confirmation dialog (same as red X button)
+                    if let Some(window) = app.get_webview_window("main") {
+                        let win = window.clone();
+                        window
+                            .dialog()
+                            .message("All terminal sessions will be terminated.")
+                            .title("Quit Termoras?")
+                            .kind(MessageDialogKind::Warning)
+                            .buttons(MessageDialogButtons::OkCancelCustom(
+                                "Quit".to_string(),
+                                "Cancel".to_string(),
+                            ))
+                            .show(move |confirmed| {
+                                if confirmed {
+                                    kill_all_sessions(&win);
+                                    win.destroy().ok();
+                                }
+                            });
+                    }
                 }
                 _ => {}
             }

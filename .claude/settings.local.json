@@ -62,7 +62,11 @@
       "Bash(convert -size 660x400 xc:'#f5f5f7' \\\\\n  -fill none -stroke '#999999' -strokewidth 1.5 \\\\\n  -draw \"line 280,195 370,195\" \\\\\n  -draw \"line 355,180 375,195\" \\\\\n  -draw \"line 355,210 375,195\" \\\\\n  -font Helvetica -pointsize 16 -fill '#888888' -stroke none \\\\\n  -gravity center -draw \"text 0,85 'Drag Termoras to Applications'\" \\\\\n  /Users/tringuyen/github.com/edynt/termoras/src-tauri/icons/dmg-background.png)",
       "Bash(git tag:*)",
       "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/docs -type f -name \"*.md\" 2>/dev/null | sort)",
-      "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/.claude/workflows -type f -name \"*.md\" 2>/dev/null | sort)"
+      "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/.claude/workflows -type f -name \"*.md\" 2>/dev/null | sort)",
+      "Bash(git add:*)",
+      "Bash(grep -r \"Cmd\\\\+W\\\\|cmd.*w\\\\|closeTab\" /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -20)",
+      "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/docs -type f -name \"*.md\" 2>/dev/null | head -10)",
+      "Bash(echo \"Date format: $CK_PLAN_DATE_FORMAT\" && date +\"%y%m%d\" && ls /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src-tauri/plans/reports/ 2>/dev/null || echo \"reports dir missing\")"
     ]
   }
 }
