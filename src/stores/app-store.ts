@@ -45,6 +45,7 @@ interface AppStore {
   setActiveTerminalInPlace: (id: string) => void;
   setTerminalRunning: (id: string, running: boolean) => void;
   renameTerminal: (id: string, name: string) => void;
+  reorderTerminals: (fromId: string, toId: string) => void;
 }
 
 /** Persist terminals to disk (fire-and-forget) */
@@ -280,5 +281,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
       ),
     }));
     persistTerminals(get().terminals);
+  },
+
+  reorderTerminals: (fromId: string, toId: string) => {
+    const { terminals } = get();
+    const fromIdx = terminals.findIndex((t) => t.id === fromId);
+    const toIdx = terminals.findIndex((t) => t.id === toId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+    const updated = [...terminals];
+    const [moved] = updated.splice(fromIdx, 1);
+    // Insert before the target's current position
+    const insertIdx = updated.findIndex((t) => t.id === toId);
+    updated.splice(insertIdx, 0, moved);
+    set({ terminals: updated });
+    persistTerminals(updated);
   },
 }));

@@ -216,11 +216,30 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     });
 
     // Observe container size changes (sidebar drag, view switch, window resize, etc.)
-    // Use rAF instead of setTimeout for faster, frame-aligned fitting
+    // Use rAF instead of setTimeout for faster, frame-aligned fitting.
+    // Track previous width to detect display:none → visible transitions (0 → real size)
+    // which need an extra delayed refit to catch late layout shifts.
     let resizeRaf = 0;
+    let resizeSafetyTimeout = 0;
+    let prevWidth = containerRef.current?.offsetWidth ?? 0;
     const observer = new ResizeObserver(() => {
       cancelAnimationFrame(resizeRaf);
-      resizeRaf = requestAnimationFrame(() => fitAddon.fit());
+      clearTimeout(resizeSafetyTimeout);
+      resizeRaf = requestAnimationFrame(() => {
+        fitAddon.fit();
+        const curWidth = containerRef.current?.offsetWidth ?? 0;
+        // Container just became visible (0 → real size) — schedule a safety refit
+        // because the first fit may use intermediate dimensions
+        if (prevWidth === 0 && curWidth > 0) {
+          resizeSafetyTimeout = window.setTimeout(() => {
+            fitAddon.fit();
+            if (termRef.current) {
+              resizeTerminal(terminalId, termRef.current.rows, termRef.current.cols).catch(() => {});
+            }
+          }, 100);
+        }
+        prevWidth = curWidth;
+      });
     });
     if (containerRef.current) observer.observe(containerRef.current);
 
@@ -230,6 +249,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       container?.removeEventListener("paste", blockPaste, true);
       container?.removeEventListener("beforeinput", blockBeforeInput as EventListener, true);
       observer.disconnect();
+      clearTimeout(resizeSafetyTimeout);
       cancelAnimationFrame(resizeRaf);
       killTerminal(terminalId).catch(() => {});
       term.dispose();
@@ -253,6 +273,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   useEffect(() => {
     if (activeTerminalId !== terminalId || !fitRef.current || !termRef.current) return;
     let rafId = 0;
+    let safetyTimeout = 0;
     const refit = () => {
       const el = containerRef.current;
       if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) {
@@ -283,9 +304,22 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
         term.refresh(0, term.rows - 1);
         term.focus();
       }
+      // Safety net: refit again after layout fully settles — catches cases where
+      // the first fit used intermediate dimensions during display:none → visible
+      safetyTimeout = window.setTimeout(() => {
+        if (fitRef.current && containerRef.current && containerRef.current.offsetWidth > 0) {
+          fitRef.current.fit();
+          if (termRef.current) {
+            resizeTerminal(terminalId, termRef.current.rows, termRef.current.cols).catch(() => {});
+          }
+        }
+      }, 100);
     };
     rafId = requestAnimationFrame(refit);
-    return () => cancelAnimationFrame(rafId);
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(safetyTimeout);
+    };
   }, [activeTerminalId, terminalId, activeView]);
 
   // Drag-and-drop handlers for image upload
