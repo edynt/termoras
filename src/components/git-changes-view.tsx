@@ -603,8 +603,11 @@ export function GitChangesView() {
             />
           )}
 
-          {/* Stash section — always visible so users discover the feature */}
-          <div className="border-t border-[var(--border-color)] mt-1 pt-1">
+        </div>
+
+        {/* Stash section — pinned to footer */}
+        {stashes.length > 0 && (
+          <div className="border-t border-[var(--border-color)] max-h-[150px] overflow-y-auto">
             <GitStashSection
               stashes={stashes}
               projectPath={project.path}
@@ -614,7 +617,7 @@ export function GitChangesView() {
               onPreviewDiff={(diff) => { setSelectedFile(null); setStashDiffPreview(diff); }}
             />
           </div>
-        </div>
+        )}
 
         {/* Summary footer */}
         {status && (

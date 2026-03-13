@@ -84,7 +84,7 @@ export function GitStashSection({
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-3 py-1 group"
       >
-        <span className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-1">
+        <span className="text-sm font-semibold text-[var(--text-secondary)] tracking-wider flex items-center gap-1">
           <ChevronDown
             size={14}
             className={`transition-transform ${expanded ? "" : "-rotate-90"}`}
