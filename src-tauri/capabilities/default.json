@@ -11,8 +11,6 @@
     "clipboard-manager:allow-write-text",
     "clipboard-manager:allow-read-image",
     "dialog:allow-open",
-    "store:default",
-    "updater:default",
-    "process:allow-restart"
+    "store:default"
   ]
 }

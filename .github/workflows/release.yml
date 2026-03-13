@@ -38,7 +38,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Termoras ${{ github.ref_name }}"
@@ -47,26 +46,8 @@ jobs:
           prerelease: false
           args: --target ${{ matrix.target }}
 
-      # Upload .sig file to draft release for the publish job
-      - name: Upload signature to draft release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ github.ref_name }}"
-          SIG=$(find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.app.tar.gz.sig" -type f | head -1)
-          if [ -z "$SIG" ]; then
-            echo "::error::No .sig file found for ${{ matrix.target }}"
-            exit 1
-          fi
-          if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
-            NAME="Termoras_aarch64.app.tar.gz.sig"
-          else
-            NAME="Termoras_x64.app.tar.gz.sig"
-          fi
-          cp "$SIG" "$NAME"
-          gh release upload "$TAG" "$NAME" --clobber
 
-  # After all builds complete, generate latest.json and publish to public repo
+  # After all builds complete, copy release assets to the public repo
   publish:
     needs: build
     runs-on: ubuntu-latest
@@ -77,40 +58,15 @@ jobs:
         run: |
           TAG="${{ github.ref_name }}"
           mkdir -p artifacts
-          gh release download "$TAG" --repo ${{ github.repository }} --dir artifacts
-
-      - name: Generate latest.json for updater
-        run: |
-          TAG="${{ github.ref_name }}"
-          VERSION="${TAG#v}"
-          AARCH64_SIG=$(cat artifacts/Termoras_aarch64.app.tar.gz.sig)
-          X64_SIG=$(cat artifacts/Termoras_x64.app.tar.gz.sig)
-          PUB_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          BASE_URL="https://github.com/edynt/termoras-page/releases/download/${TAG}"
-
-          cat > artifacts/latest.json << EOF
-          {
-            "version": "${VERSION}",
-            "notes": "See the assets to download and install this version.",
-            "pub_date": "${PUB_DATE}",
-            "platforms": {
-              "darwin-aarch64": {
-                "signature": "${AARCH64_SIG}",
-                "url": "${BASE_URL}/Termoras_aarch64.app.tar.gz"
-              },
-              "darwin-x86_64": {
-                "signature": "${X64_SIG}",
-                "url": "${BASE_URL}/Termoras_x64.app.tar.gz"
-              }
-            }
-          }
-          EOF
+          # Download all assets from the draft release
+          gh release download "$TAG" --repo edynt/termoras --dir artifacts
 
       - name: Create release on public repo
         env:
           GH_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
         run: |
           TAG="${{ github.ref_name }}"
+          # Create release on termoras-page (or update if exists)
           gh release create "$TAG" \
             --repo edynt/termoras-page \
             --title "Termoras $TAG" \
