@@ -21,6 +21,8 @@ interface AppStore {
   activeView: "terminal" | "kanban" | "git";
   lastTerminalByProject: Record<string, string>;
   vietnameseInput: boolean;
+  /** Per-terminal flag: true when the terminal is waiting for user input */
+  terminalQuestioning: Record<string, boolean>;
 
   // app init
   init: () => Promise<void>;
@@ -44,6 +46,7 @@ interface AppStore {
   /** Set active terminal without switching view (for running commands in split view) */
   setActiveTerminalInPlace: (id: string) => void;
   setTerminalRunning: (id: string, running: boolean) => void;
+  setTerminalQuestioning: (id: string, questioning: boolean) => void;
   renameTerminal: (id: string, name: string) => void;
   reorderTerminals: (fromId: string, toId: string) => void;
 }
@@ -75,6 +78,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   activeView: "terminal",
   lastTerminalByProject: {},
   vietnameseInput: (() => { try { return localStorage.getItem("termoras:vi-input") === "true"; } catch { return false; } })(),
+  terminalQuestioning: {},
 
   init: async () => {
     const [projects, terminals, activeIds, lastTerminalByProject] = await Promise.all([
@@ -108,7 +112,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const terminal: TerminalSession = {
       id: crypto.randomUUID(),
       projectId: project.id,
-      name: "Terminal 1",
+      name: "Terminal",
       isRunning: false,
     };
     const updatedTerminals = [...get().terminals, terminal];
@@ -271,6 +275,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
       terminals: state.terminals.map((t) =>
         t.id === id ? { ...t, isRunning: running } : t,
       ),
+    }));
+  },
+
+  setTerminalQuestioning: (id: string, questioning: boolean) => {
+    set((state) => ({
+      terminalQuestioning: { ...state.terminalQuestioning, [id]: questioning },
     }));
   },
 

@@ -9,6 +9,7 @@ import { Paperclip } from "lucide-react";
 import { getTerminalTheme } from "../lib/terminal-theme";
 import { attachMacKeybindings } from "../lib/terminal-keybindings";
 import { TelexEngine } from "../lib/telex-engine";
+import { QuestionDetector } from "../lib/terminal-question-detector";
 import {
   createTerminal,
   writeTerminal,
@@ -35,6 +36,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   const writeToPtyRef = useRef<((data: string) => void) | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const setTerminalRunning = useAppStore((s) => s.setTerminalRunning);
+  const setTerminalQuestioning = useAppStore((s) => s.setTerminalQuestioning);
   const isDark = useThemeStore((s) => s.isDark);
   const vietnameseInput = useAppStore((s) => s.vietnameseInput);
 
@@ -90,10 +92,18 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     // Vietnamese Telex processing happens below in onData, not in the key handler.
     attachMacKeybindings(term, writeToPty, telex);
 
+    // Question detector — monitors PTY output for prompts waiting for user input
+    const questionDetector = new QuestionDetector((questioning) => {
+      setTerminalQuestioning(terminalId, questioning);
+    });
+
     // Create Tauri channel for streaming PTY output
     const channel = new Channel<number[]>();
     channel.onmessage = (data) => {
-      term.write(new Uint8Array(data));
+      const bytes = new Uint8Array(data);
+      term.write(bytes);
+      // Feed raw output to question detector
+      questionDetector.feed(new TextDecoder().decode(bytes));
     };
 
     // Listen for PTY exit BEFORE creating the PTY — prevents race where
@@ -246,6 +256,8 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     return () => {
       cancelled = true;
       unlisten?.();
+      questionDetector.dispose();
+      setTerminalQuestioning(terminalId, false);
       container?.removeEventListener("paste", blockPaste, true);
       container?.removeEventListener("beforeinput", blockBeforeInput as EventListener, true);
       observer.disconnect();
@@ -256,7 +268,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       termRef.current = null;
       fitRef.current = null;
     };
-  }, [terminalId, projectPath, setTerminalRunning]);
+  }, [terminalId, projectPath, setTerminalRunning, setTerminalQuestioning]);
 
   // Update xterm theme when app theme changes
   useEffect(() => {

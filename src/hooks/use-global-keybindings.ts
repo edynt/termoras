@@ -46,7 +46,7 @@ export function useGlobalKeybindings() {
       const terminal: TerminalSession = {
         id: crypto.randomUUID(),
         projectId: activeProjectId,
-        name: `Terminal ${count + 1}`,
+        name: count === 0 ? "Terminal" : `Terminal ${count + 1}`,
         isRunning: false,
       };
       addTerminal(terminal);
