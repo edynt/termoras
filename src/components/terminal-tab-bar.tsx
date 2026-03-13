@@ -42,6 +42,19 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
     }
   }, [editingId]);
 
+  // Listen for Cmd+W kill confirmation event from global keybindings
+  useEffect(() => {
+    function handleConfirmKill(e: Event) {
+      const { terminalId } = (e as CustomEvent).detail;
+      const { terminals: current } = useAppStore.getState();
+      if (current.some((t) => t.id === terminalId)) {
+        setConfirmKillId(terminalId);
+      }
+    }
+    window.addEventListener("termoras:confirm-kill-terminal", handleConfirmKill);
+    return () => window.removeEventListener("termoras:confirm-kill-terminal", handleConfirmKill);
+  }, []);
+
   function handleTabClick(id: string) {
     // Suppress click if a drag just ended
     if (justDraggedRef.current) return;

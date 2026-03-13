@@ -3,6 +3,7 @@ import { Sidebar } from "./components/sidebar";
 import { MainPanel } from "./components/main-panel";
 import { useAppStore } from "./stores/app-store";
 import { useThemeStore } from "./stores/theme-store";
+import { useGlobalKeybindings } from "./hooks/use-global-keybindings";
 
 const MIN_SIDEBAR = 180;
 const MAX_SIDEBAR = 480;
@@ -22,6 +23,8 @@ export function App() {
     init();
     initTheme();
   }, [init, initTheme]);
+
+  useGlobalKeybindings();
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
