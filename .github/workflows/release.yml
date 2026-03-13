@@ -47,23 +47,30 @@ jobs:
           prerelease: false
           args: --target ${{ matrix.target }}
 
-      # Upload .sig file as artifact (needed to generate latest.json in publish job)
-      - name: Upload signature artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sig-${{ matrix.target }}
-          path: src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz.sig
+      # Upload .sig file to draft release for the publish job
+      - name: Upload signature to draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          SIG=$(find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.app.tar.gz.sig" -type f | head -1)
+          if [ -z "$SIG" ]; then
+            echo "::error::No .sig file found for ${{ matrix.target }}"
+            exit 1
+          fi
+          if [[ "${{ matrix.target }}" == "aarch64-apple-darwin" ]]; then
+            NAME="Termoras_aarch64.app.tar.gz.sig"
+          else
+            NAME="Termoras_x64.app.tar.gz.sig"
+          fi
+          cp "$SIG" "$NAME"
+          gh release upload "$TAG" "$NAME" --clobber
 
   # After all builds complete, generate latest.json and publish to public repo
   publish:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download signature artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: signatures
-
       - name: Get release assets from private repo
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -76,8 +83,8 @@ jobs:
         run: |
           TAG="${{ github.ref_name }}"
           VERSION="${TAG#v}"
-          AARCH64_SIG=$(cat signatures/sig-aarch64-apple-darwin/*.sig)
-          X64_SIG=$(cat signatures/sig-x86_64-apple-darwin/*.sig)
+          AARCH64_SIG=$(cat artifacts/Termoras_aarch64.app.tar.gz.sig)
+          X64_SIG=$(cat artifacts/Termoras_x64.app.tar.gz.sig)
           PUB_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           BASE_URL="https://github.com/edynt/termoras-page/releases/download/${TAG}"
 
