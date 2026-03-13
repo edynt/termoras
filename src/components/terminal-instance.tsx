@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
@@ -266,22 +266,15 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   }, [isDark]);
 
   // Re-fit when this terminal becomes visible (tab switch OR view switch).
-  // Polls until container has real dimensions (handles display:none → visible),
-  // then forces PTY resize + full re-render to fix any stale layout.
+  // useLayoutEffect runs BEFORE paint — prevents the 1-frame zoom flash that
+  // occurs when xterm renders at stale dimensions in the newly-sized container.
   const activeTerminalId = useAppStore((s) => s.activeTerminalId);
   const activeView = useAppStore((s) => s.activeView);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (activeTerminalId !== terminalId || !fitRef.current || !termRef.current) return;
-    let rafId = 0;
-    let safetyTimeout = 0;
-    const refit = () => {
-      const el = containerRef.current;
-      if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) {
-        // Container not laid out yet (display:none → visible transition), retry
-        rafId = requestAnimationFrame(refit);
-        return;
-      }
-      // Re-attach WebGL if context was lost (display:none kills it)
+
+    // Re-attach WebGL if context was lost (display:none kills it)
+    const reattachWebGL = () => {
       if (!webglRef.current && termRef.current) {
         try {
           const webgl = new WebglAddon();
@@ -295,30 +288,40 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
           // Canvas fallback is fine
         }
       }
+    };
+
+    const el = containerRef.current;
+    // Container already has dimensions — fit synchronously before paint
+    if (el && el.offsetWidth > 0 && el.offsetHeight > 0) {
+      reattachWebGL();
       fitRef.current?.fit();
       const term = termRef.current;
       if (term) {
-        // Force PTY resize even if xterm dimensions unchanged — ensures shell
-        // gets SIGWINCH and re-draws prompt at correct width
         resizeTerminal(terminalId, term.rows, term.cols).catch(() => {});
-        term.refresh(0, term.rows - 1);
         term.focus();
       }
-      // Safety net: refit again after layout fully settles — catches cases where
-      // the first fit used intermediate dimensions during display:none → visible
-      safetyTimeout = window.setTimeout(() => {
-        if (fitRef.current && containerRef.current && containerRef.current.offsetWidth > 0) {
-          fitRef.current.fit();
-          if (termRef.current) {
-            resizeTerminal(terminalId, termRef.current.rows, termRef.current.cols).catch(() => {});
-          }
-        }
-      }, 100);
+      return;
+    }
+
+    // Container not laid out yet (display:none → visible) — poll with rAF
+    let rafId = 0;
+    const refit = () => {
+      const container = containerRef.current;
+      if (!container || container.offsetWidth === 0 || container.offsetHeight === 0) {
+        rafId = requestAnimationFrame(refit);
+        return;
+      }
+      reattachWebGL();
+      fitRef.current?.fit();
+      const term = termRef.current;
+      if (term) {
+        resizeTerminal(terminalId, term.rows, term.cols).catch(() => {});
+        term.focus();
+      }
     };
     rafId = requestAnimationFrame(refit);
     return () => {
       cancelAnimationFrame(rafId);
-      clearTimeout(safetyTimeout);
     };
   }, [activeTerminalId, terminalId, activeView]);
 
