@@ -124,6 +124,40 @@ export async function openInVscode(path: string): Promise<void> {
   return invoke("open_in_vscode", { path });
 }
 
+/** Branch info for branch picker */
+export interface BranchInfo {
+  name: string;
+  is_current: boolean;
+  is_remote: boolean;
+}
+
+/** List local and remote branches */
+export async function gitListBranches(path: string): Promise<BranchInfo[]> {
+  return invoke<BranchInfo[]>("git_list_branches", { path });
+}
+
+/** Result of a git merge operation */
+export interface MergeResult {
+  success: boolean;
+  conflicts: string[];
+  message: string;
+}
+
+/** Merge a branch into the current branch */
+export async function gitMerge(path: string, branch: string): Promise<MergeResult> {
+  return invoke<MergeResult>("git_merge", { path, branch });
+}
+
+/** Abort an in-progress merge */
+export async function gitMergeAbort(path: string): Promise<string> {
+  return invoke<string>("git_merge_abort", { path });
+}
+
+/** Fetch from all remotes */
+export async function gitFetch(path: string): Promise<string> {
+  return invoke<string>("git_fetch", { path });
+}
+
 /** Get the foreground process name running inside a terminal's shell. */
 export async function getTerminalProcessName(
   id: string,

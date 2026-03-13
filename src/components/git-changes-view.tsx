@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, FileText, GitBranch, Upload, Check, Loader2, Undo2, Plus, Minus, X } from "lucide-react";
+import { RefreshCw, FileText, GitBranch, GitMerge, Upload, Check, Loader2, Undo2, Plus, Minus, X, ChevronDown, AlertTriangle, ExternalLink, Download } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import {
   gitChangedFiles,
@@ -15,8 +15,15 @@ import {
   gitUndoCommit,
   gitRevertFile,
   gitPush,
+  gitListBranches,
+  gitMerge,
+  gitMergeAbort,
+  gitFetch,
+  openInVscode,
   type GitChangedFile,
   type GitStatusSummary,
+  type BranchInfo,
+  type MergeResult,
 } from "../lib/tauri-commands";
 import { GitDiffViewer } from "./git-diff-viewer";
 
@@ -51,6 +58,15 @@ export function GitChangesView() {
     | null
   >(null);
 
+  // Merge state
+  const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [showMergePanel, setShowMergePanel] = useState(false);
+  const [branchFilter, setBranchFilter] = useState("");
+  const [confirmMergeBranch, setConfirmMergeBranch] = useState<string | null>(null);
+  const [merging, setMerging] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [mergeConflicts, setMergeConflicts] = useState<string[]>([]);
+
   // Resizable panel
   const [panelWidth, setPanelWidth] = useState(() => {
     const stored = localStorage.getItem(PANEL_STORAGE_KEY);
@@ -83,6 +99,21 @@ export function GitChangesView() {
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
   }, []);
+
+  // Load branches when project changes
+  const loadBranches = useCallback(async () => {
+    if (!project) return;
+    try {
+      const b = await gitListBranches(project.path);
+      setBranches(b);
+    } catch {
+      setBranches([]);
+    }
+  }, [project]);
+
+  useEffect(() => {
+    loadBranches();
+  }, [loadBranches]);
 
   const refresh = useCallback(async () => {
     if (!project) return;
@@ -262,6 +293,76 @@ export function GitChangesView() {
     setConfirmRevert(null);
   }
 
+  /** Fetch from remote and refresh branch list */
+  async function handleFetch() {
+    if (!project) return;
+    setFetching(true);
+    setActionError(null);
+    try {
+      await gitFetch(project.path);
+      await loadBranches();
+      await refresh();
+      setSuccessMsg("Fetched from remote");
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e) {
+      setActionError(`Fetch failed: ${e}`);
+    }
+    setFetching(false);
+  }
+
+  /** Merge confirmed branch into current */
+  async function handleMerge() {
+    if (!project || !confirmMergeBranch) return;
+    const branchName = confirmMergeBranch;
+    setConfirmMergeBranch(null);
+    setMerging(true);
+    setActionError(null);
+    setMergeConflicts([]);
+    try {
+      const result: MergeResult = await gitMerge(project.path, branchName);
+      if (result.success) {
+        setShowMergePanel(false);
+        await refresh();
+        await loadBranches();
+        setSuccessMsg(`Merged ${branchName}`);
+        setTimeout(() => setSuccessMsg(null), 3000);
+      } else {
+        // Merge conflicts
+        setMergeConflicts(result.conflicts);
+        setActionError(result.message);
+        await refresh();
+      }
+    } catch (e) {
+      setActionError(`Merge failed: ${e}`);
+    }
+    setMerging(false);
+  }
+
+  /** Abort in-progress merge */
+  async function handleMergeAbort() {
+    if (!project) return;
+    setActionError(null);
+    try {
+      await gitMergeAbort(project.path);
+      setMergeConflicts([]);
+      await refresh();
+      setSuccessMsg("Merge aborted");
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e) {
+      setActionError(`Abort failed: ${e}`);
+    }
+  }
+
+  /** Open project in VSCode for conflict resolution */
+  async function handleOpenVscode() {
+    if (!project) return;
+    try {
+      await openInVscode(project.path);
+    } catch (e) {
+      setActionError(`Failed to open VS Code: ${e}`);
+    }
+  }
+
   // Load diff (or raw content for new files) when a file is selected
   useEffect(() => {
     if (!project || !selectedFile) {
@@ -300,7 +401,7 @@ export function GitChangesView() {
     <div className="flex h-full relative">
       {/* File list sidebar */}
       <div className="shrink-0 border-r border-[var(--border-color)] flex flex-col bg-[var(--bg-sidebar)]" style={{ width: panelWidth }}>
-        {/* Header — branch badge */}
+        {/* Header — branch badge + actions */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-2 min-w-0">
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--accent-blue)]/10 min-w-0" title={status?.branch ?? ""}>
@@ -310,14 +411,121 @@ export function GitChangesView() {
               </span>
             </div>
           </div>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={handleFetch}
+              disabled={fetching}
+              className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+              title="Fetch from remote"
+            >
+              <Download size={16} className={fetching ? "animate-pulse" : ""} />
+            </button>
+            <button
+              onClick={refresh}
+              disabled={loading}
+              className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            </button>
+          </div>
+        </div>
+
+        {/* Merge toggle + conflict banner */}
+        <div className="border-b border-[var(--border-color)]">
+          {/* Merge panel toggle */}
           <button
-            onClick={refresh}
-            disabled={loading}
-            className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
-            title="Refresh"
+            onClick={() => { setShowMergePanel(!showMergePanel); setBranchFilter(""); }}
+            className={`w-full flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
+              showMergePanel
+                ? "text-[var(--accent-blue)] bg-[var(--accent-blue)]/5"
+                : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+            }`}
           >
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            <GitMerge size={14} />
+            Merge
+            {merging && <Loader2 size={12} className="animate-spin ml-auto" />}
+            <ChevronDown size={14} className={`ml-auto transition-transform ${showMergePanel ? "rotate-180" : ""}`} />
           </button>
+
+          {/* Branch list panel */}
+          {showMergePanel && (
+            <div className="border-t border-[var(--border-color)]">
+              {/* Search filter */}
+              <div className="px-2 py-1.5">
+                <input
+                  type="text"
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  placeholder="Search branches..."
+                  className="w-full text-sm px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:border-[var(--accent-blue)]"
+                />
+              </div>
+
+              {/* Branch list */}
+              <div className="max-h-[200px] overflow-y-auto">
+                {(() => {
+                  const filtered = branches
+                    .filter((b) => !b.is_current)
+                    .filter((b) => !branchFilter || b.name.toLowerCase().includes(branchFilter.toLowerCase()));
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="px-3 py-3 text-sm text-[var(--text-secondary)] text-center">
+                        {branchFilter ? "No matching branches" : "No other branches"}
+                      </div>
+                    );
+                  }
+                  return filtered.map((b) => (
+                    <button
+                      key={b.name}
+                      onClick={() => setConfirmMergeBranch(b.name)}
+                      disabled={merging}
+                      className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-50"
+                    >
+                      <GitBranch size={12} className={`shrink-0 ${b.is_remote ? "text-[var(--accent-red)]" : "text-[var(--text-secondary)]"}`} />
+                      <span className="truncate flex-1">{b.name}</span>
+                      {b.is_remote && (
+                        <span className="shrink-0 text-[10px] px-1 py-0.5 rounded bg-[var(--accent-red)]/10 text-[var(--accent-red)]">remote</span>
+                      )}
+                    </button>
+                  ));
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* Merge conflict banner — always visible when conflicts exist */}
+          {mergeConflicts.length > 0 && (
+            <div className="border-t border-[var(--accent-red)]/30 bg-[var(--accent-red)]/5 p-2 space-y-2">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-[var(--accent-red)]">
+                <AlertTriangle size={14} />
+                Merge conflicts in {mergeConflicts.length} file{mergeConflicts.length > 1 ? "s" : ""}
+              </div>
+              <div className="space-y-0.5 max-h-[80px] overflow-y-auto">
+                {mergeConflicts.map((f) => (
+                  <div key={f} className="text-xs text-[var(--text-secondary)] font-mono truncate pl-1">
+                    {f}
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleOpenVscode}
+                  className="flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25 transition-colors"
+                >
+                  <ExternalLink size={12} />
+                  Open in VSCode
+                </button>
+                <button
+                  onClick={handleMergeAbort}
+                  className="flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25 transition-colors"
+                >
+                  <X size={12} />
+                  Abort Merge
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* File list */}
@@ -521,6 +729,58 @@ export function GitChangesView() {
                 className="text-sm px-4 py-2 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
               >
                 Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Merge confirmation modal */}
+      {confirmMergeBranch && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setConfirmMergeBranch(null)}
+        >
+          <div
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[420px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <GitMerge size={20} className="text-[var(--accent-blue)]" />
+              <p className="text-base font-semibold">Merge Branch</p>
+            </div>
+
+            <div className="mb-5 space-y-3">
+              <p className="text-sm text-[var(--text-secondary)]">
+                Are you sure you want to merge:
+              </p>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border-color)]">
+                <GitBranch size={14} className="shrink-0 text-[var(--accent-blue)]" />
+                <span className="text-sm font-semibold text-[var(--text-primary)] truncate">{confirmMergeBranch}</span>
+              </div>
+              <div className="flex justify-center">
+                <span className="text-xs text-[var(--text-secondary)]">into</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[var(--accent-blue)]/5 border border-[var(--accent-blue)]/20">
+                <GitBranch size={14} className="shrink-0 text-[var(--accent-blue)]" />
+                <span className="text-sm font-semibold text-[var(--accent-blue)] truncate">{status?.branch ?? "—"}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">current</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmMergeBranch(null)}
+                className="text-sm px-4 py-2 rounded-md border border-[var(--border-color)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMerge}
+                className="text-sm px-4 py-2 rounded-md bg-[var(--accent-blue)] text-white hover:opacity-90 transition-colors flex items-center gap-1.5"
+              >
+                <GitMerge size={14} />
+                Merge
               </button>
             </div>
           </div>

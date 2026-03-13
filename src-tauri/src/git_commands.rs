@@ -344,3 +344,171 @@ pub async fn git_push(path: String) -> Result<String, String> {
     // git push writes progress info to stderr even on success
     Ok(String::from_utf8_lossy(&output.stderr).to_string())
 }
+
+/// Branch info for the branch picker
+#[derive(serde::Serialize)]
+pub struct BranchInfo {
+    pub name: String,
+    pub is_current: bool,
+    pub is_remote: bool,
+}
+
+/// List local and remote branches
+#[tauri::command]
+pub fn git_list_branches(path: String) -> Result<Vec<BranchInfo>, String> {
+    let output = Command::new("git")
+        .args(["branch", "-a", "--no-color"])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git branch: {}", e))?;
+
+    let text = String::from_utf8_lossy(&output.stdout);
+    let mut branches: Vec<BranchInfo> = Vec::new();
+    let mut seen_remote_names: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    // First pass: collect local branches
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let is_current = trimmed.starts_with('*');
+        let name = trimmed.trim_start_matches('*').trim().to_string();
+
+        // Skip HEAD pointer (e.g., "remotes/origin/HEAD -> origin/main")
+        if name.contains("->") {
+            continue;
+        }
+
+        if name.starts_with("remotes/") {
+            continue; // Handle remote branches in second pass
+        }
+
+        seen_remote_names.insert(name.clone());
+        branches.push(BranchInfo {
+            name,
+            is_current,
+            is_remote: false,
+        });
+    }
+
+    // Second pass: collect remote branches (skip if local equivalent exists)
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.contains("->") {
+            continue;
+        }
+        let name = trimmed.trim_start_matches('*').trim();
+        if !name.starts_with("remotes/") {
+            continue;
+        }
+        // Strip "remotes/" prefix for display (keep origin/branch format)
+        let short_name = name.strip_prefix("remotes/").unwrap_or(name).to_string();
+        // Skip if we already have the local branch
+        // e.g., skip "origin/main" if "main" exists locally
+        let local_equivalent = short_name
+            .split('/')
+            .skip(1)
+            .collect::<Vec<&str>>()
+            .join("/");
+        if seen_remote_names.contains(&local_equivalent) {
+            continue;
+        }
+        branches.push(BranchInfo {
+            name: short_name,
+            is_current: false,
+            is_remote: true,
+        });
+    }
+
+    Ok(branches)
+}
+
+/// Result of a git merge operation
+#[derive(serde::Serialize)]
+pub struct MergeResult {
+    pub success: bool,
+    pub conflicts: Vec<String>,
+    pub message: String,
+}
+
+/// Merge a branch into the current branch
+#[tauri::command]
+pub async fn git_merge(path: String, branch: String) -> Result<MergeResult, String> {
+    let output = Command::new("git")
+        .args(["merge", &branch])
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git merge: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+    if output.status.success() {
+        return Ok(MergeResult {
+            success: true,
+            conflicts: vec![],
+            message: stdout,
+        });
+    }
+
+    // Check for merge conflicts — list unmerged files
+    let unmerged = Command::new("git")
+        .args(["diff", "--name-only", "--diff-filter=U"])
+        .current_dir(&path)
+        .output()
+        .ok();
+
+    let conflicts: Vec<String> = unmerged
+        .map(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .lines()
+                .filter(|l| !l.is_empty())
+                .map(|l| l.to_string())
+                .collect()
+        })
+        .unwrap_or_default();
+
+    if !conflicts.is_empty() {
+        return Ok(MergeResult {
+            success: false,
+            conflicts,
+            message: format!("Merge conflicts detected.\n{}", stderr),
+        });
+    }
+
+    // Non-conflict merge failure
+    Err(format!("Merge failed: {}", stderr))
+}
+
+/// Abort an in-progress merge (git merge --abort)
+#[tauri::command]
+pub fn git_merge_abort(path: String) -> Result<String, String> {
+    let output = Command::new("git")
+        .args(["merge", "--abort"])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git merge --abort: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok("Merge aborted.".to_string())
+}
+
+/// Fetch from remote (git fetch)
+#[tauri::command]
+pub async fn git_fetch(path: String) -> Result<String, String> {
+    let output = Command::new("git")
+        .args(["fetch", "--all", "--prune"])
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git fetch: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    Ok(String::from_utf8_lossy(&output.stderr).to_string())
+}
