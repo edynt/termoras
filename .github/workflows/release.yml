@@ -47,6 +47,7 @@ jobs:
           prerelease: false
           args: --target ${{ matrix.target }}
 
+
   # After all builds complete, copy release assets to the public repo
   publish:
     needs: build
