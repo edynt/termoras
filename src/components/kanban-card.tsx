@@ -31,6 +31,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const autoRunStatus = useAutoRunStore((s) => s.cardStatus[card.id]);
   const terminals = useAppStore((s) => s.terminals);
   const activeProjectId = useAppStore((s) => s.activeProjectId);
+  const activeTerminalId = useAppStore((s) => s.activeTerminalId);
   const setActiveTerminal = useAppStore((s) => s.setActiveTerminal);
   const setActiveTerminalInPlace = useAppStore((s) => s.setActiveTerminalInPlace);
 
@@ -82,8 +83,9 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     e.stopPropagation();
     if (!card.content || runState !== "idle") return;
 
-    // Find a terminal for the current project
-    const projectTerminal = terminals.find((t) => t.projectId === activeProjectId);
+    // Use the active terminal if it belongs to this project, otherwise fallback to first
+    const activeTerminal = terminals.find((t) => t.id === activeTerminalId && t.projectId === activeProjectId);
+    const projectTerminal = activeTerminal ?? terminals.find((t) => t.projectId === activeProjectId);
     if (!projectTerminal) return;
 
     const command = tagPrefix ? `${tagPrefix} ${card.content}` : card.content;

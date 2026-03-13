@@ -69,11 +69,11 @@ function buildCommand(cardId: string): string | null {
   return prefix ? `${prefix} ${card.content}` : card.content;
 }
 
-/** Find a terminal for the active project */
+/** Find the active terminal for the current project, fallback to first */
 function findTerminal(): string | null {
-  const { terminals, activeProjectId } = useAppStore.getState();
-  const t = terminals.find((t) => t.projectId === activeProjectId);
-  return t?.id ?? null;
+  const { terminals, activeProjectId, activeTerminalId } = useAppStore.getState();
+  const active = terminals.find((t) => t.id === activeTerminalId && t.projectId === activeProjectId);
+  return active?.id ?? terminals.find((t) => t.projectId === activeProjectId)?.id ?? null;
 }
 
 /** Wait for terminal to become idle (no child process) */

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
@@ -216,11 +216,30 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     });
 
     // Observe container size changes (sidebar drag, view switch, window resize, etc.)
-    // Use rAF instead of setTimeout for faster, frame-aligned fitting
+    // Use rAF instead of setTimeout for faster, frame-aligned fitting.
+    // Track previous width to detect display:none → visible transitions (0 → real size)
+    // which need an extra delayed refit to catch late layout shifts.
     let resizeRaf = 0;
+    let resizeSafetyTimeout = 0;
+    let prevWidth = containerRef.current?.offsetWidth ?? 0;
     const observer = new ResizeObserver(() => {
       cancelAnimationFrame(resizeRaf);
-      resizeRaf = requestAnimationFrame(() => fitAddon.fit());
+      clearTimeout(resizeSafetyTimeout);
+      resizeRaf = requestAnimationFrame(() => {
+        fitAddon.fit();
+        const curWidth = containerRef.current?.offsetWidth ?? 0;
+        // Container just became visible (0 → real size) — schedule a safety refit
+        // because the first fit may use intermediate dimensions
+        if (prevWidth === 0 && curWidth > 0) {
+          resizeSafetyTimeout = window.setTimeout(() => {
+            fitAddon.fit();
+            if (termRef.current) {
+              resizeTerminal(terminalId, termRef.current.rows, termRef.current.cols).catch(() => {});
+            }
+          }, 100);
+        }
+        prevWidth = curWidth;
+      });
     });
     if (containerRef.current) observer.observe(containerRef.current);
 
@@ -230,6 +249,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       container?.removeEventListener("paste", blockPaste, true);
       container?.removeEventListener("beforeinput", blockBeforeInput as EventListener, true);
       observer.disconnect();
+      clearTimeout(resizeSafetyTimeout);
       cancelAnimationFrame(resizeRaf);
       killTerminal(terminalId).catch(() => {});
       term.dispose();
@@ -246,21 +266,15 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   }, [isDark]);
 
   // Re-fit when this terminal becomes visible (tab switch OR view switch).
-  // Polls until container has real dimensions (handles display:none → visible),
-  // then forces PTY resize + full re-render to fix any stale layout.
+  // useLayoutEffect runs BEFORE paint — prevents the 1-frame zoom flash that
+  // occurs when xterm renders at stale dimensions in the newly-sized container.
   const activeTerminalId = useAppStore((s) => s.activeTerminalId);
   const activeView = useAppStore((s) => s.activeView);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (activeTerminalId !== terminalId || !fitRef.current || !termRef.current) return;
-    let rafId = 0;
-    const refit = () => {
-      const el = containerRef.current;
-      if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) {
-        // Container not laid out yet (display:none → visible transition), retry
-        rafId = requestAnimationFrame(refit);
-        return;
-      }
-      // Re-attach WebGL if context was lost (display:none kills it)
+
+    // Re-attach WebGL if context was lost (display:none kills it)
+    const reattachWebGL = () => {
       if (!webglRef.current && termRef.current) {
         try {
           const webgl = new WebglAddon();
@@ -274,18 +288,41 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
           // Canvas fallback is fine
         }
       }
+    };
+
+    const el = containerRef.current;
+    // Container already has dimensions — fit synchronously before paint
+    if (el && el.offsetWidth > 0 && el.offsetHeight > 0) {
+      reattachWebGL();
       fitRef.current?.fit();
       const term = termRef.current;
       if (term) {
-        // Force PTY resize even if xterm dimensions unchanged — ensures shell
-        // gets SIGWINCH and re-draws prompt at correct width
         resizeTerminal(terminalId, term.rows, term.cols).catch(() => {});
-        term.refresh(0, term.rows - 1);
+        term.focus();
+      }
+      return;
+    }
+
+    // Container not laid out yet (display:none → visible) — poll with rAF
+    let rafId = 0;
+    const refit = () => {
+      const container = containerRef.current;
+      if (!container || container.offsetWidth === 0 || container.offsetHeight === 0) {
+        rafId = requestAnimationFrame(refit);
+        return;
+      }
+      reattachWebGL();
+      fitRef.current?.fit();
+      const term = termRef.current;
+      if (term) {
+        resizeTerminal(terminalId, term.rows, term.cols).catch(() => {});
         term.focus();
       }
     };
     rafId = requestAnimationFrame(refit);
-    return () => cancelAnimationFrame(rafId);
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
   }, [activeTerminalId, terminalId, activeView]);
 
   // Drag-and-drop handlers for image upload

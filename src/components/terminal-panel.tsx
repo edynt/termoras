@@ -1,6 +1,7 @@
 import { Plus, Terminal } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
 import { TerminalInstance } from "./terminal-instance";
+import { TerminalTabBar } from "./terminal-tab-bar";
 import type { TerminalSession } from "../types";
 
 export function TerminalPanel() {
@@ -10,6 +11,11 @@ export function TerminalPanel() {
   const activeTerminalId = useAppStore((s) => s.activeTerminalId);
   const addTerminal = useAppStore((s) => s.addTerminal);
 
+  // Terminals for the active project
+  const projectTerminals = activeProjectId
+    ? terminals.filter((t) => t.projectId === activeProjectId)
+    : [];
+
   // Get project path for each terminal
   function getProjectPath(projectId: string): string {
     return projects.find((p) => p.id === projectId)?.path ?? "/";
@@ -17,7 +23,7 @@ export function TerminalPanel() {
 
   function handleCreateTerminal() {
     if (!activeProjectId) return;
-    const count = terminals.filter((t) => t.projectId === activeProjectId).length;
+    const count = projectTerminals.length;
     const terminal: TerminalSession = {
       id: crypto.randomUUID(),
       projectId: activeProjectId,
@@ -53,25 +59,35 @@ export function TerminalPanel() {
   }
 
   return (
-    <main className="relative h-full w-full overflow-hidden bg-[var(--bg-primary)]">
-      {terminals.map((t) => {
-        const isActive = t.id === activeTerminalId;
-        return (
-        <div
-          key={t.id}
-          className="absolute inset-0"
-          style={{
-            visibility: isActive ? "visible" : "hidden",
-            pointerEvents: isActive ? "auto" : "none",
-          }}
-        >
-          <TerminalInstance
-            terminalId={t.id}
-            projectPath={getProjectPath(t.projectId)}
-          />
-        </div>
-        );
-      })}
+    <main className="flex flex-col h-full w-full overflow-hidden bg-[var(--bg-primary)]">
+      {/* Tab bar — only shows when project has 2+ terminals */}
+      <TerminalTabBar
+        terminals={projectTerminals}
+        activeTerminalId={activeTerminalId}
+        onCreateTerminal={handleCreateTerminal}
+      />
+
+      {/* Terminal instances — absolutely positioned for non-destructive switching */}
+      <div className="relative flex-1 min-h-0 w-full">
+        {terminals.map((t) => {
+          const isActive = t.id === activeTerminalId;
+          return (
+            <div
+              key={t.id}
+              className="absolute inset-0"
+              style={{
+                visibility: isActive ? "visible" : "hidden",
+                pointerEvents: isActive ? "auto" : "none",
+              }}
+            >
+              <TerminalInstance
+                terminalId={t.id}
+                projectPath={getProjectPath(t.projectId)}
+              />
+            </div>
+          );
+        })}
+      </div>
     </main>
   );
 }
