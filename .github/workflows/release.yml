@@ -47,27 +47,63 @@ jobs:
           prerelease: false
           args: --target ${{ matrix.target }}
 
+      # Upload .sig file as artifact (needed to generate latest.json in publish job)
+      - name: Upload signature artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sig-${{ matrix.target }}
+          path: src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz.sig
 
-  # After all builds complete, copy release assets to the public repo
+  # After all builds complete, generate latest.json and publish to public repo
   publish:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Download signature artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: signatures
+
       - name: Get release assets from private repo
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ github.ref_name }}"
           mkdir -p artifacts
-          # Download all assets from the draft release
-          gh release download "$TAG" --repo edynt/termoras --dir artifacts
+          gh release download "$TAG" --repo ${{ github.repository }} --dir artifacts
+
+      - name: Generate latest.json for updater
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          AARCH64_SIG=$(cat signatures/sig-aarch64-apple-darwin/*.sig)
+          X64_SIG=$(cat signatures/sig-x86_64-apple-darwin/*.sig)
+          PUB_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          BASE_URL="https://github.com/edynt/termoras-page/releases/download/${TAG}"
+
+          cat > artifacts/latest.json << EOF
+          {
+            "version": "${VERSION}",
+            "notes": "See the assets to download and install this version.",
+            "pub_date": "${PUB_DATE}",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "${AARCH64_SIG}",
+                "url": "${BASE_URL}/Termoras_aarch64.app.tar.gz"
+              },
+              "darwin-x86_64": {
+                "signature": "${X64_SIG}",
+                "url": "${BASE_URL}/Termoras_x64.app.tar.gz"
+              }
+            }
+          }
+          EOF
 
       - name: Create release on public repo
         env:
           GH_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
         run: |
           TAG="${{ github.ref_name }}"
-          # Create release on termoras-page (or update if exists)
           gh release create "$TAG" \
             --repo edynt/termoras-page \
             --title "Termoras $TAG" \
