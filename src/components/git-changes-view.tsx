@@ -240,6 +240,8 @@ export function GitChangesView() {
     setActionError(null);
     try {
       await gitPush(project.path);
+      setSelectedFile(null);
+      setDiff("");
       await refresh();
       setSuccessMsg("Pushed successfully!");
       setTimeout(() => setSuccessMsg(null), 3000);
