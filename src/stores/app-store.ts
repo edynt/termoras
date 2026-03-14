@@ -249,7 +249,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const terminal = terminals.find((t) => t.id === id);
     if (terminal) {
       const updated = { ...lastTerminalByProject, [terminal.projectId]: id };
-      set({ activeTerminalId: id, activeView: "terminal", lastTerminalByProject: updated });
+      set({ activeProjectId: terminal.projectId, activeTerminalId: id, activeView: "terminal", lastTerminalByProject: updated });
       persistLastTerminalMap(updated);
     } else {
       set({ activeTerminalId: id, activeView: "terminal" });
