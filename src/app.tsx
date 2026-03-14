@@ -1,9 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Sidebar } from "./components/sidebar";
 import { MainPanel } from "./components/main-panel";
+import { UpdateNotification } from "./components/update-notification";
 import { useAppStore } from "./stores/app-store";
 import { useThemeStore } from "./stores/theme-store";
+import { useTagStore } from "./stores/tag-store";
 import { useGlobalKeybindings } from "./hooks/use-global-keybindings";
+import { useUpdateChecker } from "./hooks/use-update-checker";
 
 const MIN_SIDEBAR = 180;
 const MAX_SIDEBAR = 480;
@@ -13,6 +16,7 @@ const STORAGE_KEY = "termoras-sidebar-width";
 export function App() {
   const init = useAppStore((s) => s.init);
   const initTheme = useThemeStore((s) => s.init);
+  const loadTags = useTagStore((s) => s.loadTags);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? Math.min(MAX_SIDEBAR, Math.max(MIN_SIDEBAR, Number(stored))) : DEFAULT_SIDEBAR;
@@ -22,9 +26,11 @@ export function App() {
   useEffect(() => {
     init();
     initTheme();
-  }, [init, initTheme]);
+    loadTags();
+  }, [init, initTheme, loadTags]);
 
   useGlobalKeybindings();
+  const { updateInfo, dismiss: dismissUpdate } = useUpdateChecker();
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -65,6 +71,9 @@ export function App() {
         style={{ left: sidebarWidth - 2 }}
       />
       <MainPanel />
+      {updateInfo && (
+        <UpdateNotification info={updateInfo} onDismiss={dismissUpdate} />
+      )}
     </div>
   );
 }

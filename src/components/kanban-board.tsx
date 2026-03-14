@@ -15,7 +15,6 @@ import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { Plus, LayoutGrid, Columns3 } from "lucide-react";
 import { useKanbanStore } from "../stores/kanban-store";
 import { useAppStore } from "../stores/app-store";
-import { useTagStore } from "../stores/tag-store";
 import { useAutoRunStore } from "../stores/auto-run-store";
 import { KanbanColumn } from "./kanban-column";
 import { KanbanCard } from "./kanban-card";
@@ -35,15 +34,6 @@ export function KanbanBoard() {
   const enqueue = useAutoRunStore((s) => s.enqueue);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
-
-  const tagLoaded = useTagStore((s) => s.loaded);
-
-  // Load tags once on mount
-  useEffect(() => {
-    if (!tagLoaded) {
-      useTagStore.getState().loadTags();
-    }
-  }, [tagLoaded]);
 
   // Load board when project changes — clear auto-run queue
   useEffect(() => {
