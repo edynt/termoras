@@ -91,13 +91,13 @@ export function KanbanColumn({ column, cards }: Props) {
             <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
             <div className="absolute right-2 top-9 z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1">
               <button
-                disabled
-                className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-[var(--text-secondary)]/50 cursor-not-allowed"
-                title="Auto-run is available in PRO version"
+                onClick={() => { setShowMenu(false); toggleAutoRun(column.id); }}
+                className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] ${
+                  column.autoRun ? "text-[var(--accent-green)]" : "text-[var(--text-primary)]"
+                }`}
               >
                 <Zap size={16} />
-                Auto-run
-                <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[var(--accent-blue)]/15 text-[var(--accent-blue)]">PRO</span>
+                {column.autoRun ? "Auto-run ON" : "Auto-run"}
               </button>
               <button
                 onClick={() => { setShowMenu(false); setIsEditingTitle(true); }}
