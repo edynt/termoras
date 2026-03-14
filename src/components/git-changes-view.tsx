@@ -7,7 +7,6 @@ import {
   gitFileDiff,
   readFileContent,
   gitStatusSummary,
-  gitLastCommitMessage,
   gitStageAll,
   gitStageFiles,
   gitUnstageFiles,
@@ -256,9 +255,6 @@ export function GitChangesView() {
     setActionError(null);
     try {
       await gitUndoCommit(project.path);
-      gitLastCommitMessage(project.path)
-        .then((msg) => { if (msg) setCommitMsg(msg); })
-        .catch(() => {});
       await refresh();
     } catch (e) {
       setActionError(`Undo failed: ${e}`);
@@ -738,22 +734,22 @@ export function GitChangesView() {
             </button>
           </div>
 
-          {/* Undo last commit — only show when there are unpushed commits */}
-          {hasUnpushed && (
-            <button
-              onClick={handleUndoCommit}
-              disabled={undoing}
-              className={`w-full flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
-                undoing
-                  ? "bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] cursor-wait"
+          {/* Undo last commit — always visible to prevent layout shift */}
+          <button
+            onClick={handleUndoCommit}
+            disabled={!hasUnpushed || undoing}
+            className={`w-full flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
+              undoing
+                ? "bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] cursor-wait"
+                : !hasUnpushed
+                  ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/30 cursor-not-allowed"
                   : "bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20"
-              }`}
-              title="Undo last commit (git reset --soft HEAD~1) — changes stay staged"
-            >
-              {undoing ? <Loader2 size={14} className="animate-spin" /> : <Undo2 size={14} />}
-              Undo Last Commit
-            </button>
-          )}
+            }`}
+            title={!hasUnpushed ? "No unpushed commits" : "Undo last commit (git reset --soft HEAD~1) — changes stay staged"}
+          >
+            {undoing ? <Loader2 size={14} className="animate-spin" /> : <Undo2 size={14} />}
+            Undo Last Commit
+          </button>
         </div>
       </div>
 
