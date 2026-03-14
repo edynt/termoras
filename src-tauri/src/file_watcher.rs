@@ -55,10 +55,12 @@ pub fn start_file_watcher(
             _ => return,
         }
 
-        // Skip internal .git changes (except index which indicates staging)
+        // Skip internal .git changes (except index and refs which track push/fetch state)
         let dominated_by_git_internal = event.paths.iter().all(|p| {
             let s = p.to_string_lossy();
-            s.contains("/.git/") && !s.ends_with("/.git/index")
+            s.contains("/.git/")
+                && !s.ends_with("/.git/index")
+                && !s.contains("/.git/refs/")
         });
         if dominated_by_git_internal {
             return;
