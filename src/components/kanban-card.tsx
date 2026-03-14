@@ -24,7 +24,6 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const tagBtnRef = useRef<HTMLButtonElement>(null);
   const removeCard = useKanbanStore((s) => s.removeCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
@@ -275,17 +274,9 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
           )}
         </div>
 
-        {/* Title */}
-        <p className="text-sm font-medium leading-snug mb-1.5">
-          {card.title}
-        </p>
-
-        {/* Content preview — click to expand/collapse */}
+        {/* Prompt content — truncated with ellipsis */}
         {card.content && (
-          <p
-            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-            className={`text-sm text-[var(--text-secondary)] leading-relaxed mb-2 cursor-pointer ${expanded ? "" : "line-clamp-3"}`}
-          >
+          <p className="text-sm font-medium leading-snug mb-2 line-clamp-2">
             {card.content}
           </p>
         )}
@@ -335,7 +326,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
             <p className="text-sm text-[var(--text-secondary)] mb-5">
               Are you sure you want to delete{" "}
               <span className="font-medium text-[var(--text-primary)]">
-                {card.title}
+                {card.content.length > 50 ? card.content.slice(0, 50) + "…" : card.content}
               </span>
               ?
             </p>
