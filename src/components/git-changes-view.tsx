@@ -22,12 +22,15 @@ import {
   gitStashList,
   gitStashSave,
   openInVscode,
+  startFileWatcher,
+  stopFileWatcher,
   type GitChangedFile,
   type GitStatusSummary,
   type BranchInfo,
   type MergeResult,
   type StashEntry,
 } from "../lib/tauri-commands";
+import { listen } from "@tauri-apps/api/event";
 import { GitDiffViewer } from "./git-diff-viewer";
 import { GitStashSection } from "./git-stash-section";
 
@@ -156,7 +159,28 @@ export function GitChangesView() {
     refresh();
   }, [refresh]);
 
+  // File watcher: start watching project dir, auto-refresh on fs changes
+  useEffect(() => {
+    if (!project) return;
+    const projectPath = project.path;
 
+    // Start the native file watcher
+    startFileWatcher(projectPath).catch(() => {});
+
+    // Listen for fs-changed events from the Rust backend (debounced further)
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const unlisten = listen<string>("fs-changed", (event) => {
+      if (event.payload !== projectPath) return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => refresh(), 500);
+    });
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      unlisten.then((fn) => fn());
+      stopFileWatcher(projectPath).catch(() => {});
+    };
+  }, [project?.path, refresh]);
 
   /** Stage a single file */
   async function handleStageFile(filePath: string) {

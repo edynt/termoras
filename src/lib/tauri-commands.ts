@@ -222,6 +222,16 @@ export async function saveTempImage(
   return invoke<string>("save_temp_image", { data, extension });
 }
 
+/** Start watching a directory for file changes */
+export async function startFileWatcher(path: string): Promise<void> {
+  return invoke("start_file_watcher", { path });
+}
+
+/** Stop watching a directory */
+export async function stopFileWatcher(path: string): Promise<void> {
+  return invoke("stop_file_watcher", { path });
+}
+
 /** Open native file picker for images. Returns path or null. */
 export async function pickImageFile(): Promise<string | null> {
   const selected = await open({

@@ -1,7 +1,9 @@
 mod commands;
+mod file_watcher;
 mod git_commands;
 mod pty_manager;
 
+use file_watcher::FileWatcherState;
 use pty_manager::AppState;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::Emitter;
@@ -114,6 +116,7 @@ pub fn run() {
             Ok(())
         })
         .manage(AppState::new())
+        .manage(FileWatcherState::new())
         .invoke_handler(tauri::generate_handler![
             commands::create_terminal,
             commands::write_terminal,
@@ -146,6 +149,8 @@ pub fn run() {
             git_commands::git_stash_pop,
             git_commands::git_stash_drop,
             git_commands::git_stash_diff,
+            file_watcher::start_file_watcher,
+            file_watcher::stop_file_watcher,
         ])
         .on_window_event(|window, event| {
             match event {
