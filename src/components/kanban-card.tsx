@@ -58,6 +58,18 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     isDragging,
   } = useSortable({ id: card.id, disabled: editing || showTypeMenu });
 
+  // Click-vs-drag detection: skip click right after drag ends, then reset
+  const justDragged = useRef(false);
+  useEffect(() => {
+    if (isDragging) {
+      justDragged.current = true;
+    } else if (justDragged.current) {
+      // Reset after short delay so residual click from drag release is ignored
+      const timer = setTimeout(() => { justDragged.current = false; }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isDragging]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -129,6 +141,15 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
       style={isDragOverlay ? undefined : style}
       {...(isDragOverlay ? {} : attributes)}
       {...(isDragOverlay ? {} : listeners)}
+      onClick={(e) => {
+        // Skip if just finished dragging
+        if (justDragged.current) { justDragged.current = false; return; }
+        if (showTypeMenu || confirmDelete) return;
+        // Ignore clicks on interactive elements (buttons, inputs)
+        const target = e.target as HTMLElement;
+        if (target.closest("button") || target.closest("input")) return;
+        setEditing(true);
+      }}
       className={`group relative rounded-lg border bg-[var(--bg-primary)] cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
           ? "border-[var(--border-color)] shadow-2xl ring-2 ring-[var(--accent-blue)]/50 scale-[1.02]"
