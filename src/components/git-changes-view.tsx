@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, FileText, GitBranch, GitMerge, Upload, Check, Loader2, Undo2, Plus, Minus, X, ChevronDown, AlertTriangle, ExternalLink, Download, Package } from "lucide-react";
+import { RefreshCw, GitBranch, GitMerge, Upload, Check, Loader2, Undo2, Plus, Minus, X, ChevronDown, AlertTriangle, ExternalLink, Download, Package } from "lucide-react";
+import { FileIcon } from "./file-icon";
 import { useAppStore } from "../stores/app-store";
 import {
   gitChangedFiles,
   gitFileDiff,
   readFileContent,
   gitStatusSummary,
-  gitLastCommitMessage,
   gitStageAll,
   gitStageFiles,
   gitUnstageFiles,
@@ -240,6 +240,8 @@ export function GitChangesView() {
     setActionError(null);
     try {
       await gitPush(project.path);
+      setSelectedFile(null);
+      setDiff("");
       await refresh();
       setSuccessMsg("Pushed successfully!");
       setTimeout(() => setSuccessMsg(null), 3000);
@@ -255,9 +257,6 @@ export function GitChangesView() {
     setActionError(null);
     try {
       await gitUndoCommit(project.path);
-      gitLastCommitMessage(project.path)
-        .then((msg) => { if (msg) setCommitMsg(msg); })
-        .catch(() => {});
       await refresh();
     } catch (e) {
       setActionError(`Undo failed: ${e}`);
@@ -737,22 +736,22 @@ export function GitChangesView() {
             </button>
           </div>
 
-          {/* Undo last commit — only show when there are unpushed commits */}
-          {hasUnpushed && (
-            <button
-              onClick={handleUndoCommit}
-              disabled={undoing}
-              className={`w-full flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
-                undoing
-                  ? "bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] cursor-wait"
+          {/* Undo last commit — always visible to prevent layout shift */}
+          <button
+            onClick={handleUndoCommit}
+            disabled={!hasUnpushed || undoing}
+            className={`w-full flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
+              undoing
+                ? "bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] cursor-wait"
+                : !hasUnpushed
+                  ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/30 cursor-not-allowed"
                   : "bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20"
-              }`}
-              title="Undo last commit (git reset --soft HEAD~1) — changes stay staged"
-            >
-              {undoing ? <Loader2 size={14} className="animate-spin" /> : <Undo2 size={14} />}
-              Undo Last Commit
-            </button>
-          )}
+            }`}
+            title={!hasUnpushed ? "No unpushed commits" : "Undo last commit (git reset --soft HEAD~1) — changes stay staged"}
+          >
+            {undoing ? <Loader2 size={14} className="animate-spin" /> : <Undo2 size={14} />}
+            Undo Last Commit
+          </button>
         </div>
       </div>
 
@@ -980,7 +979,7 @@ function FileSection({
               onClick={() => onSelect({ path: f.path, staged: f.staged, status: f.status })}
               className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-sm min-w-0 cursor-pointer"
             >
-              <FileText size={16} className="shrink-0" />
+              <FileIcon filename={f.path} size={16} />
               <span className="truncate flex-1" title={f.path}>{f.path}</span>
               <StatusBadge status={f.status} />
             </button>

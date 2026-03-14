@@ -14,17 +14,16 @@ interface Props {
 }
 
 export function KanbanCardEditor({ card, columnId, onClose, onCardAdded }: Props) {
-  const [title, setTitle] = useState(card?.title ?? "");
   const [content, setContent] = useState(card?.content ?? "");
   const [type, setType] = useState<string | null>(card?.type ?? null);
   const tags = useTagStore((s) => s.tags);
-  const titleRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const addCard = useKanbanStore((s) => s.addCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
 
   useEffect(() => {
-    titleRef.current?.focus();
+    textareaRef.current?.focus();
   }, []);
 
   /** Auto-resize textarea to fit content */
@@ -38,51 +37,49 @@ export function KanbanCardEditor({ card, columnId, onClose, onCardAdded }: Props
   useEffect(autoResize, [content]);
 
   function handleSave() {
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) return;
+    const trimmed = content.trim();
+    if (!trimmed) {
+      onClose();
+      return;
+    }
+
+    // Auto-generate title from content (first 60 chars)
+    const title = trimmed.length > 60 ? trimmed.slice(0, 60) + "…" : trimmed;
 
     if (card) {
-      updateCard(card.id, { title: trimmedTitle, content: content.trim(), type });
+      updateCard(card.id, { title, content: trimmed, type });
     } else if (columnId) {
-      const newId = addCard(columnId, trimmedTitle, content.trim(), type);
+      const newId = addCard(columnId, title, trimmed, type);
       if (newId) onCardAdded?.(newId);
     }
     onClose();
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape") onClose();
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") handleSave();
-  }
+  /** Click outside editor → auto-save */
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (editorRef.current && !editorRef.current.contains(e.target as Node)) {
+        handleSave();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  });
 
   return (
     <div
+      ref={editorRef}
       className="rounded-lg border border-[var(--accent-blue)]/40 bg-[var(--bg-primary)] p-3 shadow-lg"
-      onKeyDown={handleKeyDown}
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
     >
-      {/* Title input */}
-      <input
-        ref={titleRef}
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            handleSave();
-          }
-        }}
-        placeholder="Card title..."
-        className="w-full text-sm font-medium bg-[var(--bg-hover)] rounded-md px-2.5 py-2 border border-[var(--border-color)] outline-none mb-2.5 placeholder:text-[var(--text-secondary)]/60 focus:border-[var(--accent-blue)] transition-colors"
-      />
-
-      {/* Content textarea */}
+      {/* Prompt textarea — click outside to save */}
       <textarea
         ref={textareaRef}
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="Content / command..."
+        placeholder="Enter prompt..."
         rows={2}
-        className="w-full text-sm bg-[var(--bg-hover)] rounded-md p-2.5 border-none outline-none resize-none mb-3 placeholder:text-[var(--text-secondary)]/60 leading-relaxed max-h-[40vh] overflow-y-auto"
+        className="w-full text-sm bg-[var(--bg-hover)] rounded-md p-2.5 border border-[var(--border-color)] outline-none resize-none mb-3 placeholder:text-[var(--text-secondary)]/60 leading-relaxed max-h-[40vh] overflow-y-auto focus:border-[var(--accent-blue)] transition-colors"
       />
 
       {/* Type selector — pill buttons (click to toggle) */}
@@ -111,22 +108,14 @@ export function KanbanCardEditor({ card, columnId, onClose, onCardAdded }: Props
       {/* Actions */}
       <div className="flex items-center justify-between">
         <span className="text-sm text-[var(--text-secondary)]/60">
-          Enter to save
+          Click outside to save · Esc to cancel
         </span>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onClose}
-            className="text-sm px-3 py-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="text-sm px-3.5 py-1.5 rounded-md bg-[var(--accent-blue)] text-white hover:opacity-90 font-medium transition-opacity"
-          >
-            {card ? "Save" : "Add"}
-          </button>
-        </div>
+        <button
+          onClick={handleSave}
+          className="text-sm px-3.5 py-1.5 rounded-md bg-[var(--accent-blue)] text-white hover:opacity-90 font-medium transition-opacity"
+        >
+          {card ? "Save" : "Add"}
+        </button>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import {
   Code2,
   Pencil,
   GripVertical,
+  MessageCircleQuestion,
 } from "lucide-react";
 import type { Project } from "../types";
 import { useAppStore } from "../stores/app-store";
@@ -65,6 +66,12 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
   const isActive = activeProjectId === project.id;
   const isBoardActive = isActive && activeView === "kanban";
   const isGitViewActive = isActive && activeView === "git";
+
+  // Check if any terminal in this project is waiting for user input
+  const terminalQuestioning = useAppStore((s) => s.terminalQuestioning);
+  const hasQuestioningTerminal = projectTerminals.some(
+    (t) => terminalQuestioning[t.id],
+  );
 
   const [hasGit, setHasGit] = useState(false);
   const [gitStatus, setGitStatus] = useState<GitStatusSummary | null>(null);
@@ -122,7 +129,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
     addTerminal({
       id: crypto.randomUUID(),
       projectId: project.id,
-      name: `Terminal ${projectTerminals.length + 1}`,
+      name: projectTerminals.length === 0 ? "Terminal" : `Terminal ${projectTerminals.length + 1}`,
       isRunning: false,
     });
     setExpanded(true);
@@ -188,6 +195,16 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             <span className="text-sm truncate flex-1" title={project.path}>{project.name}</span>
           )}
 
+          {/* Needs Input indicator — always visible when a terminal is questioning */}
+          {hasQuestioningTerminal && (
+            <span
+              className="shrink-0 text-amber-500 animate-pulse"
+              title="A terminal needs input"
+            >
+              <MessageCircleQuestion size={16} />
+            </span>
+          )}
+
           {/* git indicator */}
           {hasGit && (
             <span
@@ -233,7 +250,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
 
         {/* expanded items: board tab + terminal list */}
         {expanded && (
-          <div className="ml-13">
+          <div className="ml-16">
             {/* Board tab */}
             <div
               onClick={() => handleOpenBoard()}

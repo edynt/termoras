@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, Pencil, Trash2, Check, ChevronDown, Play, Tag, Loader2, Clock, AlertCircle } from "lucide-react";
+import { Copy, Pencil, Trash2, Check, ChevronDown, Play, Tag, Loader2, Clock, AlertCircle, MessageCircleQuestion } from "lucide-react";
 import type { KanbanCard as KanbanCardType } from "../types/kanban";
 import { useKanbanStore } from "../stores/kanban-store";
 import { useAppStore } from "../stores/app-store";
@@ -9,6 +9,7 @@ import { useTagStore } from "../stores/tag-store";
 import { getTagStyles, UNTAGGED_STYLES } from "../lib/tag-colors";
 import { writeTerminal } from "../lib/tauri-commands";
 import { useAutoRunStore } from "../stores/auto-run-store";
+import { useCardRunStore } from "../stores/card-run-store";
 import { KanbanCardEditor } from "./kanban-card-editor";
 
 
@@ -22,13 +23,18 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const [copied, setCopied] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
-  const [runState, setRunState] = useState<"idle" | "running" | "done">("idle");
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const tagBtnRef = useRef<HTMLButtonElement>(null);
   const removeCard = useKanbanStore((s) => s.removeCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
   const autoRunStatus = useAutoRunStore((s) => s.cardStatus[card.id]);
+  const runState = useCardRunStore((s) => s.states[card.id]) as "running" | "done" | undefined;
+  const runTerminalId = useCardRunStore((s) => s.cardTerminals[card.id]);
+  const isQuestioning = useAppStore((s) => runTerminalId ? s.terminalQuestioning[runTerminalId] ?? false : false);
+  const startRun = useCardRunStore((s) => s.startRun);
+
+  // Effective display state: questioning overrides running
+  const displayState = runState === "running" && isQuestioning ? "questioning" : runState;
   const terminals = useAppStore((s) => s.terminals);
   const activeProjectId = useAppStore((s) => s.activeProjectId);
   const activeTerminalId = useAppStore((s) => s.activeTerminalId);
@@ -51,6 +57,18 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     transition,
     isDragging,
   } = useSortable({ id: card.id, disabled: editing || showTypeMenu });
+
+  // Click-vs-drag detection: skip click right after drag ends, then reset
+  const justDragged = useRef(false);
+  useEffect(() => {
+    if (isDragging) {
+      justDragged.current = true;
+    } else if (justDragged.current) {
+      // Reset after short delay so residual click from drag release is ignored
+      const timer = setTimeout(() => { justDragged.current = false; }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isDragging]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -81,7 +99,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
 
   async function handleRun(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!card.content || runState !== "idle") return;
+    if (!card.content || runState) return;
 
     // Use the active terminal if it belongs to this project, otherwise fallback to first
     const activeTerminal = terminals.find((t) => t.id === activeTerminalId && t.projectId === activeProjectId);
@@ -89,8 +107,6 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     if (!projectTerminal) return;
 
     const command = tagPrefix ? `${tagPrefix} ${card.content}` : card.content;
-
-    setRunState("running");
 
     // If terminal panel is visible in dashboard, stay on dashboard
     const { activeView } = useAppStore.getState();
@@ -107,9 +123,8 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
     // Write command + enter to the PTY
     await writeTerminal(projectTerminal.id, command + "\r");
 
-    // Show done state after command is sent
-    setRunState("done");
-    setTimeout(() => setRunState("idle"), 2000);
+    // Track running state in store (persists across tab switches) + poll until idle
+    startRun(card.id, projectTerminal.id);
   }
 
   if (editing) {
@@ -126,10 +141,25 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
       style={isDragOverlay ? undefined : style}
       {...(isDragOverlay ? {} : attributes)}
       {...(isDragOverlay ? {} : listeners)}
-      className={`group relative rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] cursor-grab active:cursor-grabbing transition-all duration-200 hover:border-[var(--text-secondary)]/30 ${
+      onClick={(e) => {
+        // Skip if just finished dragging
+        if (justDragged.current) { justDragged.current = false; return; }
+        if (showTypeMenu || confirmDelete) return;
+        // Ignore clicks on interactive elements (buttons, inputs)
+        const target = e.target as HTMLElement;
+        if (target.closest("button") || target.closest("input")) return;
+        setEditing(true);
+      }}
+      className={`group relative rounded-lg border bg-[var(--bg-primary)] cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
-          ? "shadow-2xl ring-2 ring-[var(--accent-blue)]/50 scale-[1.02]"
-          : "shadow-sm hover:shadow-md"
+          ? "border-[var(--border-color)] shadow-2xl ring-2 ring-[var(--accent-blue)]/50 scale-[1.02]"
+          : displayState === "questioning"
+          ? "border-amber-500/30 ring-1 ring-amber-500/20 shadow-sm shadow-amber-500/5"
+          : displayState === "running"
+          ? "border-[var(--accent-blue)]/30 ring-1 ring-[var(--accent-blue)]/20 shadow-sm shadow-[var(--accent-blue)]/5"
+          : displayState === "done"
+          ? "border-[var(--accent-green)]/30 ring-1 ring-[var(--accent-green)]/20 shadow-sm"
+          : "border-[var(--border-color)] shadow-sm hover:shadow-md hover:border-[var(--text-secondary)]/30"
       }`}
     >
       <div className="px-3 py-3">
@@ -201,71 +231,73 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
           </div>
           <div className="flex-1" />
 
-          {/* Actions — visible on hover */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-            {card.content && (
-              <button
-                onClick={handleRun}
-                className={`p-1.5 rounded-md transition-colors ${
-                  runState === "done"
-                    ? "text-[var(--accent-green)]"
-                    : runState === "running"
-                    ? "text-[var(--accent-blue)]"
-                    : "hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-green)]"
-                }`}
-                title="Run in terminal"
-              >
-                {runState === "running" ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : runState === "done" ? (
-                  <Check size={18} />
-                ) : (
+          {/* Status badge — always visible when active */}
+          {displayState === "questioning" && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md animate-pulse">
+              <MessageCircleQuestion size={12} />
+              Needs Input
+            </span>
+          )}
+          {displayState === "running" && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-blue)] bg-[var(--accent-blue)]/10 px-2 py-1 rounded-md animate-pulse">
+              <Loader2 size={12} className="animate-spin" />
+              Running
+            </span>
+          )}
+          {displayState === "done" && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-green)] bg-[var(--accent-green)]/10 px-2 py-1 rounded-md">
+              <Check size={12} />
+              Done
+            </span>
+          )}
+
+          {/* Actions — visible on hover, hidden while running/questioning */}
+          {!displayState && (
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              {card.content && (
+                <button
+                  onClick={handleRun}
+                  className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors"
+                  title="Run in terminal"
+                >
                   <Play size={18} />
+                </button>
+              )}
+              <button
+                onClick={handleCopy}
+                className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-blue)] transition-colors"
+                title="Copy command"
+              >
+                {copied ? (
+                  <Check size={18} className="text-[var(--accent-green)]" />
+                ) : (
+                  <Copy size={18} />
                 )}
               </button>
-            )}
-            <button
-              onClick={handleCopy}
-              className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-blue)] transition-colors"
-              title="Copy command"
-            >
-              {copied ? (
-                <Check size={18} className="text-[var(--accent-green)]" />
-              ) : (
-                <Copy size={18} />
-              )}
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditing(true);
-              }}
-              className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-              title="Edit card"
-            >
-              <Pencil size={18} />
-            </button>
-            <button
-              onClick={handleDelete}
-              className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-colors"
-              title="Delete card"
-            >
-              <Trash2 size={18} />
-            </button>
-          </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing(true);
+                }}
+                className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                title="Edit card"
+              >
+                <Pencil size={18} />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-colors"
+                title="Delete card"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Title */}
-        <p className="text-sm font-medium leading-snug mb-1.5">
-          {card.title}
-        </p>
-
-        {/* Content preview — click to expand/collapse */}
+        {/* Prompt content — truncated with ellipsis */}
         {card.content && (
-          <p
-            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-            className={`text-sm text-[var(--text-secondary)] leading-relaxed mb-2 cursor-pointer ${expanded ? "" : "line-clamp-3"}`}
-          >
+          <p className="text-sm font-medium leading-snug mb-2 line-clamp-2">
             {card.content}
           </p>
         )}
@@ -273,7 +305,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
         {/* Command preview — monospace chip */}
         {card.content && (
           <div className="flex items-center gap-2">
-            <span className="inline-block text-sm font-mono px-2 py-1 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
+            <span className="inline-block text-xs font-mono px-1.5 py-0.5 rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)] truncate max-w-full">
               {tagPrefix ? `${tagPrefix} ` : ""}{card.content.length > 40 ? card.content.slice(0, 40) + "…" : card.content}
             </span>
             {/* Auto-run status badge */}
@@ -315,7 +347,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
             <p className="text-sm text-[var(--text-secondary)] mb-5">
               Are you sure you want to delete{" "}
               <span className="font-medium text-[var(--text-primary)]">
-                {card.title}
+                {card.content.length > 50 ? card.content.slice(0, 50) + "…" : card.content}
               </span>
               ?
             </p>

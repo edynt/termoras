@@ -67,7 +67,19 @@
       "Bash(grep -r \"Cmd\\\\+W\\\\|cmd.*w\\\\|closeTab\" /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -20)",
       "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/docs -type f -name \"*.md\" 2>/dev/null | head -10)",
       "Bash(echo \"Date format: $CK_PLAN_DATE_FORMAT\" && date +\"%y%m%d\" && ls /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src-tauri/plans/reports/ 2>/dev/null || echo \"reports dir missing\")",
-      "Bash(cargo clippy:*)"
+      "Bash(cargo clippy:*)",
+      "Bash(claude --version 2>&1)",
+      "Bash(curl -s --max-time 5 https://registry.npmjs.org/@anthropic-ai/claude-code/latest 2>&1 | head -5)",
+      "Bash(npm config:*)",
+      "Bash(curl -sI \"https://github.com/edynt/termoras-page/releases/latest/download/latest.json\" 2>&1 | head -20)",
+      "Bash(curl -sL \"https://github.com/edynt/termoras-page/releases/latest/download/latest.json\" 2>&1)",
+      "Bash(gh release:*)",
+      "Bash(gh run:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git commit:*)",
+      "Bash(cd /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src-tauri && cargo update --package termoras 2>&1)"
     ]
   }
 }

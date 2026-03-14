@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Termoras",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "identifier": "com.termoras.app",
   "build": {
     "frontendDist": "../dist",
@@ -25,14 +25,6 @@
     ],
     "security": {
       "csp": null
-    }
-  },
-  "plugins": {
-    "updater": {
-      "endpoints": [
-        "https://github.com/edynt/termoras-page/releases/latest/download/latest.json"
-      ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDI1M0VFRkJBRjkzNUFBMjYKUldRbXFqWDV1dTgrSmRlRjZrK1FHWExEQ09hVWFadlNEV2dRbWNQOWdBc3RQUlZuNllPU1A2L2wK"
     }
   },
   "bundle": {
