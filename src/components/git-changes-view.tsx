@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, FileText, GitBranch, GitMerge, Upload, Check, Loader2, Undo2, Plus, Minus, X, ChevronDown, AlertTriangle, ExternalLink, Download, Package } from "lucide-react";
+import { RefreshCw, GitBranch, GitMerge, Upload, Check, Loader2, Undo2, Plus, Minus, X, ChevronDown, AlertTriangle, ExternalLink, Download, Package } from "lucide-react";
+import { FileIcon } from "./file-icon";
 import { useAppStore } from "../stores/app-store";
 import {
   gitChangedFiles,
@@ -980,7 +981,7 @@ function FileSection({
               onClick={() => onSelect({ path: f.path, staged: f.staged, status: f.status })}
               className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-sm min-w-0 cursor-pointer"
             >
-              <FileText size={16} className="shrink-0" />
+              <FileIcon filename={f.path} size={16} />
               <span className="truncate flex-1" title={f.path}>{f.path}</span>
               <StatusBadge status={f.status} />
             </button>
