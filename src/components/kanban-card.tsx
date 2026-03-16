@@ -7,7 +7,7 @@ import { useKanbanStore } from "../stores/kanban-store";
 import { useAppStore } from "../stores/app-store";
 import { useTagStore } from "../stores/tag-store";
 import { getTagStyles, UNTAGGED_STYLES } from "../lib/tag-colors";
-import { writeTerminal } from "../lib/tauri-commands";
+import { writeTerminal, getTerminalProcessName } from "../lib/tauri-commands";
 import { useAutoRunStore } from "../stores/auto-run-store";
 import { useCardRunStore } from "../stores/card-run-store";
 import { KanbanCardEditor } from "./kanban-card-editor";
@@ -24,6 +24,7 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busyError, setBusyError] = useState<string | null>(null);
   const tagBtnRef = useRef<HTMLButtonElement>(null);
   const removeCard = useKanbanStore((s) => s.removeCard);
   const updateCard = useKanbanStore((s) => s.updateCard);
@@ -100,11 +101,24 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
   async function handleRun(e: React.MouseEvent) {
     e.stopPropagation();
     if (!card.content || runState) return;
+    setBusyError(null);
 
     // Use the active terminal if it belongs to this project, otherwise fallback to first
     const activeTerminal = terminals.find((t) => t.id === activeTerminalId && t.projectId === activeProjectId);
     const projectTerminal = activeTerminal ?? terminals.find((t) => t.projectId === activeProjectId);
     if (!projectTerminal) return;
+
+    // Check if terminal already has a running process (e.g. dev server)
+    try {
+      const processName = await getTerminalProcessName(projectTerminal.id);
+      if (processName) {
+        setBusyError(`Terminal busy (${processName}). Open a new terminal first.`);
+        setTimeout(() => setBusyError(null), 4000);
+        return;
+      }
+    } catch {
+      // Terminal may not exist yet — proceed anyway
+    }
 
     const command = tagPrefix ? `${tagPrefix} ${card.content}` : card.content;
 
@@ -248,6 +262,12 @@ export function KanbanCard({ card, isDragOverlay }: Props) {
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-green)] bg-[var(--accent-green)]/10 px-2 py-1 rounded-md">
               <Check size={12} />
               Done
+            </span>
+          )}
+          {busyError && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-red)] bg-[var(--accent-red)]/10 px-2 py-1 rounded-md" title={busyError}>
+              <AlertCircle size={12} />
+              Terminal Busy
             </span>
           )}
 
