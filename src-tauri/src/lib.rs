@@ -29,6 +29,34 @@ fn kill_all_sessions(handle: &impl tauri::Manager<tauri::Wry>) {
     drop(guard);
 }
 
+/// Check if any terminal has a busy foreground process (e.g. running a server).
+/// Returns true if at least one terminal has a child process beyond the shell itself.
+fn has_busy_terminals(handle: &impl tauri::Manager<tauri::Wry>) -> bool {
+    let sessions_arc = {
+        let state = handle.state::<AppState>();
+        state.sessions.clone()
+    };
+    let guard = match sessions_arc.lock() {
+        Ok(g) => g,
+        Err(_) => return false,
+    };
+    for session in guard.values() {
+        if let Some(pid) = session.child.process_id() {
+            // Check if shell has any child processes (= something is running)
+            if let Ok(output) = std::process::Command::new("pgrep")
+                .args(["-P", &pid.to_string()])
+                .output()
+            {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                if stdout.lines().any(|l| !l.trim().is_empty()) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -155,13 +183,18 @@ pub fn run() {
         .on_window_event(|window, event| {
             match event {
                 tauri::WindowEvent::CloseRequested { api, .. } => {
-                    // Prevent the default close — show confirmation dialog first
-                    api.prevent_close();
+                    // No busy terminals — quit immediately without confirmation
+                    if !has_busy_terminals(window) {
+                        kill_all_sessions(window);
+                        return;
+                    }
 
+                    // Busy terminals found — show confirmation dialog
+                    api.prevent_close();
                     let win = window.clone();
                     window
                         .dialog()
-                        .message("All terminal sessions will be terminated.")
+                        .message("Some terminals are still running processes. Quit anyway?")
                         .title("Quit Termoras?")
                         .kind(MessageDialogKind::Warning)
                         .buttons(MessageDialogButtons::OkCancelCustom(
@@ -195,12 +228,19 @@ pub fn run() {
                     }
                 }
                 "quit-app" => {
-                    // Show quit confirmation dialog (same as red X button)
                     if let Some(window) = app.get_webview_window("main") {
+                        // No busy terminals — quit immediately
+                        if !has_busy_terminals(&window) {
+                            kill_all_sessions(&window);
+                            window.destroy().ok();
+                            return;
+                        }
+
+                        // Busy terminals — show confirmation dialog
                         let win = window.clone();
                         window
                             .dialog()
-                            .message("All terminal sessions will be terminated.")
+                            .message("Some terminals are still running processes. Quit anyway?")
                             .title("Quit Termoras?")
                             .kind(MessageDialogKind::Warning)
                             .buttons(MessageDialogButtons::OkCancelCustom(

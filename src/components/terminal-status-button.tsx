@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Terminal, X } from "lucide-react";
 import { useAppStore } from "../stores/app-store";
-import { killTerminal } from "../lib/tauri-commands";
+import { useTerminalProcessStore } from "../stores/terminal-process-store";
+import { killTerminal, getTerminalProcessName } from "../lib/tauri-commands";
 
 /** Sidebar footer button showing total alive terminals.
  *  Click to expand a popover with per-project terminal list + kill buttons. */
@@ -9,15 +10,15 @@ export function TerminalStatusButton() {
   const terminals = useAppStore((s) => s.terminals);
   const projects = useAppStore((s) => s.projects);
   const [open, setOpen] = useState(false);
-  const [confirmKill, setConfirmKill] = useState<{ id: string; name: string } | null>(null);
+  const [confirmKill, setConfirmKill] = useState<{ id: string; name: string; process?: string } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const setActiveProject = useAppStore((s) => s.setActiveProject);
   const setActiveView = useAppStore((s) => s.setActiveView);
   const setActiveTerminal = useAppStore((s) => s.setActiveTerminal);
   const removeTerminal = useAppStore((s) => s.removeTerminal);
-  const aliveTerminals = terminals.filter((t) => t.isRunning);
-  const totalAlive = aliveTerminals.length;
+  const processes = useTerminalProcessStore((s) => s.processes);
+  const busyCount = terminals.filter((t) => !!processes[t.id]).length;
   const totalCount = terminals.length;
 
   // Per-project groups (only projects that have terminals)
@@ -52,13 +53,13 @@ export function TerminalStatusButton() {
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-        title={`${totalAlive} of ${totalCount} terminals running`}
+        title={`${busyCount} busy / ${totalCount} terminals`}
       >
         <Terminal size={18} />
         <span className="text-sm font-medium">
-          {totalAlive}/{totalCount}
+          {busyCount}/{totalCount}
         </span>
-        {totalAlive > 0 && (
+        {busyCount > 0 && (
           <span className="w-2 h-2 rounded-full bg-[var(--accent-green,#22c55e)]" />
         )}
       </button>
@@ -82,7 +83,7 @@ export function TerminalStatusButton() {
               >
                 <span className="truncate text-[var(--text-primary)]">{g.name}</span>
                 <span className="shrink-0 ml-2 text-[var(--text-secondary)]">
-                  {g.terminals.filter((t) => t.isRunning).length}/{g.terminals.length}
+                  {g.terminals.filter((t) => !!processes[t.id]).length}/{g.terminals.length}
                 </span>
               </button>
               {/* Individual terminals */}
@@ -91,13 +92,13 @@ export function TerminalStatusButton() {
                   key={t.id}
                   className="group flex items-center gap-1.5 pl-6 pr-2 py-1 text-sm hover:bg-[var(--bg-hover)] transition-colors"
                 >
-                  {/* Running indicator */}
+                  {/* Process status dot: green = busy, gray = idle */}
                   <span
                     className={`w-2 h-2 rounded-full shrink-0 ${
-                      t.isRunning ? "bg-[var(--accent-green,#22c55e)]" : "bg-[var(--text-secondary)]/30"
+                      processes[t.id] ? "bg-[var(--accent-green,#22c55e)]" : "bg-[var(--text-secondary)]/30"
                     }`}
                   />
-                  {/* Terminal name — click to open */}
+                  {/* Terminal name + process — click to open */}
                   <button
                     onClick={() => {
                       setActiveProject(g.id);
@@ -107,12 +108,22 @@ export function TerminalStatusButton() {
                     className="flex-1 text-left truncate text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
                   >
                     {t.name}
+                    {processes[t.id] && (
+                      <span className="ml-1 text-xs text-[var(--text-secondary)]/60">— {processes[t.id]}</span>
+                    )}
                   </button>
-                  {/* Kill button — opens confirmation */}
+                  {/* Kill button — confirm only if terminal is busy */}
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      setConfirmKill({ id: t.id, name: t.name });
+                      try {
+                        const proc = await getTerminalProcessName(t.id);
+                        if (proc) {
+                          setConfirmKill({ id: t.id, name: t.name, process: proc });
+                          return;
+                        }
+                      } catch { /* terminal may be dead */ }
+                      handleKill(t.id);
                     }}
                     className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--accent-red)]/15 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-all"
                     title={`Kill ${t.name}`}
@@ -138,11 +149,14 @@ export function TerminalStatusButton() {
           >
             <p className="text-base font-semibold mb-2">Kill Terminal</p>
             <p className="text-sm text-[var(--text-secondary)] mb-5">
-              Kill{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {confirmKill.name}
               </span>
-              ? This will terminate the process.
+              {" "}is running{" "}
+              <span className="font-mono text-[var(--text-primary)]">
+                {confirmKill.process ?? "a process"}
+              </span>
+              . Kill it?
             </p>
             <div className="flex justify-end gap-2">
               <button

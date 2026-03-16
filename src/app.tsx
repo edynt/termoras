@@ -7,6 +7,7 @@ import { useThemeStore } from "./stores/theme-store";
 import { useTagStore } from "./stores/tag-store";
 import { useGlobalKeybindings } from "./hooks/use-global-keybindings";
 import { useUpdateChecker } from "./hooks/use-update-checker";
+import { startProcessPolling, stopProcessPolling } from "./stores/terminal-process-store";
 
 const MIN_SIDEBAR = 180;
 const MAX_SIDEBAR = 480;
@@ -27,6 +28,8 @@ export function App() {
     init();
     initTheme();
     loadTags();
+    startProcessPolling();
+    return () => stopProcessPolling();
   }, [init, initTheme, loadTags]);
 
   useGlobalKeybindings();

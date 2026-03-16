@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Plus, X } from "lucide-react";
 import type { TerminalSession } from "../types";
 import { useAppStore } from "../stores/app-store";
-import { killTerminal } from "../lib/tauri-commands";
+import { useTerminalProcessStore } from "../stores/terminal-process-store";
+import { killTerminal, getTerminalProcessName } from "../lib/tauri-commands";
 
 interface Props {
   terminals: TerminalSession[];
@@ -19,6 +20,7 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
   const reorderTerminals = useAppStore((s) => s.reorderTerminals);
   const activeView = useAppStore((s) => s.activeView);
   const projects = useAppStore((s) => s.projects);
+  const processes = useTerminalProcessStore((s) => s.processes);
 
   // Show project prefix when terminals span multiple projects
   const projectIds = new Set(terminals.map((t) => t.projectId));
@@ -208,13 +210,14 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-blue)]" />
               )}
 
-              {/* Running dot */}
+              {/* Process status dot: green = busy (running command), gray = idle */}
               <span
                 className={`shrink-0 w-1.5 h-1.5 rounded-full ${
-                  t.isRunning
+                  processes[t.id]
                     ? "bg-[var(--accent-green,#22c55e)]"
                     : "bg-[var(--text-secondary)]/30"
                 }`}
+                title={processes[t.id] ?? "idle"}
               />
 
               {/* Name / rename input */}
@@ -235,11 +238,20 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
                 <span className="truncate max-w-[200px]">{getTabLabel(t)}</span>
               )}
 
-              {/* Close button */}
+              {/* Close button — smart kill: confirm only if terminal is busy */}
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  setConfirmKillId(t.id);
+                  try {
+                    const proc = await getTerminalProcessName(t.id);
+                    if (proc) {
+                      // Terminal is busy — show confirmation modal
+                      setConfirmKillId(t.id);
+                      return;
+                    }
+                  } catch { /* terminal may be dead */ }
+                  // Terminal is idle — kill directly without confirmation
+                  handleKill(t.id);
                 }}
                 className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
                 title="Kill terminal"
@@ -272,11 +284,14 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
           >
             <p className="text-base font-semibold mb-2">Kill Terminal</p>
             <p className="text-sm text-[var(--text-secondary)] mb-5">
-              Are you sure you want to kill{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {getTabLabel(terminals.find((t) => t.id === confirmKillId)!)}
               </span>
-              ? Any running process will be terminated.
+              {" "}is running{" "}
+              <span className="font-mono text-[var(--text-primary)]">
+                {processes[confirmKillId] ?? "a process"}
+              </span>
+              . Kill it?
             </p>
             <div className="flex justify-end gap-2">
               <button
