@@ -54,36 +54,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "Termoras ${{ github.ref_name }}"
           releaseBody: "See the assets to download and install this version."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.target }}
-
-
-  # After all builds complete, copy release assets to the public repo
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get release assets from private repo
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ github.ref_name }}"
-          mkdir -p artifacts
-          # Download all assets from the draft release
-          gh release download "$TAG" --repo edynt/termoras --dir artifacts
-
-      - name: Create release on public repo
-        env:
-          GH_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
-        run: |
-          TAG="${{ github.ref_name }}"
-          # Create release on termoras-page (or update if exists)
-          gh release create "$TAG" \
-            --repo edynt/termoras-page \
-            --title "Termoras $TAG" \
-            --notes "See the assets to download and install this version." \
-            artifacts/* || \
-          gh release upload "$TAG" \
-            --repo edynt/termoras-page \
-            artifacts/* --clobber
