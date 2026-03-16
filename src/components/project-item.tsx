@@ -253,6 +253,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           <div className="ml-16">
             {/* Board tab */}
             <div
+              data-onboarding="board-tab"
               onClick={() => handleOpenBoard()}
               className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-all duration-150 ${
                 isBoardActive
@@ -267,6 +268,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             {/* Git Changes tab — only if git repo */}
             {hasGit && (
               <div
+                data-onboarding="changes-tab"
                 onClick={() => handleOpenGitView()}
                 className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-all duration-150 ${
                   isGitViewActive

@@ -149,6 +149,7 @@ export function KanbanBoard() {
         </div>
         <div className="flex-1" />
         <button
+          data-onboarding="kanban-add-column"
           onClick={() => addColumn("New Column")}
           className="flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >

@@ -150,7 +150,7 @@ export function MainPanel() {
   const divBtn = "flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors";
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full min-w-0 overflow-hidden">
+    <div ref={containerRef} data-onboarding="main-area" className="flex flex-col h-full min-w-0 overflow-hidden">
       {/* Titlebar drag region — matches macOS traffic light height */}
       <div
         onMouseDown={(e) => { e.preventDefault(); getCurrentWindow().startDragging(); }}

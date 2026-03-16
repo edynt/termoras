@@ -75,6 +75,7 @@ export function Sidebar() {
       >
         <span className="text-sm font-semibold tracking-tight pointer-events-none">Projects</span>
         <button
+          data-onboarding="add-project"
           onClick={addProject}
           className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors duration-150"
           title="Add project folder"
@@ -110,10 +111,11 @@ export function Sidebar() {
       </div>
 
       {/* footer — terminal status, theme toggle, settings */}
-      <div className="flex items-center justify-center gap-1 p-2 border-t border-[var(--border-color)]">
+      <div data-onboarding="sidebar-footer" className="flex items-center justify-center gap-1 p-2 border-t border-[var(--border-color)]">
         <TerminalStatusButton />
         <ThemeToggle />
         <button
+          data-onboarding="tag-settings"
           onClick={() => setShowTagSettings(true)}
           className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           title="Tag settings"

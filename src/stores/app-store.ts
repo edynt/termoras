@@ -117,6 +117,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     };
     const updatedTerminals = [...get().terminals, terminal];
 
+    const isFirstProject = projects.length === 0;
     set({
       projects: updated,
       activeProjectId: project.id,
@@ -127,6 +128,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await saveProjects(updated);
     persistTerminals(updatedTerminals);
     persistActiveIds(project.id, terminal.id, "terminal");
+
+    // Trigger Phase 2 onboarding when first project is added
+    if (isFirstProject) {
+      window.dispatchEvent(new CustomEvent("termoras:first-project-added"));
+    }
   },
 
   removeProject: async (id: string) => {
