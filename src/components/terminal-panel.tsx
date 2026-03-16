@@ -60,9 +60,9 @@ export function TerminalPanel() {
 
   return (
     <main className="flex flex-col h-full w-full overflow-hidden bg-[var(--bg-primary)]">
-      {/* Tab bar — only shows when project has 2+ terminals */}
+      {/* Tab bar — shows all terminals across all projects */}
       <TerminalTabBar
-        terminals={projectTerminals}
+        terminals={terminals}
         activeTerminalId={activeTerminalId}
         onCreateTerminal={handleCreateTerminal}
       />

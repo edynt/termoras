@@ -18,6 +18,19 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
   const renameTerminal = useAppStore((s) => s.renameTerminal);
   const reorderTerminals = useAppStore((s) => s.reorderTerminals);
   const activeView = useAppStore((s) => s.activeView);
+  const projects = useAppStore((s) => s.projects);
+
+  // Show project prefix when terminals span multiple projects
+  const projectIds = new Set(terminals.map((t) => t.projectId));
+  const multiProject = projectIds.size > 1;
+
+  /** Resolve display label for a terminal tab */
+  function getTabLabel(t: TerminalSession): string {
+    if (!multiProject) return t.name;
+    const project = projects.find((p) => p.id === t.projectId);
+    const projectName = project?.name ?? "Unknown";
+    return `${projectName} - ${t.name}`;
+  }
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -211,7 +224,7 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
                   className="text-xs w-20 bg-[var(--bg-primary)] border border-[var(--accent-blue)] rounded px-1 py-0 outline-none text-[var(--text-primary)]"
                 />
               ) : (
-                <span className="truncate max-w-[100px]">{t.name}</span>
+                <span className="truncate max-w-[200px]">{getTabLabel(t)}</span>
               )}
 
               {/* Close button */}
@@ -253,7 +266,7 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
             <p className="text-sm text-[var(--text-secondary)] mb-5">
               Are you sure you want to kill{" "}
               <span className="font-medium text-[var(--text-primary)]">
-                {terminals.find((t) => t.id === confirmKillId)?.name}
+                {getTabLabel(terminals.find((t) => t.id === confirmKillId)!)}
               </span>
               ? Any running process will be terminated.
             </p>
