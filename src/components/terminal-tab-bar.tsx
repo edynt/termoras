@@ -24,12 +24,20 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
   const projectIds = new Set(terminals.map((t) => t.projectId));
   const multiProject = projectIds.size > 1;
 
+  /** Generate acronym from project name (e.g. "irohana-match-frontend" → "IMF") */
+  function getProjectPrefix(name: string): string {
+    const words = name.split(/[\s\-_]+|(?=[A-Z])/).filter(Boolean);
+    if (words.length <= 1) return name.slice(0, 3).toUpperCase();
+    const acronym = words.map((w) => w[0]).join("").toUpperCase();
+    return acronym.length > 4 ? acronym.slice(0, 3) : acronym;
+  }
+
   /** Resolve display label for a terminal tab */
   function getTabLabel(t: TerminalSession): string {
     if (!multiProject) return t.name;
     const project = projects.find((p) => p.id === t.projectId);
-    const projectName = project?.name ?? "Unknown";
-    return `${projectName} - ${t.name}`;
+    const prefix = project ? getProjectPrefix(project.name) : "???";
+    return `${prefix} - ${t.name}`;
   }
 
   const [editingId, setEditingId] = useState<string | null>(null);
