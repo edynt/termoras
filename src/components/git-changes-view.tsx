@@ -240,13 +240,17 @@ export function GitChangesView() {
     setStaging(false);
   }
 
-  /** Commit: auto-stage all changes first, then commit */
+  /** Commit staged files; auto-stage all only when nothing is staged */
   async function handleCommit() {
     if (!project || !commitMsg.trim() || files.length === 0) return;
     setCommitting(true);
     setActionError(null);
     try {
-      await gitStageAll(project.path);
+      // Only auto-stage all if user hasn't manually staged anything
+      const hasStagedFiles = files.some((f) => f.staged);
+      if (!hasStagedFiles) {
+        await gitStageAll(project.path);
+      }
       await gitCommit(project.path, commitMsg.trim());
       setCommitMsg("");
       await refresh();
@@ -725,7 +729,7 @@ export function GitChangesView() {
                     ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
                     : "bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25"
               }`}
-              title={files.length === 0 ? "No changes" : !commitMsg.trim() ? "Enter a commit message" : "Stage all and commit"}
+              title={files.length === 0 ? "No changes" : !commitMsg.trim() ? "Enter a commit message" : stagedFiles.length > 0 ? "Commit staged files" : "Stage all and commit"}
             >
               {committing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
               {committing ? "Committing..." : "Commit"}
