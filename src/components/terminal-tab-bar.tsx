@@ -210,14 +210,13 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-blue)]" />
               )}
 
-              {/* Process status dot: green = busy (running command), gray = idle */}
+              {/* Process status dot: green = busy, gray = idle */}
               <span
                 className={`shrink-0 w-1.5 h-1.5 rounded-full ${
                   processes[t.id]
                     ? "bg-[var(--accent-green,#22c55e)]"
                     : "bg-[var(--text-secondary)]/30"
                 }`}
-                title={processes[t.id] ?? "idle"}
               />
 
               {/* Name / rename input */}
@@ -284,14 +283,11 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
           >
             <p className="text-base font-semibold mb-2">Kill Terminal</p>
             <p className="text-sm text-[var(--text-secondary)] mb-5">
+              Kill{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {getTabLabel(terminals.find((t) => t.id === confirmKillId)!)}
               </span>
-              {" "}is running{" "}
-              <span className="font-mono text-[var(--text-primary)]">
-                {processes[confirmKillId] ?? "a process"}
-              </span>
-              . Kill it?
+              ? The running process will be terminated.
             </p>
             <div className="flex justify-end gap-2">
               <button

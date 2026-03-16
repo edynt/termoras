@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Terminal, X } from "lucide-react";
 import type { TerminalSession } from "../types";
 import { useAppStore } from "../stores/app-store";
-import { killTerminal } from "../lib/tauri-commands";
+import { useTerminalProcessStore } from "../stores/terminal-process-store";
+import { killTerminal, getTerminalProcessName } from "../lib/tauri-commands";
 
 interface Props {
   terminal: TerminalSession;
@@ -22,6 +23,7 @@ export function TerminalItem({ terminal }: Props) {
   const removeTerminal = useAppStore((s) => s.removeTerminal);
   const setTerminalRunning = useAppStore((s) => s.setTerminalRunning);
   const renameTerminal = useAppStore((s) => s.renameTerminal);
+  const isBusy = !!useTerminalProcessStore((s) => s.processes[terminal.id]);
 
   const isActive = activeTerminalId === terminal.id && activeView === "terminal";
 
@@ -93,14 +95,13 @@ export function TerminalItem({ terminal }: Props) {
             : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
         }`}
       >
-        {/* Alive/dead dot indicator */}
+        {/* Process status dot: green = busy, gray = idle */}
         <span
           className={`shrink-0 w-2 h-2 rounded-full ${
-            terminal.isRunning
+            isBusy
               ? "bg-[var(--accent-green,#22c55e)]"
               : "bg-[var(--text-secondary)]/30"
           }`}
-          title={terminal.isRunning ? "Running" : "Exited"}
         />
         <Terminal size={16} className="shrink-0" />
 
@@ -119,9 +120,13 @@ export function TerminalItem({ terminal }: Props) {
         )}
 
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            setConfirmKill(true);
+            try {
+              const proc = await getTerminalProcessName(terminal.id);
+              if (proc) { setConfirmKill(true); return; }
+            } catch { /* terminal may be dead */ }
+            handleKill();
           }}
           className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
           title="Kill terminal"

@@ -10,7 +10,7 @@ export function TerminalStatusButton() {
   const terminals = useAppStore((s) => s.terminals);
   const projects = useAppStore((s) => s.projects);
   const [open, setOpen] = useState(false);
-  const [confirmKill, setConfirmKill] = useState<{ id: string; name: string; process?: string } | null>(null);
+  const [confirmKill, setConfirmKill] = useState<{ id: string; name: string } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const setActiveProject = useAppStore((s) => s.setActiveProject);
@@ -98,7 +98,7 @@ export function TerminalStatusButton() {
                       processes[t.id] ? "bg-[var(--accent-green,#22c55e)]" : "bg-[var(--text-secondary)]/30"
                     }`}
                   />
-                  {/* Terminal name + process — click to open */}
+                  {/* Terminal name — click to open */}
                   <button
                     onClick={() => {
                       setActiveProject(g.id);
@@ -108,9 +108,6 @@ export function TerminalStatusButton() {
                     className="flex-1 text-left truncate text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
                   >
                     {t.name}
-                    {processes[t.id] && (
-                      <span className="ml-1 text-xs text-[var(--text-secondary)]/60">— {processes[t.id]}</span>
-                    )}
                   </button>
                   {/* Kill button — confirm only if terminal is busy */}
                   <button
@@ -119,7 +116,7 @@ export function TerminalStatusButton() {
                       try {
                         const proc = await getTerminalProcessName(t.id);
                         if (proc) {
-                          setConfirmKill({ id: t.id, name: t.name, process: proc });
+                          setConfirmKill({ id: t.id, name: t.name });
                           return;
                         }
                       } catch { /* terminal may be dead */ }
@@ -149,14 +146,11 @@ export function TerminalStatusButton() {
           >
             <p className="text-base font-semibold mb-2">Kill Terminal</p>
             <p className="text-sm text-[var(--text-secondary)] mb-5">
+              Kill{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {confirmKill.name}
               </span>
-              {" "}is running{" "}
-              <span className="font-mono text-[var(--text-primary)]">
-                {confirmKill.process ?? "a process"}
-              </span>
-              . Kill it?
+              ? The running process will be terminated.
             </p>
             <div className="flex justify-end gap-2">
               <button
