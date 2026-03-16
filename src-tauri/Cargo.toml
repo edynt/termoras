@@ -30,4 +30,4 @@ tauri-plugin-store = "2"
 portable-pty = "0.8"
 base64 = "0.22"
 tauri-plugin-clipboard-manager = "2.3.2"
-notify = { version = "7", default-features = false, features = ["macos_fsevent"] }
+notify = "7"

@@ -18,8 +18,14 @@ pub fn create_terminal(
     app_handle: tauri::AppHandle,
 ) -> Result<String, String> {
 
-    // Detect default shell
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+    // Detect default shell — prefer $SHELL, fall back to platform default
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| {
+        if cfg!(target_os = "macos") {
+            "/bin/zsh".to_string()
+        } else {
+            "/bin/bash".to_string()
+        }
+    });
 
     let pty_system = native_pty_system();
 
@@ -262,14 +268,20 @@ pub fn get_terminal_process_name(
     ))
 }
 
-/// Open a directory in VS Code
+/// Open a directory in VS Code (platform-aware)
 #[tauri::command]
 pub fn open_in_vscode(path: String) -> Result<(), String> {
-    // Use macOS `open -a` instead of `code` CLI — production builds have minimal PATH
-    // that doesn't include /usr/local/bin where `code` lives
-    Command::new("open")
-        .args(["-a", "Visual Studio Code", &path])
-        .spawn()
-        .map_err(|e| format!("Failed to open VS Code: {}", e))?;
+    if cfg!(target_os = "macos") {
+        // macOS: use `open -a` — production builds have minimal PATH
+        Command::new("open")
+            .args(["-a", "Visual Studio Code", &path])
+            .spawn()
+    } else {
+        // Linux: `code` CLI is typically in PATH
+        Command::new("code")
+            .arg(&path)
+            .spawn()
+    }
+    .map_err(|e| format!("Failed to open VS Code: {}", e))?;
     Ok(())
 }
