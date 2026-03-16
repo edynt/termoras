@@ -18,14 +18,14 @@ pub fn create_terminal(
     app_handle: tauri::AppHandle,
 ) -> Result<String, String> {
 
-    // Detect default shell — prefer $SHELL, fall back to platform default
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| {
-        if cfg!(target_os = "macos") {
-            "/bin/zsh".to_string()
-        } else {
-            "/bin/bash".to_string()
-        }
-    });
+    // Detect default shell per platform
+    let shell = if cfg!(target_os = "windows") {
+        std::env::var("COMSPEC").unwrap_or_else(|_| "powershell.exe".to_string())
+    } else {
+        std::env::var("SHELL").unwrap_or_else(|_| {
+            if cfg!(target_os = "macos") { "/bin/zsh" } else { "/bin/bash" }.to_string()
+        })
+    };
 
     let pty_system = native_pty_system();
 
@@ -38,18 +38,20 @@ pub fn create_terminal(
         })
         .map_err(|e| format!("Failed to open PTY: {}", e))?;
 
-    // Start as login shell (-l) so user profile loads (PATH, nvm, cargo, etc.)
     let mut cmd = CommandBuilder::new(&shell);
-    cmd.arg("-l");
     cmd.cwd(&project_path);
 
-    // Set TERM for color/TUI support (required by Claude Code CLI)
-    cmd.env("TERM", "xterm-256color");
-    // Propagate full locale chain for programs that check LC_* independently (vim, less, python)
-    let locale = std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".to_string());
-    cmd.env("LANG", &locale);
-    cmd.env("LC_ALL", std::env::var("LC_ALL").unwrap_or_else(|_| locale.clone()));
-    cmd.env("LC_CTYPE", std::env::var("LC_CTYPE").unwrap_or_else(|_| locale.clone()));
+    if cfg!(not(target_os = "windows")) {
+        // Unix: login shell so user profile loads (PATH, nvm, cargo, etc.)
+        cmd.arg("-l");
+        // Set TERM for color/TUI support
+        cmd.env("TERM", "xterm-256color");
+        // Propagate locale chain for programs that check LC_* (vim, less, python)
+        let locale = std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".to_string());
+        cmd.env("LANG", &locale);
+        cmd.env("LC_ALL", std::env::var("LC_ALL").unwrap_or_else(|_| locale.clone()));
+        cmd.env("LC_CTYPE", std::env::var("LC_CTYPE").unwrap_or_else(|_| locale.clone()));
+    }
 
     let child = pair
         .slave
@@ -215,11 +217,19 @@ pub fn save_temp_image(data: String, extension: String) -> Result<String, String
 
 /// Get the foreground process name running inside a terminal's shell.
 /// Returns None if the shell is idle (no child process).
+/// On Windows, process tree inspection is not yet supported — always returns None.
 #[tauri::command]
 pub fn get_terminal_process_name(
     id: String,
     state: State<AppState>,
 ) -> Result<Option<String>, String> {
+    if cfg!(target_os = "windows") {
+        // Windows: ConPTY doesn't expose child process tree via pgrep/ps.
+        // TODO: add sysinfo crate for cross-platform process detection
+        let _ = (id, state);
+        return Ok(None);
+    }
+
     // Get shell PID while holding lock briefly, then release
     let shell_pid = {
         let sessions = state
@@ -235,7 +245,7 @@ pub fn get_terminal_process_name(
         }
     };
 
-    // Find child processes of the shell (lock-free, safe to be slow)
+    // Find child processes of the shell (Unix only, lock-free)
     let output = Command::new("pgrep")
         .args(["-P", &shell_pid.to_string()])
         .output()
@@ -246,7 +256,7 @@ pub fn get_terminal_process_name(
     };
     let first_pid = match pids_str.lines().next() {
         Some(pid) if !pid.trim().is_empty() => pid.trim().to_string(),
-        _ => return Ok(None), // No child processes — shell is idle
+        _ => return Ok(None),
     };
 
     // Get process name from PID
@@ -262,7 +272,7 @@ pub fn get_terminal_process_name(
         return Ok(None);
     }
 
-    // Extract just the binary name (strip path prefix like /usr/bin/node → node)
+    // Extract binary name (strip path prefix like /usr/bin/node → node)
     Ok(Some(
         name.rsplit('/').next().unwrap_or(&name).to_string(),
     ))
@@ -275,6 +285,11 @@ pub fn open_in_vscode(path: String) -> Result<(), String> {
         // macOS: use `open -a` — production builds have minimal PATH
         Command::new("open")
             .args(["-a", "Visual Studio Code", &path])
+            .spawn()
+    } else if cfg!(target_os = "windows") {
+        // Windows: `code` is a batch file, invoke via cmd
+        Command::new("cmd")
+            .args(["/c", "code", &path])
             .spawn()
     } else {
         // Linux: `code` CLI is typically in PATH

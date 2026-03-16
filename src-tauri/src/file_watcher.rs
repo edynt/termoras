@@ -56,11 +56,16 @@ pub fn start_file_watcher(
         }
 
         // Skip internal .git changes (except index and refs which track push/fetch state)
+        // Use std::path separators to handle both `/` (Unix) and `\` (Windows)
+        let git_sep = std::path::MAIN_SEPARATOR;
+        let git_dir = format!("{}.git{}", git_sep, git_sep);
+        let git_index = format!("{}.git{}index", git_sep, git_sep);
+        let git_refs = format!("{}.git{}refs{}", git_sep, git_sep, git_sep);
         let dominated_by_git_internal = event.paths.iter().all(|p| {
             let s = p.to_string_lossy();
-            s.contains("/.git/")
-                && !s.ends_with("/.git/index")
-                && !s.contains("/.git/refs/")
+            s.contains(&git_dir)
+                && !s.ends_with(&git_index)
+                && !s.contains(&git_refs)
         });
         if dominated_by_git_internal {
             return;

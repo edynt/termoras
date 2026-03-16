@@ -31,7 +31,14 @@ fn kill_all_sessions(handle: &impl tauri::Manager<tauri::Wry>) {
 
 /// Check if any terminal has a busy foreground process (e.g. running a server).
 /// Returns true if at least one terminal has a child process beyond the shell itself.
+/// On Windows, process tree inspection is not yet supported — always returns false.
 fn has_busy_terminals(handle: &impl tauri::Manager<tauri::Wry>) -> bool {
+    if cfg!(target_os = "windows") {
+        // TODO: add sysinfo crate for cross-platform process detection
+        let _ = handle;
+        return false;
+    }
+
     let sessions_arc = {
         let state = handle.state::<AppState>();
         state.sessions.clone()
@@ -42,7 +49,6 @@ fn has_busy_terminals(handle: &impl tauri::Manager<tauri::Wry>) -> bool {
     };
     for session in guard.values() {
         if let Some(pid) = session.child.process_id() {
-            // Check if shell has any child processes (= something is running)
             if let Ok(output) = std::process::Command::new("pgrep")
                 .args(["-P", &pid.to_string()])
                 .output()
