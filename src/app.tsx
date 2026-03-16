@@ -8,6 +8,7 @@ import { useTagStore } from "./stores/tag-store";
 import { useGlobalKeybindings } from "./hooks/use-global-keybindings";
 import { useUpdateChecker } from "./hooks/use-update-checker";
 import { startProcessPolling, stopProcessPolling } from "./stores/terminal-process-store";
+import { OnboardingModal } from "./components/onboarding-modal";
 
 const MIN_SIDEBAR = 180;
 const MAX_SIDEBAR = 480;
@@ -77,6 +78,7 @@ export function App() {
       {updateInfo && (
         <UpdateNotification info={updateInfo} onDismiss={dismissUpdate} />
       )}
+      <OnboardingModal />
     </div>
   );
 }
