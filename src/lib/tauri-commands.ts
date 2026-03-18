@@ -153,6 +153,11 @@ export async function gitMergeAbort(path: string): Promise<string> {
   return invoke<string>("git_merge_abort", { path });
 }
 
+/** Switch to a different branch */
+export async function gitCheckoutBranch(path: string, branch: string): Promise<string> {
+  return invoke<string>("git_checkout_branch", { path, branch });
+}
+
 /** Fetch from all remotes */
 export async function gitFetch(path: string): Promise<string> {
   return invoke<string>("git_fetch", { path });

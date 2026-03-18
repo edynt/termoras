@@ -497,6 +497,23 @@ pub fn git_merge_abort(path: String) -> Result<String, String> {
     Ok("Merge aborted.".to_string())
 }
 
+/// Switch to a different branch (git checkout <branch>)
+#[tauri::command]
+pub fn git_checkout_branch(path: String, branch: String) -> Result<String, String> {
+    let output = Command::new("git")
+        .args(["checkout", &branch])
+        .current_dir(&path)
+        .output()
+        .map_err(|e| format!("Failed to run git checkout: {}", e))?;
+
+    if output.status.success() {
+        return Ok(format!("Switched to branch '{}'", branch));
+    }
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    Err(stderr.trim().to_string())
+}
+
 // ── Git Stash Commands ──────────────────────────────────────────────
 
 /// Stash entry returned by git_stash_list

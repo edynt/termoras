@@ -18,6 +18,7 @@ import {
   gitListBranches,
   gitMerge,
   gitMergeAbort,
+  gitCheckoutBranch,
   gitFetch,
   gitStashList,
   gitStashSave,
@@ -81,6 +82,10 @@ export function GitChangesView() {
   const [merging, setMerging] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [mergeConflicts, setMergeConflicts] = useState<string[]>([]);
+  const [showBranchPicker, setShowBranchPicker] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [branchPickerFilter, setBranchPickerFilter] = useState("");
+  const branchPickerRef = useRef<HTMLDivElement>(null);
 
   // Resizable panel
   const [panelWidth, setPanelWidth] = useState(() => {
@@ -129,6 +134,18 @@ export function GitChangesView() {
   useEffect(() => {
     loadBranches();
   }, [loadBranches]);
+
+  // Close branch picker on outside click
+  useEffect(() => {
+    if (!showBranchPicker) return;
+    function handleClick(e: MouseEvent) {
+      if (branchPickerRef.current && !branchPickerRef.current.contains(e.target as Node)) {
+        setShowBranchPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showBranchPicker]);
 
   const refresh = useCallback(async () => {
     if (!project) return;
@@ -336,6 +353,24 @@ export function GitChangesView() {
   }
 
   /** Fetch from remote and refresh branch list */
+  async function handleCheckoutBranch(branchName: string) {
+    if (!project) return;
+    setCheckingOut(true);
+    setActionError(null);
+    try {
+      const msg = await gitCheckoutBranch(project.path, branchName);
+      setShowBranchPicker(false);
+      setBranchPickerFilter("");
+      await loadBranches();
+      await refresh();
+      setSuccessMsg(msg);
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e) {
+      setActionError(`${e}`);
+    }
+    setCheckingOut(false);
+  }
+
   async function handleFetch() {
     if (!project) return;
     setFetching(true);
@@ -461,15 +496,65 @@ export function GitChangesView() {
     <div className="flex h-full relative">
       {/* File list sidebar */}
       <div className="shrink-0 border-r border-[var(--border-color)] flex flex-col bg-[var(--bg-sidebar)]" style={{ width: panelWidth }}>
-        {/* Header — branch badge + actions */}
+        {/* Header — branch picker + actions */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--accent-blue)]/10 min-w-0" title={status?.branch ?? ""}>
-              <GitBranch size={16} className="shrink-0 text-[var(--accent-blue)]" />
+          <div ref={branchPickerRef} className="relative flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => { setShowBranchPicker(!showBranchPicker); setBranchPickerFilter(""); }}
+              disabled={checkingOut}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--accent-blue)]/10 min-w-0 hover:bg-[var(--accent-blue)]/20 transition-colors cursor-pointer"
+              title="Switch branch"
+            >
+              <GitBranch size={16} className={`shrink-0 text-[var(--accent-blue)] ${checkingOut ? "animate-pulse" : ""}`} />
               <span className="text-sm font-semibold text-[var(--accent-blue)] truncate">
                 {status?.branch ?? "—"}
               </span>
-            </div>
+              <ChevronDown size={12} className={`shrink-0 text-[var(--accent-blue)] transition-transform ${showBranchPicker ? "rotate-180" : ""}`} />
+            </button>
+
+            {/* Branch picker dropdown */}
+            {showBranchPicker && (
+              <div className="absolute top-full left-0 mt-1 z-50 w-[260px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl overflow-hidden">
+                <div className="px-2 py-1.5">
+                  <input
+                    type="text"
+                    value={branchPickerFilter}
+                    onChange={(e) => setBranchPickerFilter(e.target.value)}
+                    placeholder="Switch to branch..."
+                    autoFocus
+                    className="w-full text-sm px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:border-[var(--accent-blue)]"
+                  />
+                </div>
+                <div className="max-h-[240px] overflow-y-auto">
+                  {(() => {
+                    const filtered = branches
+                      .filter((b) => !b.is_current)
+                      .filter((b) => !branchPickerFilter || b.name.toLowerCase().includes(branchPickerFilter.toLowerCase()));
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="px-3 py-3 text-sm text-[var(--text-secondary)] text-center">
+                          {branchPickerFilter ? "No matching branches" : "No other branches"}
+                        </div>
+                      );
+                    }
+                    return filtered.map((b) => (
+                      <button
+                        key={b.name}
+                        onClick={() => handleCheckoutBranch(b.name)}
+                        disabled={checkingOut}
+                        className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-50"
+                      >
+                        <GitBranch size={12} className={`shrink-0 ${b.is_remote ? "text-[var(--accent-red)]" : "text-[var(--text-secondary)]"}`} />
+                        <span className="truncate flex-1">{b.name}</span>
+                        {b.is_remote && (
+                          <span className="shrink-0 text-[10px] px-1 py-0.5 rounded bg-[var(--accent-red)]/10 text-[var(--accent-red)]">remote</span>
+                        )}
+                      </button>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-0.5">
             <button
@@ -649,11 +734,11 @@ export function GitChangesView() {
         {/* Summary footer */}
         {status && (
           <div className="px-3 py-2 border-t border-[var(--border-color)] text-sm text-[var(--text-secondary)]">
-            {status.staged > 0 && <span className="text-[var(--accent-green)]">{status.staged} staged</span>}
+            {status.staged > 0 && <span className="text-[var(--accent-green)]">+{status.staged} staged</span>}
             {status.staged > 0 && (status.modified > 0 || status.untracked > 0) && " · "}
-            {status.modified > 0 && <span className="text-[var(--accent-blue)]">{status.modified} modified</span>}
+            {status.modified > 0 && <span className="text-[var(--accent-blue)]">~{status.modified} mod</span>}
             {status.modified > 0 && status.untracked > 0 && " · "}
-            {status.untracked > 0 && <span className="text-[var(--text-secondary)]">{status.untracked} untracked</span>}
+            {status.untracked > 0 && <span className="text-[var(--text-secondary)]">?{status.untracked} new</span>}
           </div>
         )}
 
@@ -1021,11 +1106,11 @@ function FileSection({
 /** Colored tag badge for file status */
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
-    M: { label: "Modified", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
-    A: { label: "Added", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
-    D: { label: "Deleted", color: "text-[var(--accent-red)]", bg: "bg-[var(--accent-red)]/12" },
-    R: { label: "Renamed", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
-    "?": { label: "New", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
+    M: { label: "M", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
+    A: { label: "A", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
+    D: { label: "D", color: "text-[var(--accent-red)]", bg: "bg-[var(--accent-red)]/12" },
+    R: { label: "R", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
+    "?": { label: "U", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
   };
   const { label, color, bg } = config[status] ?? { label: status, color: "text-[var(--text-secondary)]", bg: "bg-[var(--text-secondary)]/10" };
 

@@ -176,6 +176,7 @@ pub fn run() {
             git_commands::git_list_branches,
             git_commands::git_merge,
             git_commands::git_merge_abort,
+            git_commands::git_checkout_branch,
             git_commands::git_fetch,
             git_commands::git_stash_list,
             git_commands::git_stash_save,

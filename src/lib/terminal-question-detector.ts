@@ -66,8 +66,6 @@ const MANUAL_PATTERNS: RegExp[] = [
   /Interrupted/,
   // git prompts requiring text input
   /Please enter (?:a |the )?commit message/i,
-  // Option selection prompts (numbered lists with ❯ selector)
-  /❯/,
   // Password / credential prompts (colon-terminated)
   /Password\s*:/i,
   /passphrase\s*:/i,
