@@ -92,10 +92,17 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     // Vietnamese Telex processing happens below in onData, not in the key handler.
     attachMacKeybindings(term, writeToPty, telex);
 
-    // Question detector — monitors PTY output for prompts waiting for user input
-    const questionDetector = new QuestionDetector((questioning) => {
-      setTerminalQuestioning(terminalId, questioning);
-    });
+    // Question detector — monitors PTY output for prompts waiting for user input.
+    // Auto-confirms yes/no prompts; only shows "needs input" for manual-input prompts.
+    const questionDetector = new QuestionDetector(
+      (questioning) => {
+        setTerminalQuestioning(terminalId, questioning);
+      },
+      (response) => {
+        // Auto-confirm: write response (e.g. "y\n") directly to PTY
+        writeToPty(response);
+      },
+    );
 
     // Create Tauri channel for streaming PTY output
     const channel = new Channel<number[]>();

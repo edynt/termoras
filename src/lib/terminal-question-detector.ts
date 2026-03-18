@@ -9,6 +9,10 @@
  *      for user input (spinners, cursor repositioning, status updates).
  * ANSI-only PTY chunks (cursor moves, style changes) are ignored so they
  * don't reset timers or pollute the text buffer.
+ *
+ * Auto-confirm: confirmation/yes-no prompts are automatically answered with "y"
+ * (or Enter for press-enter prompts). Only non-confirmation prompts (passwords,
+ * selections, open-ended questions) trigger the "needs input" UI indicator.
  */
 
 /** Strip all ANSI escape sequences + control chars from raw PTY output */
@@ -20,39 +24,47 @@ function stripAnsi(text: string): string {
   return text.replace(ANSI_RE, "");
 }
 
-/** Patterns that indicate a CLI is waiting for user input.
- * IMPORTANT: Keep patterns specific to avoid false positives during throttled
- * checks (which fire while output is still streaming). Prefer patterns that
- * include structural indicators like (y/n), ?, option selectors, etc. */
-const QUESTION_PATTERNS: RegExp[] = [
+/** Auto-confirmable patterns: yes/no and confirmation prompts.
+ * These get automatically answered — no UI indicator shown. */
+interface AutoConfirmPattern {
+  pattern: RegExp;
+  response: string;
+}
+
+const AUTO_CONFIRM_PATTERNS: AutoConfirmPattern[] = [
   // Claude Code — tool permission prompts
-  /Allow .+ tool/i,
-  /\(y\)es\s*\/\s*\(n\)o/i,
-  /yes to \(a\)ll/i,
-  // Claude Code — interrupted / waiting for input
+  { pattern: /Allow .+ tool/i, response: "y\n" },
+  { pattern: /\(y\)es\s*\/\s*\(n\)o/i, response: "y\n" },
+  { pattern: /yes to \(a\)ll/i, response: "y\n" },
+  // Claude Code — explicit confirmation prompts
+  { pattern: /Do you want to proceed\??/i, response: "y\n" },
+  { pattern: /Do you want to allow/i, response: "y\n" },
+  { pattern: /Do you want to continue\??/i, response: "y\n" },
+  // Generic CLI yes/no prompts (structural indicators)
+  { pattern: /\(y\/n\)/i, response: "y\n" },
+  { pattern: /\[Y\/n\]/i, response: "y\n" },
+  { pattern: /\[y\/N\]/i, response: "y\n" },
+  { pattern: /\(yes\/no\)/i, response: "y\n" },
+  { pattern: /Are you sure\??/i, response: "y\n" },
+  { pattern: /Continue\?/, response: "y\n" },
+  { pattern: /Confirm\?/i, response: "y\n" },
+  { pattern: /Overwrite\?/i, response: "y\n" },
+  { pattern: /Replace\?/i, response: "y\n" },
+  { pattern: /Proceed\?/i, response: "y\n" },
+  // Generic CLI action prompts
+  { pattern: /Press Enter to/i, response: "\n" },
+  { pattern: /Press any key/i, response: "\n" },
+  // npm / package managers
+  { pattern: /Is this OK\?/i, response: "y\n" },
+];
+
+/** Manual input patterns: need real user input (password, text, selection).
+ * These trigger the "needs input" UI indicator and wait for user action. */
+const MANUAL_PATTERNS: RegExp[] = [
+  // Claude Code — interrupted / open-ended questions
   /What should Claude do/i,
   /Interrupted/,
-  // Claude Code — explicit question prompts
-  /Do you want to proceed\??/i,
-  /Do you want to allow/i,
-  /Do you want to continue\??/i,
-  // Generic CLI yes/no prompts (structural indicators)
-  /\(y\/n\)/i,
-  /\[Y\/n\]/i,
-  /\[y\/N\]/i,
-  /\(yes\/no\)/i,
-  /Are you sure\??/i,
-  /Continue\?/,
-  /Confirm\?/i,
-  /Overwrite\?/i,
-  /Replace\?/i,
-  /Proceed\?/i,
-  // Generic CLI action prompts
-  /Press Enter to/i,
-  /Press any key/i,
-  // npm / package managers
-  /Is this OK\?/i,
-  // git prompts
+  // git prompts requiring text input
   /Please enter (?:a |the )?commit message/i,
   // Option selection prompts (numbered lists with ❯ selector)
   /❯/,
@@ -71,13 +83,40 @@ export class QuestionDetector {
   private throttleTimer: number | null = null;
   private currentState = false;
   private onChange: (questioning: boolean) => void;
+  private onAutoConfirm: ((response: string) => void) | null;
 
-  constructor(onChange: (questioning: boolean) => void) {
+  constructor(
+    onChange: (questioning: boolean) => void,
+    onAutoConfirm?: (response: string) => void,
+  ) {
     this.onChange = onChange;
+    this.onAutoConfirm = onAutoConfirm ?? null;
+  }
+
+  private clearTimers() {
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    if (this.throttleTimer) clearTimeout(this.throttleTimer);
+    this.debounceTimer = null;
+    this.throttleTimer = null;
   }
 
   private checkPatterns() {
-    const isQuestion = QUESTION_PATTERNS.some((p) => p.test(this.buffer));
+    // Auto-confirm: check confirmation patterns first
+    if (this.onAutoConfirm) {
+      for (const { pattern, response } of AUTO_CONFIRM_PATTERNS) {
+        if (pattern.test(this.buffer)) {
+          this.onAutoConfirm(response);
+          // Reset silently (no onChange callback) so next question is detected fresh
+          this.buffer = "";
+          this.currentState = false;
+          this.clearTimers();
+          return;
+        }
+      }
+    }
+
+    // Manual input: check patterns that need real user input
+    const isQuestion = MANUAL_PATTERNS.some((p) => p.test(this.buffer));
     if (isQuestion !== this.currentState) {
       this.currentState = isQuestion;
       this.onChange(isQuestion);
@@ -113,8 +152,7 @@ export class QuestionDetector {
 
   reset() {
     this.buffer = "";
-    if (this.debounceTimer) clearTimeout(this.debounceTimer);
-    if (this.throttleTimer) clearTimeout(this.throttleTimer);
+    this.clearTimers();
     if (this.currentState) {
       this.currentState = false;
       this.onChange(false);
@@ -122,7 +160,6 @@ export class QuestionDetector {
   }
 
   dispose() {
-    if (this.debounceTimer) clearTimeout(this.debounceTimer);
-    if (this.throttleTimer) clearTimeout(this.throttleTimer);
+    this.clearTimers();
   }
 }
