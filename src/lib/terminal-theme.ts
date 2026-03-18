@@ -1,13 +1,13 @@
 import type { ITheme } from "@xterm/xterm";
 
-/** Light theme for xterm.js — VS Code Light+ inspired */
+/** Light theme for xterm.js — macOS-native aligned */
 export const lightTheme: ITheme = {
   background: "#ffffff",
-  foreground: "#1e1e1e",
-  cursor: "#333333",
+  foreground: "#1c1c1e",
+  cursor: "#1c1c1e",
   cursorAccent: "#ffffff",
   selectionBackground: "#b5d5ff",
-  selectionForeground: "#1e1e1e",
+  selectionForeground: "#1c1c1e",
   black: "#1e1e1e",
   red: "#cd3131",
   green: "#00bc7c",

@@ -78,7 +78,10 @@
       "Bash(npm uninstall:*)",
       "Bash(cd /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src-tauri && cargo update --package termoras 2>&1)",
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git:*)",
+      "Bash(cd:*)",
+      "Bash(grep:*)"
     ]
   }
 }

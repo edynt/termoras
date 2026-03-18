@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
-/* Light theme (default) */
+/* Light theme (default) — clean macOS-native aesthetic */
 :root,
 [data-theme="light"] {
   --bg-primary: #ffffff;
-  --bg-sidebar: #f7f8fa;
-  --bg-active: #e8eaef;
-  --bg-hover: #f0f1f4;
-  --text-primary: #1a1d26;
-  --text-secondary: #6b7280;
-  --border-color: #e3e5ea;
-  --accent-blue: #4a8ff5;
-  --accent-green: #1aad8a;
-  --accent-red: #e94e4e;
-  --glow-color: rgba(74, 143, 245, 0.15);
+  --bg-sidebar: #f5f5f7;
+  --bg-active: #e3e5ea;
+  --bg-hover: #eeeff1;
+  --text-primary: #1c1c1e;
+  --text-secondary: #6e6e73;
+  --border-color: #d1d1d6;
+  --accent-blue: #007aff;
+  --accent-green: #28cd6c;
+  --accent-red: #ff3b30;
+  --glow-color: rgba(0, 122, 255, 0.12);
   --diff-add-bg: #dafbe1;
   --diff-add-border: #2da44e;
   --diff-del-bg: #ffebe9;
