@@ -88,4 +88,46 @@ export function useGlobalKeybindings() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Cmd+Plus / Cmd+Minus / Cmd+0 → zoom in / out / reset (10% steps, 50%-200%)
+  useEffect(() => {
+    const ZOOM_KEY = "termoras:zoom";
+    const STEP = 10;
+    const MIN = 50;
+    const MAX = 200;
+
+    // Restore saved zoom on mount
+    const saved = localStorage.getItem(ZOOM_KEY);
+    if (saved) {
+      document.documentElement.style.zoom = `${saved}%`;
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return;
+
+      let zoom = parseInt(localStorage.getItem(ZOOM_KEY) ?? "100", 10);
+
+      if (e.key === "=" || e.key === "+") {
+        // Cmd+Plus → zoom in
+        e.preventDefault();
+        zoom = Math.min(MAX, zoom + STEP);
+      } else if (e.key === "-") {
+        // Cmd+Minus → zoom out
+        e.preventDefault();
+        zoom = Math.max(MIN, zoom - STEP);
+      } else if (e.key === "0") {
+        // Cmd+0 → reset to 100%
+        e.preventDefault();
+        zoom = 100;
+      } else {
+        return;
+      }
+
+      document.documentElement.style.zoom = `${zoom}%`;
+      localStorage.setItem(ZOOM_KEY, String(zoom));
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 }

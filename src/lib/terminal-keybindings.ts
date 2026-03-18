@@ -146,6 +146,11 @@ export function attachMacKeybindings(
           event.preventDefault();
           return false;
         }
+
+        case "=": case "+": case "-": case "0":
+          // Cmd+Plus/Minus/0 → zoom (handled by global keybindings)
+          event.preventDefault();
+          return false;
       }
     }
 
