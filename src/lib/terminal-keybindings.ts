@@ -137,10 +137,15 @@ export function attachMacKeybindings(
           return false;
 
         case "1": case "2": case "3": case "4": case "5":
-        case "6": case "7": case "8": case "9":
-          // Cmd+1-9 → switch terminal tabs (handled by global keybindings hook)
+        case "6": case "7": case "8": case "9": {
+          // Cmd+1-9 → switch terminal tabs (all terminals, matching tab bar order)
+          const digit = parseInt(key, 10);
+          const state = useAppStore.getState();
+          const target = state.terminals[digit - 1];
+          if (target) state.setActiveTerminal(target.id);
           event.preventDefault();
           return false;
+        }
       }
     }
 

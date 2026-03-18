@@ -68,7 +68,7 @@ export function useGlobalKeybindings() {
     };
   }, []);
 
-  // Cmd+1-9 → switch terminal tabs within current project
+  // Cmd+1-9 → switch terminal tabs (all terminals, matching tab bar order)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (!e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return;
@@ -78,11 +78,8 @@ export function useGlobalKeybindings() {
 
       e.preventDefault();
 
-      const { activeProjectId, terminals, setActiveTerminal } = useAppStore.getState();
-      if (!activeProjectId) return;
-
-      const projectTerminals = terminals.filter((t) => t.projectId === activeProjectId);
-      const target = projectTerminals[digit - 1];
+      const { terminals, setActiveTerminal } = useAppStore.getState();
+      const target = terminals[digit - 1];
       if (target) {
         setActiveTerminal(target.id);
       }
