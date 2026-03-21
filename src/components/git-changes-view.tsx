@@ -504,19 +504,19 @@ export function GitChangesView() {
             <button
               onClick={() => { setShowBranchPicker(!showBranchPicker); setBranchPickerFilter(""); }}
               disabled={checkingOut}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--accent-blue)]/10 min-w-0 hover:bg-[var(--accent-blue)]/20 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-[var(--border-color)] min-w-0 hover:border-[var(--border-hover)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
               title="Switch branch"
             >
-              <GitBranch size={16} className={`shrink-0 text-[var(--accent-blue)] ${checkingOut ? "animate-pulse" : ""}`} />
-              <span className="text-sm font-semibold text-[var(--accent-blue)] truncate">
+              <GitBranch size={14} className={`shrink-0 text-[var(--accent-blue)] ${checkingOut ? "animate-pulse" : ""}`} />
+              <span className="text-sm font-medium text-[var(--text-primary)] truncate">
                 {status?.branch ?? "—"}
               </span>
-              <ChevronDown size={12} className={`shrink-0 text-[var(--accent-blue)] transition-transform ${showBranchPicker ? "rotate-180" : ""}`} />
+              <ChevronDown size={12} className={`shrink-0 text-[var(--text-tertiary)] transition-transform ${showBranchPicker ? "rotate-180" : ""}`} />
             </button>
 
             {/* Branch picker dropdown */}
             {showBranchPicker && (
-              <div className="absolute top-full left-0 mt-1 z-50 w-[260px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl overflow-hidden">
+              <div className="absolute top-full left-0 mt-1 z-50 w-[260px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-elevated)] overflow-hidden" style={{ boxShadow: "var(--shadow-lg)" }}>
                 <div className="px-2 py-1.5">
                   <input
                     type="text"
@@ -524,7 +524,7 @@ export function GitChangesView() {
                     onChange={(e) => setBranchPickerFilter(e.target.value)}
                     placeholder="Switch to branch..."
                     autoFocus
-                    className="w-full text-sm px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:border-[var(--accent-blue)]"
+                    className="w-full text-sm px-2 py-1.5 rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors"
                   />
                 </div>
                 <div className="max-h-[240px] overflow-y-auto">
@@ -562,18 +562,18 @@ export function GitChangesView() {
             <button
               onClick={handleFetch}
               disabled={fetching}
-              className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+              className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
               title="Fetch from remote"
             >
-              <Download size={16} className={fetching ? "animate-pulse" : ""} />
+              <Download size={14} className={fetching ? "animate-pulse" : ""} />
             </button>
             <button
               onClick={refresh}
               disabled={loading}
-              className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+              className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
               title="Refresh"
             >
-              <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             </button>
           </div>
         </div>
@@ -585,14 +585,14 @@ export function GitChangesView() {
             onClick={() => { setShowMergePanel(!showMergePanel); setBranchFilter(""); }}
             className={`w-full flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
               showMergePanel
-                ? "text-[var(--accent-blue)] bg-[var(--accent-blue)]/5"
+                ? "text-[var(--text-primary)] bg-[var(--bg-hover)]"
                 : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
             }`}
           >
             <GitMerge size={14} />
             Merge
             {merging && <Loader2 size={12} className="animate-spin ml-auto" />}
-            <ChevronDown size={14} className={`ml-auto transition-transform ${showMergePanel ? "rotate-180" : ""}`} />
+            <ChevronDown size={14} className={`ml-auto transition-transform duration-150 ${showMergePanel ? "rotate-180" : ""}`} />
           </button>
 
           {/* Branch list panel */}
@@ -605,7 +605,7 @@ export function GitChangesView() {
                   value={branchFilter}
                   onChange={(e) => setBranchFilter(e.target.value)}
                   placeholder="Search branches..."
-                  className="w-full text-sm px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:border-[var(--accent-blue)]"
+                  className="w-full text-sm px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors"
                 />
               </div>
 
@@ -764,7 +764,7 @@ export function GitChangesView() {
                 }}
                 placeholder="Stash name..."
                 autoFocus
-                className="flex-1 text-sm px-2 py-1.5 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:border-[var(--accent-blue)]"
+                className="flex-1 text-sm px-2 py-1.5 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors"
               />
               <button
                 onClick={handleStashSave}
@@ -791,7 +791,7 @@ export function GitChangesView() {
               if (e.key === "Enter" && commitMsg.trim() && files.length > 0) handleCommit();
             }}
             placeholder="Commit message..."
-            className="w-full text-sm px-2 py-1.5 rounded border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:outline-none focus:border-[var(--accent-blue)]"
+            className="w-full text-sm px-2.5 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)] focus:ring-2 focus:ring-[var(--accent-blue)]/10 transition-all"
           />
 
           {/* Action buttons */}
@@ -799,12 +799,12 @@ export function GitChangesView() {
             <button
               onClick={handleCommit}
               disabled={committing || !commitMsg.trim() || files.length === 0}
-              className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
                 committing
-                  ? "bg-[var(--accent-blue)]/25 text-[var(--accent-blue)] cursor-wait"
+                  ? "bg-[var(--accent-blue)] text-white cursor-wait opacity-70"
                   : !commitMsg.trim() || files.length === 0
-                    ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
-                    : "bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/25"
+                    ? "border border-[var(--border-color)] text-[var(--text-tertiary)] cursor-not-allowed"
+                    : "bg-[var(--accent-blue)] text-white hover:opacity-90"
               }`}
               title={files.length === 0 ? "No changes" : !commitMsg.trim() ? "Enter a commit message" : stagedFiles.length > 0 ? "Commit staged files" : "Stage all and commit"}
             >
@@ -814,12 +814,12 @@ export function GitChangesView() {
             <button
               onClick={handlePush}
               disabled={!hasUnpushed || pushing}
-              className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
                 pushing
-                  ? "bg-[var(--accent-red)]/25 text-[var(--accent-red)] cursor-wait"
+                  ? "border border-[var(--accent-blue)] text-[var(--accent-blue)] cursor-wait opacity-70"
                   : !hasUnpushed
-                    ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
-                    : "bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25"
+                    ? "border border-[var(--border-color)] text-[var(--text-tertiary)] cursor-not-allowed"
+                    : "border border-[var(--accent-blue)] text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/8"
               }`}
               title={!hasUnpushed ? "No unpushed commits" : "Push to remote"}
             >
@@ -829,10 +829,10 @@ export function GitChangesView() {
             <button
               onClick={() => setShowStashInput(!showStashInput)}
               disabled={files.length === 0}
-              className={`shrink-0 flex items-center justify-center gap-1 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
+              className={`shrink-0 flex items-center justify-center gap-1 text-sm font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
                 files.length === 0
-                  ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
-                  : "bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20"
+                  ? "border border-[var(--border-color)] text-[var(--text-tertiary)] cursor-not-allowed"
+                  : "border border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-hover)]"
               }`}
               title="Stash changes"
             >
@@ -841,16 +841,16 @@ export function GitChangesView() {
             </button>
           </div>
 
-          {/* Undo last commit — always visible to prevent layout shift */}
+          {/* Undo last commit */}
           <button
             onClick={handleUndoCommit}
             disabled={!hasUnpushed || undoing}
-            className={`w-full flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
+            className={`w-full flex items-center justify-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
               undoing
-                ? "bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] cursor-wait"
+                ? "text-[var(--text-secondary)] cursor-wait opacity-60"
                 : !hasUnpushed
-                  ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/30 cursor-not-allowed"
-                  : "bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20"
+                  ? "text-[var(--text-tertiary)]/40 cursor-not-allowed"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
             }`}
             title={!hasUnpushed ? "No unpushed commits" : "Undo last commit (git reset --soft HEAD~1) — changes stay staged"}
           >
@@ -863,7 +863,7 @@ export function GitChangesView() {
       {/* Resize handle */}
       <div
         onMouseDown={handlePanelResize}
-        className="w-1 shrink-0 cursor-col-resize hover:bg-[var(--accent-blue)]/30 active:bg-[var(--accent-blue)]/50 transition-colors"
+        className="w-[3px] shrink-0 cursor-col-resize hover:bg-[var(--accent-blue)]/20 active:bg-[var(--accent-blue)]/40 transition-colors"
       />
 
       {/* Diff viewer / File content viewer / Stash diff preview */}
@@ -882,11 +882,11 @@ export function GitChangesView() {
       {/* Revert confirmation dialog */}
       {confirmRevert && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmRevert(null)}
         >
           <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
+            className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)] p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-base font-semibold mb-2">Discard Changes</p>
@@ -936,11 +936,11 @@ export function GitChangesView() {
       {/* Merge confirmation modal */}
       {confirmMergeBranch && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmMergeBranch(null)}
         >
           <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[420px]"
+            className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)] p-5 w-[420px]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2 mb-4">
@@ -1015,10 +1015,10 @@ function FileSection({
   onRevertAll?: () => void;
 }) {
   return (
-    <div>
+    <div className="py-1">
       {/* Section header with bulk actions */}
       <div className="flex items-center justify-between px-3 py-1">
-        <span className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+        <span className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
           {title} ({files.length})
         </span>
         <div className="flex items-center gap-0.5">
@@ -1027,20 +1027,20 @@ function FileSection({
             <button
               onClick={(e) => { e.stopPropagation(); onRevertAll(); }}
               disabled={disabled}
-              className="p-0.5 rounded hover:bg-[var(--accent-red)]/15 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-colors disabled:opacity-40"
+              className="p-0.5 rounded-md hover:bg-[var(--accent-red)]/8 text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-colors disabled:opacity-40"
               title="Discard all changes"
             >
-              <Undo2 size={16} />
+              <Undo2 size={14} />
             </button>
           )}
           {/* Stage/Unstage all button */}
           <button
             onClick={(e) => { e.stopPropagation(); onSectionAction(); }}
             disabled={disabled}
-            className="p-0.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
+            className="p-0.5 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
             title={sectionActionTitle}
           >
-            {actionIcon === "stage" ? <Plus size={16} /> : <Minus size={16} />}
+            {actionIcon === "stage" ? <Plus size={14} /> : <Minus size={14} />}
           </button>
         </div>
       </div>
@@ -1052,9 +1052,9 @@ function FileSection({
           <div
             key={`${f.staged ? "s" : "u"}-${f.path}`}
             onClick={() => onSelect({ path: f.path, staged: f.staged, status: f.status })}
-            className={`group flex items-center gap-1.5 px-1.5 py-1 cursor-pointer transition-all ${
+            className={`group flex items-center gap-1.5 mx-1 px-2 py-1.5 rounded-md cursor-pointer transition-colors duration-150 ${
               isSelected
-                ? "bg-[var(--bg-active)] text-[var(--text-primary)] shadow-[inset_0_0_0_1px_var(--accent-blue)] rounded"
+                ? "bg-[var(--bg-active)] text-[var(--text-primary)]"
                 : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
             }`}
           >
@@ -1062,7 +1062,7 @@ function FileSection({
             <button
               onClick={(e) => { e.stopPropagation(); onFileAction(f.path); }}
               disabled={disabled}
-              className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-active)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-40"
+              className="shrink-0 p-0.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-active)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all disabled:opacity-40"
               title={actionIcon === "stage" ? `Stage ${f.path}` : `Unstage ${f.path}`}
             >
               {actionIcon === "stage" ? <Plus size={14} /> : <Minus size={14} />}
@@ -1073,7 +1073,7 @@ function FileSection({
               <button
                 onClick={(e) => { e.stopPropagation(); onRevertFile({ path: f.path, status: f.status, staged: f.staged }); }}
                 disabled={disabled}
-                className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--accent-red)]/15 text-[var(--text-secondary)] hover:text-[var(--accent-red)] transition-all disabled:opacity-40"
+                className="shrink-0 p-0.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[var(--accent-red)]/8 text-[var(--text-tertiary)] hover:text-[var(--accent-red)] transition-all disabled:opacity-40"
                 title={`Discard changes: ${f.path}`}
               >
                 <Undo2 size={14} />
@@ -1081,8 +1081,8 @@ function FileSection({
             )}
 
             {/* File row */}
-            <div className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-sm min-w-0">
-              <FileIcon filename={f.path} size={16} />
+            <div className="flex-1 flex items-center gap-1.5 text-left text-sm min-w-0">
+              <FileIcon filename={f.path} size={14} />
               <span className="truncate flex-1" title={f.path}>{f.path}</span>
               <StatusBadge status={f.status} />
             </div>
@@ -1095,17 +1095,17 @@ function FileSection({
 
 /** Colored tag badge for file status */
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; color: string; bg: string }> = {
-    M: { label: "M", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
-    A: { label: "A", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
-    D: { label: "D", color: "text-[var(--accent-red)]", bg: "bg-[var(--accent-red)]/12" },
-    R: { label: "R", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
-    "?": { label: "U", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
+  const config: Record<string, { label: string; color: string }> = {
+    M: { label: "M", color: "text-[var(--accent-blue)]" },
+    A: { label: "A", color: "text-[var(--accent-green)]" },
+    D: { label: "D", color: "text-[var(--accent-red)]" },
+    R: { label: "R", color: "text-[var(--accent-blue)]" },
+    "?": { label: "U", color: "text-[var(--accent-green)]" },
   };
-  const { label, color, bg } = config[status] ?? { label: status, color: "text-[var(--text-secondary)]", bg: "bg-[var(--text-secondary)]/10" };
+  const { label, color } = config[status] ?? { label: status, color: "text-[var(--text-secondary)]" };
 
   return (
-    <span className={`shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded ${color} ${bg}`}>
+    <span className={`shrink-0 text-[11px] font-medium tabular-nums ${color}`}>
       {label}
     </span>
   );

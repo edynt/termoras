@@ -1,49 +1,63 @@
 @import "tailwindcss";
 
-/* Light theme (default) — clean macOS-native aesthetic */
+/* ─── Light theme — Linear/Vercel-inspired clean minimalism ─── */
 :root,
 [data-theme="light"] {
   --bg-primary: #ffffff;
-  --bg-sidebar: #f5f5f7;
-  --bg-active: #e3e5ea;
-  --bg-hover: #eeeff1;
-  --text-primary: #1c1c1e;
-  --text-secondary: #6e6e73;
-  --border-color: #d1d1d6;
-  --accent-blue: #007aff;
-  --accent-green: #28cd6c;
-  --accent-red: #ff3b30;
-  --glow-color: rgba(0, 122, 255, 0.12);
-  --diff-add-bg: #dafbe1;
-  --diff-add-border: #2da44e;
-  --diff-del-bg: #ffebe9;
-  --diff-del-border: #cf222e;
-  --diff-hunk-bg: #ddf4ff;
-  --diff-hunk-text: #0969da;
+  --bg-sidebar: #fafafa;
+  --bg-elevated: #ffffff;
+  --bg-active: #f0f0f0;
+  --bg-hover: #f5f5f5;
+  --text-primary: #171717;
+  --text-secondary: #737373;
+  --text-tertiary: #a3a3a3;
+  --border-color: #e5e5e5;
+  --border-hover: #d4d4d4;
+  --accent-blue: #2563eb;
+  --accent-green: #16a34a;
+  --accent-red: #dc2626;
+  --accent-amber: #d97706;
+  --glow-color: transparent;
+  --diff-add-bg: #dcfce7;
+  --diff-add-border: #16a34a;
+  --diff-del-bg: #fee2e2;
+  --diff-del-border: #dc2626;
+  --diff-hunk-bg: #eff6ff;
+  --diff-hunk-text: #2563eb;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
 }
 
-/* Dark theme — deep teal-navy aesthetic */
+/* ─── Dark theme — pure dark, modern neutral ─── */
 [data-theme="dark"] {
-  --bg-primary: #0d1b2a;
-  --bg-sidebar: #091520;
-  --bg-active: #1a3040;
-  --bg-hover: #122535;
-  --text-primary: #d4dde8;
-  --text-secondary: #7089a0;
-  --border-color: #17293a;
-  --accent-blue: #6ba1f1;
-  --accent-green: #5ec4a8;
-  --accent-red: #f06f6f;
-  --glow-color: rgba(107, 161, 241, 0.3);
-  --diff-add-bg: #0d2f1e;
-  --diff-add-border: #3fb950;
-  --diff-del-bg: #3a1520;
-  --diff-del-border: #f85149;
-  --diff-hunk-bg: #0d2540;
-  --diff-hunk-text: #79c0ff;
+  --bg-primary: #0a0a0a;
+  --bg-sidebar: #111111;
+  --bg-elevated: #1a1a1a;
+  --bg-active: #262626;
+  --bg-hover: #1c1c1c;
+  --text-primary: #ededed;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #666666;
+  --border-color: #262626;
+  --border-hover: #363636;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-red: #ef4444;
+  --accent-amber: #f59e0b;
+  --glow-color: transparent;
+  --diff-add-bg: #052e16;
+  --diff-add-border: #22c55e;
+  --diff-del-bg: #2a0a0a;
+  --diff-del-border: #ef4444;
+  --diff-hunk-bg: #0c1929;
+  --diff-hunk-text: #3b82f6;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
 }
 
-/* ─── highlight.js syntax colors (CSS variables for theme-aware) ─── */
+/* ─── highlight.js syntax colors (theme-aware) ─── */
 :root,
 [data-theme="light"] {
   --hljs-keyword: #d73a49;
@@ -104,48 +118,51 @@
 .hljs-selector-class,
 .hljs-selector-id { color: var(--hljs-function); }
 
-/* Onboarding tooltip fade-in */
+/* ─── Animations ─── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(2px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ─── Base ─── */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   margin: 0;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.011em;
 }
 
-/* Active item glow in sidebar */
-.glow-active {
-  box-shadow: 0 0 8px var(--glow-color);
-  border-radius: 4px;
+/* ─── Global interactive elements ─── */
+button, [role="button"] {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+button:active:not(:disabled), [role="button"]:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
-/* Ensure xterm's hidden textarea can receive IME composition events in WKWebView.
-   WKWebView checks ancestor user-select for IME activation, so we must NOT set
-   user-select: none on body — only on specific UI elements (sidebar). */
+/* Ensure xterm's hidden textarea can receive IME composition events in WKWebView */
 .xterm-helper-textarea {
   user-select: text !important;
   -webkit-user-select: text !important;
 }
 
-/* Kanban board thin scrollbars */
+/* ─── Scrollbars ─── */
 .overflow-y-auto::-webkit-scrollbar,
 .overflow-x-auto::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 .overflow-y-auto::-webkit-scrollbar-thumb,
 .overflow-x-auto::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 3px;
 }
-
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
 .overflow-y-auto::-webkit-scrollbar-track,
 .overflow-x-auto::-webkit-scrollbar-track {
   background: transparent;
