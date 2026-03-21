@@ -12,6 +12,4 @@ export interface TerminalSession {
   isRunning: boolean;
 }
 
-export type ThemeMode = "light" | "dark" | "system";
-
 export type { TagDefinition, KanbanCard, KanbanColumn, KanbanBoard } from "./kanban";

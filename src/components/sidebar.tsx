@@ -3,7 +3,6 @@ import { FolderPlus, Settings } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useAppStore } from "../stores/app-store";
 import { ProjectItem } from "./project-item";
-import { ThemeToggle } from "./theme-toggle";
 import { TerminalStatusButton } from "./terminal-status-button";
 import { TagSettingsModal } from "./tag-settings-modal";
 
@@ -113,7 +112,6 @@ export function Sidebar() {
       {/* footer — terminal status, theme toggle, settings */}
       <div data-onboarding="sidebar-footer" className="flex items-center justify-center gap-1 p-2 border-t border-[var(--border-color)]">
         <TerminalStatusButton />
-        <ThemeToggle />
         <button
           data-onboarding="tag-settings"
           onClick={() => setShowTagSettings(true)}

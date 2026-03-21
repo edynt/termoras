@@ -63,7 +63,6 @@
       "Bash(git tag:*)",
       "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/docs -type f -name \"*.md\" 2>/dev/null | sort)",
       "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/.claude/workflows -type f -name \"*.md\" 2>/dev/null | sort)",
-      "Bash(git add:*)",
       "Bash(grep -r \"Cmd\\\\+W\\\\|cmd.*w\\\\|closeTab\" /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -20)",
       "Bash(find /Users/tringuyen/github.com/edynt/termoras-cli/termoras/docs -type f -name \"*.md\" 2>/dev/null | head -10)",
       "Bash(echo \"Date format: $CK_PLAN_DATE_FORMAT\" && date +\"%y%m%d\" && ls /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src-tauri/plans/reports/ 2>/dev/null || echo \"reports dir missing\")",
@@ -79,9 +78,12 @@
       "Bash(cd /Users/tringuyen/github.com/edynt/termoras-cli/termoras/src-tauri && cargo update --package termoras 2>&1)",
       "Bash(find:*)",
       "Bash(ls:*)",
-      "Bash(git:*)",
       "Bash(cd:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(echo \"CK_PLAN_DATE_FORMAT: $CK_PLAN_DATE_FORMAT\")",
+      "WebFetch(domain:docs.warp.dev)",
+      "WebFetch(domain:www.warp.dev)",
+      "Bash(gh api:*)"
     ]
   }
 }

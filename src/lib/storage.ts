@@ -1,5 +1,5 @@
 import { load } from "@tauri-apps/plugin-store";
-import type { Project, TerminalSession, ThemeMode } from "../types";
+import type { Project, TerminalSession } from "../types";
 
 let storeInstance: Awaited<ReturnType<typeof load>> | null = null;
 
@@ -107,22 +107,3 @@ export async function saveLastTerminalMap(map: Record<string, string>): Promise<
   }
 }
 
-export async function loadThemeMode(): Promise<ThemeMode> {
-  try {
-    const store = await getStore();
-    const mode = await store.get<ThemeMode>("themeMode");
-    return mode ?? "system";
-  } catch {
-    return "system";
-  }
-}
-
-export async function saveThemeMode(mode: ThemeMode): Promise<void> {
-  try {
-    const store = await getStore();
-    await store.set("themeMode", mode);
-    await store.save();
-  } catch (err) {
-    console.error("Failed to save theme mode:", err);
-  }
-}

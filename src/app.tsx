@@ -18,7 +18,7 @@ const STORAGE_KEY = "termoras-sidebar-width";
 
 export function App() {
   const init = useAppStore((s) => s.init);
-  const initTheme = useThemeStore((s) => s.init);
+  const initTheme = useThemeStore.getState().init;
   const loadTags = useTagStore((s) => s.loadTags);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const stored = localStorage.getItem(STORAGE_KEY);

@@ -1093,19 +1093,20 @@ function FileSection({
   );
 }
 
-/** Colored tag badge for file status */
+/** Colored tag badge for file status — vibrant distinct colors */
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
-    M: { label: "M", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
-    A: { label: "A", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
-    D: { label: "D", color: "text-[var(--accent-red)]", bg: "bg-[var(--accent-red)]/12" },
-    R: { label: "R", color: "text-[var(--accent-blue)]", bg: "bg-[var(--accent-blue)]/12" },
-    "?": { label: "U", color: "text-[var(--accent-green)]", bg: "bg-[var(--accent-green)]/12" },
+    M: { label: "Modified", color: "text-[#74c0fc]", bg: "bg-[#74c0fc]/15" },
+    A: { label: "Added", color: "text-[#69db7c]", bg: "bg-[#69db7c]/15" },
+    D: { label: "Deleted", color: "text-[#fb7185]", bg: "bg-[#fb7185]/15" },
+    R: { label: "Renamed", color: "text-[#c084fc]", bg: "bg-[#c084fc]/15" },
+    C: { label: "Copied", color: "text-[#67e8f9]", bg: "bg-[#67e8f9]/15" },
+    "?": { label: "Untracked", color: "text-[#fbbf24]", bg: "bg-[#fbbf24]/15" },
   };
   const { label, color, bg } = config[status] ?? { label: status, color: "text-[var(--text-secondary)]", bg: "bg-[var(--text-secondary)]/10" };
 
   return (
-    <span className={`shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded ${color} ${bg}`}>
+    <span className={`shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${color} ${bg}`}>
       {label}
     </span>
   );

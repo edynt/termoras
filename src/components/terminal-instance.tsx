@@ -20,7 +20,6 @@ import {
 import { saveImageBlob, isImageFile } from "../lib/image-upload";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { useAppStore } from "../stores/app-store";
-import { useThemeStore } from "../stores/theme-store";
 import "@xterm/xterm/css/xterm.css";
 
 interface Props {
@@ -37,14 +36,13 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   const [isDragOver, setIsDragOver] = useState(false);
   const setTerminalRunning = useAppStore((s) => s.setTerminalRunning);
   const setTerminalQuestioning = useAppStore((s) => s.setTerminalQuestioning);
-  const isDark = useThemeStore((s) => s.isDark);
   const vietnameseInput = useAppStore((s) => s.vietnameseInput);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const term = new Terminal({
-      theme: getTerminalTheme(useThemeStore.getState().isDark),
+      theme: getTerminalTheme(),
       fontFamily: "'JetBrains Mono', 'SF Mono', 'Menlo', 'Fira Code', monospace",
       fontSize: 13,
       lineHeight: 1.3,
@@ -280,12 +278,6 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     };
   }, [terminalId, projectPath, setTerminalRunning, setTerminalQuestioning]);
 
-  // Update xterm theme when app theme changes
-  useEffect(() => {
-    if (termRef.current) {
-      termRef.current.options.theme = getTerminalTheme(isDark);
-    }
-  }, [isDark]);
 
   // Re-fit when this terminal becomes visible (tab switch OR view switch).
   // useLayoutEffect runs BEFORE paint — prevents the 1-frame zoom flash that
@@ -397,6 +389,29 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       onDrop={handleDrop}
     >
       <div ref={containerRef} className="h-full w-full" />
+
+      {/* Gradient overlay — subtle top tint + bottom glow for depth */}
+      <div
+        className="absolute inset-0 pointer-events-none z-[1]"
+        style={{ padding: "8px 10px 4px 10px" }}
+      >
+        {/* Top gradient: subtle blue tint fading down */}
+        <div
+          className="absolute inset-x-0 top-0 h-[35%]"
+          style={{
+            background: "linear-gradient(to bottom, rgba(107, 161, 241, 0.07), transparent)",
+            borderRadius: "4px 4px 0 0",
+          }}
+        />
+        {/* Bottom gradient: subtle purple glow rising up */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[25%]"
+          style={{
+            background: "linear-gradient(to top, rgba(139, 92, 246, 0.06), transparent)",
+            borderRadius: "0 0 4px 4px",
+          }}
+        />
+      </div>
 
       {/* Drag-and-drop overlay */}
       {isDragOver && (
