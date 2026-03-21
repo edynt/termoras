@@ -4332,7 +4332,7 @@ dependencies = [
 
 [[package]]
 name = "termoras"
-version = "0.0.2"
+version = "0.0.4"
 dependencies = [
  "base64 0.22.1",
  "log",

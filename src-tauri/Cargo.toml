@@ -1,6 +1,6 @@
 [package]
 name = "termoras"
-version = "0.0.2"
+version = "0.0.4"
 description = "Terminal manager for projects"
 authors = ["you"]
 license = ""
