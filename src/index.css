@@ -22,25 +22,25 @@
   --diff-hunk-text: #0969da;
 }
 
-/* Dark theme — Warp-inspired near-black */
+/* Dark theme — deep teal-navy aesthetic */
 [data-theme="dark"] {
-  --bg-primary: #09090b;
-  --bg-sidebar: #0c0c0e;
-  --bg-active: #1c1c1e;
-  --bg-hover: #151517;
-  --text-primary: #d4d4d8;
-  --text-secondary: #71717a;
-  --border-color: #1c1c1e;
-  --accent-blue: #57c7ff;
-  --accent-green: #5af78e;
-  --accent-red: #ff5c57;
-  --glow-color: rgba(87, 199, 255, 0.2);
-  --diff-add-bg: #0a2618;
-  --diff-add-border: #5af78e;
-  --diff-del-bg: #2a0a0a;
-  --diff-del-border: #ff5c57;
-  --diff-hunk-bg: #0a1a2a;
-  --diff-hunk-text: #57c7ff;
+  --bg-primary: #0d1b2a;
+  --bg-sidebar: #091520;
+  --bg-active: #1a3040;
+  --bg-hover: #122535;
+  --text-primary: #d4dde8;
+  --text-secondary: #7089a0;
+  --border-color: #17293a;
+  --accent-blue: #6ba1f1;
+  --accent-green: #5ec4a8;
+  --accent-red: #f06f6f;
+  --glow-color: rgba(107, 161, 241, 0.3);
+  --diff-add-bg: #0d2f1e;
+  --diff-add-border: #3fb950;
+  --diff-del-bg: #3a1520;
+  --diff-del-border: #f85149;
+  --diff-hunk-bg: #0d2540;
+  --diff-hunk-text: #79c0ff;
 }
 
 /* ─── highlight.js syntax colors (CSS variables for theme-aware) ─── */

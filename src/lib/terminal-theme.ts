@@ -26,34 +26,30 @@ export const lightTheme: ITheme = {
   brightWhite: "#525252",
 };
 
-/**
- * Dark theme for xterm.js — matches Warp's default dark theme.
- * Background is near-black with very subtle warm tint.
- * ANSI colors use Warp's vibrant palette.
- */
+/** Dark theme for xterm.js — Warp-inspired vibrant dark */
 export const darkTheme: ITheme = {
-  background: "#09090b",
-  foreground: "#d4d4d8",
-  cursor: "#d4d4d8",
-  cursorAccent: "#09090b",
-  selectionBackground: "#27272a",
-  selectionForeground: "#d4d4d8",
-  black: "#09090b",
-  red: "#ff5c57",
-  green: "#5af78e",
-  yellow: "#f3f99d",
-  blue: "#57c7ff",
-  magenta: "#ff6ac1",
-  cyan: "#9aedfe",
-  white: "#f1f1f0",
-  brightBlack: "#686868",
-  brightRed: "#ff5c57",
-  brightGreen: "#5af78e",
-  brightYellow: "#f3f99d",
-  brightBlue: "#57c7ff",
-  brightMagenta: "#ff6ac1",
-  brightCyan: "#9aedfe",
-  brightWhite: "#f1f1f0",
+  background: "#0b1622",
+  foreground: "#d8dee9",
+  cursor: "#f8f8f2",
+  cursorAccent: "#0b1622",
+  selectionBackground: "#3d5a80",
+  selectionForeground: "#d8dee9",
+  black: "#0b1622",
+  red: "#ff6b6b",
+  green: "#69db7c",
+  yellow: "#ffd43b",
+  blue: "#74c0fc",
+  magenta: "#da77f2",
+  cyan: "#66d9ef",
+  white: "#d8dee9",
+  brightBlack: "#5c7089",
+  brightRed: "#ff8787",
+  brightGreen: "#8ce99a",
+  brightYellow: "#ffe066",
+  brightBlue: "#a5d8ff",
+  brightMagenta: "#e599f7",
+  brightCyan: "#99e9f2",
+  brightWhite: "#eceff4",
 };
 
 /** Get xterm theme based on resolved theme */
