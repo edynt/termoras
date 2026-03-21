@@ -17,12 +17,12 @@ export function TagSettingsModal({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40"
       onClick={onClose}
       onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
       <div
-        className="w-[420px] max-h-[80vh] flex flex-col rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)]"
+        className="w-[420px] max-h-[80vh] flex flex-col rounded-xl border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

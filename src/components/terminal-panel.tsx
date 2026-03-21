@@ -63,7 +63,7 @@ export function TerminalPanel() {
   }
 
   return (
-    <main className="flex flex-col h-full w-full overflow-hidden bg-[var(--bg-terminal)]">
+    <main className="flex flex-col h-full w-full overflow-hidden bg-[var(--bg-primary)]">
       {/* Tab bar — filtered by view context */}
       <TerminalTabBar
         terminals={terminals}

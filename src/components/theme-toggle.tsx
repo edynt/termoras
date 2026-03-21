@@ -13,15 +13,15 @@ export function ThemeToggle() {
   const setMode = useThemeStore((s) => s.setMode);
 
   return (
-    <div className="flex items-center gap-0.5 rounded-lg bg-[var(--bg-active)] p-0.5">
+    <div className="flex items-center gap-0.5 rounded-md bg-[var(--bg-active)] p-0.5">
       {modes.map(({ value, icon: Icon, label }) => (
         <button
           key={value}
           onClick={() => setMode(value)}
-          className={`p-1 rounded-md transition-colors duration-150 ${
+          className={`p-1 rounded transition-colors duration-150 ${
             mode === value
-              ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
-              : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+              ? "bg-[var(--bg-primary)] text-[var(--accent-blue)] shadow-sm"
+              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           }`}
           title={label}
         >

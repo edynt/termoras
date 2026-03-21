@@ -81,10 +81,7 @@
       "Bash(ls:*)",
       "Bash(git:*)",
       "Bash(cd:*)",
-      "Bash(grep:*)",
-      "WebFetch(domain:linear.app)",
-      "WebFetch(domain:vercel.com)",
-      "WebFetch(domain:fontofweb.com)"
+      "Bash(grep:*)"
     ]
   }
 }

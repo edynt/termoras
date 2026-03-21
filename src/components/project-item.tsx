@@ -21,14 +21,14 @@ import { TerminalItem } from "./terminal-item";
 /** Outline color presets for folder icons */
 const FOLDER_COLORS = [
   { value: undefined, label: "Default" },
-  { value: "#ef4444", label: "Red" },
-  { value: "#f97316", label: "Orange" },
-  { value: "#eab308", label: "Yellow" },
-  { value: "#22c55e", label: "Green" },
-  { value: "#06b6d4", label: "Teal" },
-  { value: "#3b82f6", label: "Blue" },
-  { value: "#8b5cf6", label: "Purple" },
-  { value: "#ec4899", label: "Pink" },
+  { value: "#e94e4e", label: "Red" },
+  { value: "#e88a3e", label: "Orange" },
+  { value: "#d4b035", label: "Yellow" },
+  { value: "#1aad8a", label: "Green" },
+  { value: "#3ab5c2", label: "Teal" },
+  { value: "#4a8ff5", label: "Blue" },
+  { value: "#9b6fef", label: "Purple" },
+  { value: "#e06aa0", label: "Pink" },
 ];
 
 interface Props {
@@ -152,23 +152,26 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
         <div
           onClick={handleClick}
           onContextMenu={handleContextMenu}
-          className={`group flex items-center gap-1.5 mx-1 px-2 py-1.5 rounded-md cursor-pointer transition-colors duration-150 ${
+          className={`group flex items-center gap-1.5 px-2 py-1.5 cursor-pointer transition-all duration-150 ${
             isActive
-              ? "bg-[var(--bg-active)] text-[var(--text-primary)]"
-              : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-          } ${isDragOver ? "ring-1 ring-[var(--accent-blue)]" : ""} ${isDragging ? "opacity-40" : ""}`}
+              ? "bg-[var(--bg-active)] border-l-3 glow-active"
+              : "hover:bg-[var(--bg-hover)] border-l-3 border-l-transparent"
+          } ${isDragOver ? "border-t-2 border-t-[var(--accent-blue)]" : "border-t-2 border-t-transparent"} ${isDragging ? "opacity-40" : ""}`}
+          style={isActive ? { borderLeftColor: project.color || "var(--accent-blue)" } : undefined}
         >
           {/* Drag handle — pointer-based */}
           <span title="Drag to reorder" onPointerDown={(e) => { e.stopPropagation(); onGripPointerDown(); }}>
             <GripVertical
-              size={14}
+              size={16}
               className="shrink-0 opacity-0 group-hover:opacity-40 cursor-grab active:cursor-grabbing transition-opacity"
             />
           </span>
-          <span className="shrink-0 text-[var(--text-tertiary)] transition-transform duration-150">
-            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          </span>
-          <Folder size={14} className="shrink-0" color={project.color || "var(--accent-blue)"} />
+          {expanded ? (
+            <ChevronDown size={16} className="shrink-0" />
+          ) : (
+            <ChevronRight size={16} className="shrink-0" />
+          )}
+          <Folder size={16} className="shrink-0" color={project.color || "var(--accent-blue)"} />
           {renaming ? (
             <input
               ref={renameRef}
@@ -185,51 +188,62 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
                 if (e.key === "Escape") { setRenameName(project.name); setRenaming(false); }
               }}
               onClick={(e) => e.stopPropagation()}
-              className="flex-1 text-sm bg-[var(--bg-primary)] rounded-md px-1.5 py-0.5 border border-[var(--accent-blue)] outline-none min-w-0"
+              className="flex-1 text-sm bg-[var(--bg-hover)] rounded px-1 py-0 border border-[var(--accent-blue)] outline-none min-w-0"
               autoFocus
             />
           ) : (
             <span className="text-sm truncate flex-1" title={project.path}>{project.name}</span>
           )}
 
-          {/* Needs Input indicator */}
+          {/* Needs Input indicator — always visible when a terminal is questioning */}
           {hasQuestioningTerminal && (
-            <span className="shrink-0 text-[var(--accent-amber)] animate-pulse" title="A terminal needs input">
-              <MessageCircleQuestion size={14} />
+            <span
+              className="shrink-0 text-amber-500 animate-pulse"
+              title="A terminal needs input"
+            >
+              <MessageCircleQuestion size={16} />
             </span>
           )}
 
+
+
           {/* quick actions (show on hover) */}
           <button
-            onClick={(e) => { e.stopPropagation(); handleOpenBoard(); }}
-            className="shrink-0 p-0.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenBoard();
+            }}
+            className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
             title="Open board"
           >
-            <LayoutGrid size={14} />
+            <LayoutGrid size={16} />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); handleNewTerminal(); }}
-            className="shrink-0 p-0.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNewTerminal();
+            }}
+            className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
             title="New terminal"
           >
-            <Plus size={14} />
+            <Plus size={16} />
           </button>
         </div>
 
         {/* expanded items: board tab + terminal list */}
         {expanded && (
-          <div className="ml-10 mr-1">
+          <div className="ml-16">
             {/* Board tab */}
             <div
               data-onboarding="board-tab"
               onClick={() => handleOpenBoard()}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors duration-150 ${
+              className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-all duration-150 ${
                 isBoardActive
-                  ? "bg-[var(--accent-blue)]/8 text-[var(--accent-blue)]"
-                  : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                  ? "text-[var(--accent-blue)] glow-active bg-[var(--accent-blue)]/8"
+                  : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
               }`}
             >
-              <LayoutGrid size={14} className="shrink-0" />
+              <LayoutGrid size={16} className="shrink-0" />
               <span className="text-sm truncate flex-1">Board</span>
             </div>
 
@@ -238,16 +252,16 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
               <div
                 data-onboarding="changes-tab"
                 onClick={() => handleOpenGitView()}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors duration-150 ${
+                className={`flex items-center gap-1.5 px-2 py-1 cursor-pointer transition-all duration-150 ${
                   isGitViewActive
-                    ? "bg-[var(--accent-blue)]/8 text-[var(--accent-blue)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                    ? "text-[var(--accent-blue)] glow-active bg-[var(--accent-blue)]/8"
+                    : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}
               >
-                <GitBranch size={14} className="shrink-0" />
+                <GitBranch size={16} className="shrink-0" />
                 <span className="text-sm truncate flex-1">Changes</span>
                 {gitStatus && (gitStatus.modified + gitStatus.untracked + gitStatus.staged) > 0 && (
-                  <span className="text-[11px] font-medium tabular-nums px-1.5 py-0.5 rounded-md bg-[var(--text-secondary)]/10 text-[var(--text-secondary)]">
+                  <span className="text-xs font-medium px-1 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]">
                     {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
                   </span>
                 )}
@@ -265,42 +279,55 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
       {/* Right-click context menu */}
       {ctxMenu && (
         <div
-          className="fixed z-50 min-w-[180px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-elevated)] py-1"
-          style={{ left: ctxMenu.x, top: ctxMenu.y, boxShadow: "var(--shadow-lg)" }}
+          className="fixed z-50 min-w-[160px] rounded-md border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-lg py-1"
+          style={{ left: ctxMenu.x, top: ctxMenu.y }}
         >
           <button
-            onClick={() => { setCtxMenu(null); handleOpenBoard(); }}
-            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)] transition-colors"
+            onClick={() => {
+              setCtxMenu(null);
+              handleOpenBoard();
+            }}
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <LayoutGrid size={14} className="text-[var(--text-secondary)]" />
+            <LayoutGrid size={16} />
             Create Board
           </button>
           <button
-            onClick={() => { setCtxMenu(null); handleNewTerminal(); }}
-            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)] transition-colors"
+            onClick={() => {
+              setCtxMenu(null);
+              handleNewTerminal();
+            }}
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Terminal size={14} className="text-[var(--text-secondary)]" />
+            <Terminal size={16} />
             Create Terminal
           </button>
           <button
-            onClick={() => { setCtxMenu(null); openInVscode(project.path); }}
-            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)] transition-colors"
+            onClick={() => {
+              setCtxMenu(null);
+              openInVscode(project.path);
+            }}
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Code2 size={14} className="text-[var(--text-secondary)]" />
+            <Code2 size={16} />
             Open in VS Code
           </button>
           <button
-            onClick={() => { setCtxMenu(null); setRenameName(project.name); setRenaming(true); }}
-            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)] transition-colors"
+            onClick={() => {
+              setCtxMenu(null);
+              setRenameName(project.name);
+              setRenaming(true);
+            }}
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
           >
-            <Pencil size={14} className="text-[var(--text-secondary)]" />
+            <Pencil size={16} />
             Rename
           </button>
           <div className="my-1 border-t border-[var(--border-color)]" />
           {/* Folder color picker */}
           <div className="px-3 py-1.5">
-            <span className="text-xs text-[var(--text-tertiary)] mb-1.5 block uppercase tracking-wider">Color</span>
-            <div className="flex items-center gap-1.5">
+            <span className="text-sm text-[var(--text-secondary)] mb-1 block">Folder Color</span>
+            <div className="flex items-center gap-1">
               {FOLDER_COLORS.map((c) => (
                 <button
                   key={c.label}
@@ -309,11 +336,11 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
                     setProjectColor(project.id, c.value);
                     setCtxMenu(null);
                   }}
-                  className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${
-                    (project.color || undefined) === c.value ? "scale-110 ring-2 ring-offset-1 ring-[var(--accent-blue)]" : ""
+                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-125 ${
+                    (project.color || undefined) === c.value ? "scale-125 ring-1 ring-offset-1 ring-[var(--accent-blue)]" : ""
                   }`}
                   style={{
-                    borderColor: c.value || "var(--text-tertiary)",
+                    borderColor: c.value || "var(--text-secondary)",
                     background: "transparent",
                   }}
                   title={c.label}
@@ -323,10 +350,13 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           </div>
           <div className="my-1 border-t border-[var(--border-color)]" />
           <button
-            onClick={() => { setCtxMenu(null); setConfirmDelete(true); }}
-            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--accent-red)]/8 text-[var(--accent-red)] transition-colors"
+            onClick={() => {
+              setCtxMenu(null);
+              setConfirmDelete(true);
+            }}
+            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] text-[var(--accent-red)]"
           >
-            <Trash2 size={14} />
+            <Trash2 size={16} />
             Delete Project
           </button>
         </div>
@@ -335,16 +365,15 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
       {/* Delete confirmation dialog */}
       {confirmDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
           onClick={() => setConfirmDelete(false)}
         >
           <div
-            className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)] p-6 w-[380px]"
-            style={{ boxShadow: "var(--shadow-lg)" }}
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-base font-semibold mb-2">Delete Project</p>
-            <p className="text-sm text-[var(--text-secondary)] mb-6">
+            <p className="text-sm text-[var(--text-secondary)] mb-5">
               Are you sure you want to delete{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {project.name}
@@ -354,7 +383,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="text-sm px-4 py-2 rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+                className="text-sm px-4 py-2 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
               >
                 Cancel
               </button>
@@ -363,7 +392,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
                   setConfirmDelete(false);
                   removeProject(project.id);
                 }}
-                className="text-sm px-4 py-2 rounded-lg bg-[var(--accent-red)] text-white hover:opacity-90 transition-opacity"
+                className="text-sm px-4 py-2 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
               >
                 Delete
               </button>

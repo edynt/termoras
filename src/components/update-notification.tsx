@@ -8,7 +8,7 @@ interface Props {
 
 export function UpdateNotification({ info, onDismiss }: Props) {
   return (
-    <div className="fixed top-10 right-4 z-[9999] w-[340px] rounded-lg border border-[var(--accent-blue)]/30 bg-[var(--bg-elevated)] animate-in slide-in-from-right">
+    <div className="fixed top-10 right-4 z-[9999] w-[340px] rounded-lg border border-[var(--accent-blue)]/30 bg-[var(--bg-sidebar)] shadow-xl animate-in slide-in-from-right">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-1">
         <span className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1.5">

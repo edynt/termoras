@@ -45,14 +45,10 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
     const term = new Terminal({
       theme: getTerminalTheme(useThemeStore.getState().isDark),
-      fontFamily: "'JetBrains Mono', 'SF Mono', 'Menlo', 'Fira Code', monospace",
+      fontFamily: "'JetBrains Mono', 'SF Mono', 'Menlo', monospace",
       fontSize: 13,
-      lineHeight: 1.35,
-      letterSpacing: 0.5,
+      lineHeight: 1.2,
       cursorBlink: true,
-      cursorStyle: "bar",
-      cursorWidth: 2,
-      cursorInactiveStyle: "outline",
       scrollback: 10000,
       altClickMovesCursor: true,
       // Don't treat Option as Meta — required for IME input methods (Vietnamese Telex/VNI)
@@ -392,7 +388,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   return (
     <div
       className="relative h-full w-full"
-      style={{ padding: "8px 8px 4px 8px" }}
+      style={{ padding: "4px" }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -401,8 +397,8 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
       {/* Drag-and-drop overlay */}
       {isDragOver && (
-        <div className="absolute inset-2 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-[#6366f1] bg-[#6366f1]/10 backdrop-blur-sm">
-          <span className="text-sm font-medium text-[#6366f1]">
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-[var(--accent-blue)] bg-[var(--accent-blue)]/10">
+          <span className="text-sm font-medium text-[var(--accent-blue)]">
             Drop image here
           </span>
         </div>
@@ -411,7 +407,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       {/* Attach image button */}
       <button
         onClick={handleAttachImage}
-        className="absolute bottom-2 left-4 rounded-md p-1 text-[var(--text-tertiary)] opacity-20 transition-opacity hover:text-[#6366f1] hover:opacity-100"
+        className="absolute bottom-2 left-3 rounded p-1 text-[var(--text-secondary)] opacity-30 transition-opacity hover:text-[var(--accent-blue)] hover:opacity-100"
         title="Attach image"
       >
         <Paperclip size={14} />
@@ -419,7 +415,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
       {/* Vietnamese input mode indicator */}
       {vietnameseInput && (
-        <div className="absolute bottom-2 right-4 px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-[#6366f1]/15 text-[#6366f1] select-none pointer-events-none tracking-wide">
+        <div className="absolute bottom-2 right-3 px-1.5 py-0.5 text-[10px] font-bold rounded bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] select-none pointer-events-none tracking-wide">
           VI
         </div>
       )}

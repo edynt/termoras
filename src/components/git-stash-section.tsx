@@ -165,11 +165,11 @@ export function GitStashSection({
       {/* Drop confirmation modal */}
       {confirmDrop && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
           onClick={() => setConfirmDrop(null)}
         >
           <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-elevated)] p-5 w-[380px]"
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-base font-semibold mb-2">Drop Stash</p>

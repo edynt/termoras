@@ -89,7 +89,7 @@ export function KanbanColumn({ column, cards }: Props) {
         {showMenu && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-            <div className="absolute right-2 top-9 z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-elevated)] py-1">
+            <div className="absolute right-2 top-9 z-50 min-w-[130px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl py-1">
               <button
                 onClick={() => { setShowMenu(false); toggleAutoRun(column.id); }}
                 className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 hover:bg-[var(--bg-hover)] ${
@@ -161,11 +161,11 @@ export function KanbanColumn({ column, cards }: Props) {
     {/* Delete column confirmation modal */}
     {confirmDelete && (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
         onClick={() => setConfirmDelete(false)}
       >
         <div
-          className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-elevated)] p-5 w-[380px]"
+          className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
           onClick={(e) => e.stopPropagation()}
         >
           <p className="text-base font-semibold mb-2">Delete Column</p>

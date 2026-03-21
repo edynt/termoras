@@ -198,7 +198,7 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
               }}
               onClick={() => handleTabClick(t.id)}
               onDoubleClick={() => handleDoubleClick(t)}
-              className={`group relative flex items-center gap-1.5 px-3 py-1.5 cursor-pointer text-xs transition-colors duration-150 select-none shrink-0 border-r border-[var(--border-color)] ${
+              className={`group relative flex items-center gap-1.5 px-3 py-1.5 cursor-pointer text-xs transition-colors select-none shrink-0 border-r border-[var(--border-color)] ${
                 isActive
                   ? "bg-[var(--bg-primary)] text-[var(--text-primary)]"
                   : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
@@ -210,12 +210,12 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-blue)]" />
               )}
 
-              {/* Process status dot */}
+              {/* Process status dot: green = busy, gray = idle */}
               <span
-                className={`shrink-0 w-1.5 h-1.5 rounded-full transition-colors ${
+                className={`shrink-0 w-1.5 h-1.5 rounded-full ${
                   processes[t.id]
-                    ? "bg-[var(--accent-green)]"
-                    : "bg-[var(--text-tertiary)]/30"
+                    ? "bg-[var(--accent-green,#22c55e)]"
+                    : "bg-[var(--text-secondary)]/30"
                 }`}
               />
 
@@ -231,26 +231,28 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
                     if (e.key === "Escape") setEditingId(null);
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs w-20 bg-[var(--bg-primary)] border border-[var(--accent-blue)] rounded-md px-1.5 py-0.5 outline-none text-[var(--text-primary)]"
+                  className="text-xs w-20 bg-[var(--bg-primary)] border border-[var(--accent-blue)] rounded px-1 py-0 outline-none text-[var(--text-primary)]"
                 />
               ) : (
                 <span className="truncate max-w-[200px]">{getTabLabel(t)}</span>
               )}
 
-              {/* Close button */}
+              {/* Close button — smart kill: confirm only if terminal is busy */}
               <button
                 onClick={async (e) => {
                   e.stopPropagation();
                   try {
                     const proc = await getTerminalProcessName(t.id);
                     if (proc) {
+                      // Terminal is busy — show confirmation modal
                       setConfirmKillId(t.id);
                       return;
                     }
                   } catch { /* terminal may be dead */ }
+                  // Terminal is idle — kill directly without confirmation
                   handleKill(t.id);
                 }}
-                className="shrink-0 p-0.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
+                className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-opacity"
                 title="Kill terminal"
               >
                 <X size={12} />
@@ -262,7 +264,7 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
         {/* Add terminal button */}
         <button
           onClick={onCreateTerminal}
-          className="shrink-0 p-1.5 text-[var(--text-tertiary)] hover:text-[var(--accent-blue)] hover:bg-[var(--bg-hover)] transition-colors rounded-md"
+          className="shrink-0 p-1.5 text-[var(--text-secondary)] hover:text-[var(--accent-blue)] hover:bg-[var(--bg-hover)] transition-colors"
           title="New terminal"
         >
           <Plus size={14} />
@@ -272,16 +274,15 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
       {/* Kill confirmation modal */}
       {confirmKillId && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
           onClick={() => setConfirmKillId(null)}
         >
           <div
-            className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)] p-6 w-[380px]"
-            style={{ boxShadow: "var(--shadow-lg)" }}
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-base font-semibold mb-2">Kill Terminal</p>
-            <p className="text-sm text-[var(--text-secondary)] mb-6">
+            <p className="text-sm text-[var(--text-secondary)] mb-5">
               Kill{" "}
               <span className="font-medium text-[var(--text-primary)]">
                 {getTabLabel(terminals.find((t) => t.id === confirmKillId)!)}
@@ -291,13 +292,13 @@ export function TerminalTabBar({ terminals, activeTerminalId, onCreateTerminal }
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setConfirmKillId(null)}
-                className="text-sm px-4 py-2 rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+                className="text-sm px-4 py-2 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleKill(confirmKillId)}
-                className="text-sm px-4 py-2 rounded-lg bg-[var(--accent-red)] text-white hover:opacity-90 transition-opacity"
+                className="text-sm px-4 py-2 rounded bg-[var(--accent-red)] text-white hover:opacity-90"
               >
                 Kill
               </button>

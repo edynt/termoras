@@ -66,7 +66,7 @@ export function TerminalStatusButton() {
 
       {/* Popover with per-project terminal list */}
       {open && groups.length > 0 && (
-        <div className="absolute bottom-full left-0 mb-1 w-60 max-h-[300px] overflow-y-auto rounded-md border border-[var(--border-color)] bg-[var(--bg-elevated)] py-1 z-50">
+        <div className="absolute bottom-full left-0 mb-1 w-60 max-h-[300px] overflow-y-auto rounded-md border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-lg py-1 z-50">
           <div className="px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
             Terminals
           </div>
@@ -137,11 +137,11 @@ export function TerminalStatusButton() {
       {/* Kill confirmation modal */}
       {confirmKill && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40"
           onClick={() => setConfirmKill(null)}
         >
           <div
-            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-elevated)] p-5 w-[380px]"
+            className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-sidebar)] shadow-xl p-5 w-[380px]"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-base font-semibold mb-2">Kill Terminal</p>
