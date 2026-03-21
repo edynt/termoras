@@ -23,6 +23,11 @@ interface AppStore {
   vietnameseInput: boolean;
   /** Per-terminal flag: true when the terminal is waiting for user input */
   terminalQuestioning: Record<string, boolean>;
+  /** Per-project git operation flags (survives tab switches) */
+  gitPushing: Record<string, boolean>;
+  gitCommitting: Record<string, boolean>;
+  setGitPushing: (projectPath: string, value: boolean) => void;
+  setGitCommitting: (projectPath: string, value: boolean) => void;
 
   // app init
   init: () => Promise<void>;
@@ -79,6 +84,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
   lastTerminalByProject: {},
   vietnameseInput: (() => { try { return localStorage.getItem("termoras:vi-input") === "true"; } catch { return false; } })(),
   terminalQuestioning: {},
+  gitPushing: {},
+  gitCommitting: {},
+  setGitPushing: (projectPath, value) => set((s) => ({
+    gitPushing: { ...s.gitPushing, [projectPath]: value },
+  })),
+  setGitCommitting: (projectPath, value) => set((s) => ({
+    gitCommitting: { ...s.gitCommitting, [projectPath]: value },
+  })),
 
   init: async () => {
     const [projects, terminals, activeIds, lastTerminalByProject] = await Promise.all([

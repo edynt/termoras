@@ -54,8 +54,10 @@ export function GitChangesView() {
   const [loading, setLoading] = useState(false);
   const [commitMsg, setCommitMsg] = useState("");
   const [staging, setStaging] = useState(false);
-  const [committing, setCommitting] = useState(false);
-  const [pushing, setPushing] = useState(false);
+  const committing = useAppStore((s) => project ? s.gitCommitting[project.path] ?? false : false);
+  const setCommitting = useAppStore((s) => s.setGitCommitting);
+  const pushing = useAppStore((s) => project ? s.gitPushing[project.path] ?? false : false);
+  const setPushing = useAppStore((s) => s.setGitPushing);
   const [undoing, setUndoing] = useState(false);
   const [hasUnpushed, setHasUnpushed] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -260,7 +262,7 @@ export function GitChangesView() {
   /** Commit staged files; auto-stage all only when nothing is staged */
   async function handleCommit() {
     if (!project || !commitMsg.trim() || files.length === 0) return;
-    setCommitting(true);
+    setCommitting(project.path, true);
     setActionError(null);
     try {
       // Only auto-stage all if user hasn't manually staged anything
@@ -276,12 +278,12 @@ export function GitChangesView() {
     } catch (e) {
       setActionError(`Commit failed: ${e}`);
     }
-    setCommitting(false);
+    setCommitting(project.path, false);
   }
 
   async function handlePush() {
     if (!project) return;
-    setPushing(true);
+    setPushing(project.path, true);
     setActionError(null);
     try {
       await gitPush(project.path);
@@ -293,7 +295,7 @@ export function GitChangesView() {
     } catch (e) {
       setActionError(`Push failed: ${e}`);
     }
-    setPushing(false);
+    setPushing(project.path, false);
   }
 
   async function handleUndoCommit() {
