@@ -560,6 +560,20 @@ export function GitChangesView() {
           </div>
           <div className="flex items-center gap-0.5">
             <button
+              onClick={handleUndoCommit}
+              disabled={!hasUnpushed || undoing}
+              className={`shrink-0 p-1 rounded-md transition-colors ${
+                undoing
+                  ? "text-[var(--text-secondary)] cursor-wait"
+                  : !hasUnpushed
+                    ? "text-[var(--text-secondary)]/20 cursor-not-allowed"
+                    : "text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/15"
+              }`}
+              title={!hasUnpushed ? "No unpushed commits" : "Undo last commit (git reset --soft HEAD~1)"}
+            >
+              {undoing ? <Loader2 size={16} className="animate-spin" /> : <Undo2 size={16} />}
+            </button>
+            <button
               onClick={handleFetch}
               disabled={fetching}
               className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
@@ -816,10 +830,10 @@ export function GitChangesView() {
               disabled={!hasUnpushed || pushing}
               className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
                 pushing
-                  ? "bg-[var(--accent-red)]/25 text-[var(--accent-red)] cursor-wait"
+                  ? "bg-[var(--accent-green)]/25 text-[var(--accent-green)] cursor-wait"
                   : !hasUnpushed
                     ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/60 cursor-not-allowed"
-                    : "bg-[var(--accent-red)]/15 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/25"
+                    : "bg-[var(--accent-green)]/15 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/25"
               }`}
               title={!hasUnpushed ? "No unpushed commits" : "Push to remote"}
             >
@@ -841,22 +855,6 @@ export function GitChangesView() {
             </button>
           </div>
 
-          {/* Undo last commit — always visible to prevent layout shift */}
-          <button
-            onClick={handleUndoCommit}
-            disabled={!hasUnpushed || undoing}
-            className={`w-full flex items-center justify-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded transition-colors ${
-              undoing
-                ? "bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] cursor-wait"
-                : !hasUnpushed
-                  ? "bg-[var(--text-secondary)]/8 text-[var(--text-secondary)]/30 cursor-not-allowed"
-                  : "bg-[var(--text-secondary)]/10 text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/20"
-            }`}
-            title={!hasUnpushed ? "No unpushed commits" : "Undo last commit (git reset --soft HEAD~1) — changes stay staged"}
-          >
-            {undoing ? <Loader2 size={14} className="animate-spin" /> : <Undo2 size={14} />}
-            Undo Last Commit
-          </button>
         </div>
       </div>
 
@@ -1093,20 +1091,20 @@ function FileSection({
   );
 }
 
-/** Colored tag badge for file status — vibrant distinct colors */
+/** Colored tag badge for file status — single-letter abbreviations */
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
-    M: { label: "Modified", color: "text-[#74c0fc]", bg: "bg-[#74c0fc]/15" },
-    A: { label: "Added", color: "text-[#69db7c]", bg: "bg-[#69db7c]/15" },
-    D: { label: "Deleted", color: "text-[#fb7185]", bg: "bg-[#fb7185]/15" },
-    R: { label: "Renamed", color: "text-[#c084fc]", bg: "bg-[#c084fc]/15" },
-    C: { label: "Copied", color: "text-[#67e8f9]", bg: "bg-[#67e8f9]/15" },
-    "?": { label: "Untracked", color: "text-[#fbbf24]", bg: "bg-[#fbbf24]/15" },
+    M: { label: "M", color: "text-[#74c0fc]", bg: "bg-[#74c0fc]/15" },
+    A: { label: "A", color: "text-[#69db7c]", bg: "bg-[#69db7c]/15" },
+    D: { label: "D", color: "text-[#fb7185]", bg: "bg-[#fb7185]/15" },
+    R: { label: "R", color: "text-[#c084fc]", bg: "bg-[#c084fc]/15" },
+    C: { label: "C", color: "text-[#67e8f9]", bg: "bg-[#67e8f9]/15" },
+    "?": { label: "U", color: "text-[#fbbf24]", bg: "bg-[#fbbf24]/15" },
   };
   const { label, color, bg } = config[status] ?? { label: status, color: "text-[var(--text-secondary)]", bg: "bg-[var(--text-secondary)]/10" };
 
   return (
-    <span className={`shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${color} ${bg}`}>
+    <span className={`shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded ${color} ${bg}`}>
       {label}
     </span>
   );
