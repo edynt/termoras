@@ -132,8 +132,7 @@ export function attachMacKeybindings(
 
         case "w":
         case "t":
-          // Cmd+W (close tab) and Cmd+T (new tab) — handled by Tauri menu
-          event.preventDefault();
+          // Cmd+W (close tab) and Cmd+T (new tab) — let Tauri native menu handle
           return false;
 
         case "1": case "2": case "3": case "4": case "5":
