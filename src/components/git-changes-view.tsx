@@ -731,16 +731,6 @@ export function GitChangesView() {
           </div>
         )}
 
-        {/* Summary footer */}
-        {status && (
-          <div className="px-3 py-2 border-t border-[var(--border-color)] text-sm text-[var(--text-secondary)]">
-            {status.staged > 0 && <span className="text-[var(--accent-green)]">+{status.staged} staged</span>}
-            {status.staged > 0 && (status.modified > 0 || status.untracked > 0) && " · "}
-            {status.modified > 0 && <span className="text-[var(--accent-blue)]">~{status.modified} mod</span>}
-            {status.modified > 0 && status.untracked > 0 && " · "}
-            {status.untracked > 0 && <span className="text-[var(--text-secondary)]">?{status.untracked} new</span>}
-          </div>
-        )}
 
         {/* Action bar */}
         <div className="border-t border-[var(--border-color)] p-2 space-y-1.5">

@@ -215,15 +215,6 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             </span>
           )}
 
-          {/* git changes count */}
-          {gitStatus && (gitStatus.modified + gitStatus.untracked + gitStatus.staged) > 0 && (
-            <span
-              className="shrink-0 text-xs font-medium px-1 py-0.5 rounded-full bg-[var(--accent-red)]/15 text-[var(--accent-red)]"
-              title={`${gitStatus.staged} staged, ${gitStatus.modified} modified, ${gitStatus.untracked} untracked`}
-            >
-              {gitStatus.modified + gitStatus.untracked + gitStatus.staged}
-            </span>
-          )}
 
           {/* quick actions (show on hover) */}
           <button
