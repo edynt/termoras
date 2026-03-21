@@ -232,7 +232,7 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
 
         {/* expanded items: board tab + terminal list */}
         {expanded && (
-          <div className="ml-16">
+          <div className="ml-16 mt-1">
             {/* Board tab */}
             <div
               data-onboarding="board-tab"
