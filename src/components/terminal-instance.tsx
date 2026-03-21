@@ -45,10 +45,13 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
 
     const term = new Terminal({
       theme: getTerminalTheme(useThemeStore.getState().isDark),
-      fontFamily: "'JetBrains Mono', 'SF Mono', 'Menlo', monospace",
+      fontFamily: "'JetBrains Mono', 'SF Mono', 'Menlo', 'Fira Code', monospace",
       fontSize: 13,
-      lineHeight: 1.2,
+      lineHeight: 1.3,
       cursorBlink: true,
+      cursorStyle: "bar",
+      cursorWidth: 2,
+      cursorInactiveStyle: "outline",
       scrollback: 10000,
       altClickMovesCursor: true,
       // Don't treat Option as Meta — required for IME input methods (Vietnamese Telex/VNI)
@@ -388,7 +391,7 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
   return (
     <div
       className="relative h-full w-full"
-      style={{ padding: "4px" }}
+      style={{ padding: "8px 10px 4px 10px" }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
