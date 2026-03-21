@@ -205,15 +205,6 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
             </span>
           )}
 
-          {/* git indicator */}
-          {hasGit && (
-            <span
-              className="shrink-0 text-xs font-bold text-[var(--accent-red)] opacity-70"
-              title={gitStatus ? `${gitStatus.branch} — ${gitStatus.modified + gitStatus.untracked} changed` : "git"}
-            >
-              git
-            </span>
-          )}
 
 
           {/* quick actions (show on hover) */}

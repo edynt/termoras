@@ -1049,6 +1049,7 @@ function FileSection({
         return (
           <div
             key={`${f.staged ? "s" : "u"}-${f.path}`}
+            onClick={() => onSelect({ path: f.path, staged: f.staged, status: f.status })}
             className={`group flex items-center gap-1.5 px-1.5 py-1 cursor-pointer transition-all ${
               isSelected
                 ? "bg-[var(--bg-active)] text-[var(--text-primary)] shadow-[inset_0_0_0_1px_var(--accent-blue)] rounded"
@@ -1077,15 +1078,12 @@ function FileSection({
               </button>
             )}
 
-            {/* File row — clickable to view diff */}
-            <button
-              onClick={() => onSelect({ path: f.path, staged: f.staged, status: f.status })}
-              className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-sm min-w-0 cursor-pointer"
-            >
+            {/* File row */}
+            <div className="flex-1 flex items-center gap-1.5 py-0.5 text-left text-sm min-w-0">
               <FileIcon filename={f.path} size={16} />
               <span className="truncate flex-1" title={f.path}>{f.path}</span>
               <StatusBadge status={f.status} />
-            </button>
+            </div>
           </div>
         );
       })}
