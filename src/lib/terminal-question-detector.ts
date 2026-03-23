@@ -32,30 +32,29 @@ interface AutoConfirmPattern {
 }
 
 const AUTO_CONFIRM_PATTERNS: AutoConfirmPattern[] = [
-  // Claude Code — tool permission prompts
-  { pattern: /Allow .+ tool/i, response: "y\n" },
-  { pattern: /\(y\)es\s*\/\s*\(n\)o/i, response: "y\n" },
-  { pattern: /yes to \(a\)ll/i, response: "y\n" },
-  // Claude Code — explicit confirmation prompts
-  { pattern: /Do you want to proceed\??/i, response: "y\n" },
-  { pattern: /Do you want to allow/i, response: "y\n" },
-  { pattern: /Do you want to continue\??/i, response: "y\n" },
+  // Claude Code — numbered selection prompts (Enter accepts highlighted default)
+  // NOTE: PTY expects \r (carriage return) for Enter, not \n (line feed)
+  { pattern: /Allow .+ tool/i, response: "\r" },
+  { pattern: /\(y\)es\s*\/\s*\(n\)o/i, response: "\r" },
+  { pattern: /yes to \(a\)ll/i, response: "\r" },
+  { pattern: /Do you want to proceed\??/i, response: "\r" },
+  { pattern: /Do you want to allow/i, response: "\r" },
+  { pattern: /Do you want to continue\??/i, response: "\r" },
   // Generic CLI yes/no prompts (structural indicators)
-  { pattern: /\(y\/n\)/i, response: "y\n" },
-  { pattern: /\[Y\/n\]/i, response: "y\n" },
-  { pattern: /\[y\/N\]/i, response: "y\n" },
-  { pattern: /\(yes\/no\)/i, response: "y\n" },
-  { pattern: /Are you sure\??/i, response: "y\n" },
-  { pattern: /Continue\?/, response: "y\n" },
-  { pattern: /Confirm\?/i, response: "y\n" },
-  { pattern: /Overwrite\?/i, response: "y\n" },
-  { pattern: /Replace\?/i, response: "y\n" },
-  { pattern: /Proceed\?/i, response: "y\n" },
+  { pattern: /\(y\/n\)/i, response: "y\r" },
+  { pattern: /\[Y\/n\]/i, response: "y\r" },
+  { pattern: /\[y\/N\]/i, response: "y\r" },
+  { pattern: /\(yes\/no\)/i, response: "y\r" },
+  { pattern: /Are you sure\??/i, response: "y\r" },
+  { pattern: /^Continue\?/m, response: "y\r" },
+  { pattern: /^Confirm\?/im, response: "y\r" },
+  { pattern: /^Overwrite\?/im, response: "y\r" },
+  { pattern: /^Replace\?/im, response: "y\r" },
   // Generic CLI action prompts
-  { pattern: /Press Enter to/i, response: "\n" },
-  { pattern: /Press any key/i, response: "\n" },
+  { pattern: /Press Enter to/i, response: "\r" },
+  { pattern: /Press any key/i, response: "\r" },
   // npm / package managers
-  { pattern: /Is this OK\?/i, response: "y\n" },
+  { pattern: /Is this OK\?/i, response: "y\r" },
 ];
 
 /** Manual input patterns: need real user input (password, text, selection).
@@ -75,6 +74,8 @@ const BUFFER_SIZE = 1200;
 const DEBOUNCE_MS = 800;    // Check 800ms after last visible output
 const THROTTLE_MS = 2000;   // Also check every 2s during continuous output
 
+const AUTO_CONFIRM_COOLDOWN_MS = 3000; // Ignore patterns for 3s after auto-confirm
+
 export class QuestionDetector {
   private buffer = "";
   private debounceTimer: number | null = null;
@@ -82,6 +83,9 @@ export class QuestionDetector {
   private currentState = false;
   private onChange: (questioning: boolean) => void;
   private onAutoConfirm: ((response: string) => void) | null;
+  private cooldownUntil = 0; // Timestamp: ignore auto-confirm until this time
+  /** Fingerprint of the last auto-confirmed buffer to avoid re-triggering same prompt */
+  private lastConfirmedFingerprint = "";
 
   constructor(
     onChange: (questioning: boolean) => void,
@@ -98,15 +102,29 @@ export class QuestionDetector {
     this.throttleTimer = null;
   }
 
+  /** Create a fingerprint from the last ~200 chars to detect duplicate prompts */
+  private bufferFingerprint(): string {
+    return this.buffer.trim().slice(-200);
+  }
+
   private checkPatterns() {
-    // Auto-confirm: check confirmation patterns first
-    if (this.onAutoConfirm) {
+    // Auto-confirm: check confirmation patterns first (with cooldown to prevent double-fire)
+    if (this.onAutoConfirm && Date.now() >= this.cooldownUntil) {
       for (const { pattern, response } of AUTO_CONFIRM_PATTERNS) {
         if (pattern.test(this.buffer)) {
+          // Prevent re-triggering: if the buffer fingerprint hasn't changed
+          // (same prompt redisplayed by TUI), skip the auto-confirm
+          const fingerprint = this.bufferFingerprint();
+          if (fingerprint === this.lastConfirmedFingerprint) {
+            return;
+          }
+          console.log("[QuestionDetector] Auto-confirm matched:", pattern.source, "→ sending response");
           this.onAutoConfirm(response);
-          // Reset silently (no onChange callback) so next question is detected fresh
+          // Reset silently + start cooldown so TUI redraws don't re-trigger
+          this.lastConfirmedFingerprint = fingerprint;
           this.buffer = "";
           this.currentState = false;
+          this.cooldownUntil = Date.now() + AUTO_CONFIRM_COOLDOWN_MS;
           this.clearTimers();
           return;
         }

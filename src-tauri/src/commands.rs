@@ -245,7 +245,7 @@ pub fn get_terminal_process_name(
         }
     };
 
-    // Find child processes of the shell (Unix only, lock-free)
+    // Find direct child process of the shell (Unix only, lock-free)
     let output = Command::new("pgrep")
         .args(["-P", &shell_pid.to_string()])
         .output()
@@ -256,10 +256,25 @@ pub fn get_terminal_process_name(
     };
     let first_pid = match pids_str.lines().next() {
         Some(pid) if !pid.trim().is_empty() => pid.trim().to_string(),
-        _ => return Ok(None),
+        _ => return Ok(None), // No child → shell is idle
     };
 
-    // Get process name from PID
+    // Check if the direct child has its own children.
+    // If not, it's an idle interactive process (REPL like claude, python, node).
+    // If yes, it's actively executing something (e.g. claude running a tool).
+    let grandchild_output = Command::new("pgrep")
+        .args(["-P", &first_pid])
+        .output()
+        .ok();
+    let has_grandchild = grandchild_output
+        .as_ref()
+        .map(|o| !o.stdout.is_empty())
+        .unwrap_or(false);
+    if !has_grandchild {
+        return Ok(None); // Direct child is idle (interactive REPL) → terminal available
+    }
+
+    // Process is busy — get its name for the UI
     let output = Command::new("ps")
         .args(["-p", &first_pid, "-o", "comm="])
         .output()

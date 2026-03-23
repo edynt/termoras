@@ -206,7 +206,6 @@ export function ProjectItem({ project, index, isDragOver, isDragging, onGripPoin
           )}
 
 
-
           {/* quick actions (show on hover) */}
           <button
             onClick={(e) => {

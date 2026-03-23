@@ -100,7 +100,8 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
         setTerminalQuestioning(terminalId, questioning);
       },
       (response) => {
-        // Auto-confirm: write response (e.g. "y\n") directly to PTY
+        // Auto-confirm: write response directly to PTY
+        console.log(`[AutoConfirm] Writing to terminal ${terminalId}:`, JSON.stringify(response));
         writeToPty(response);
       },
     );
@@ -132,12 +133,17 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
     // or zero-size container → text layout breaks on first open.
     document.fonts.ready.then(() => {
       if (cancelled) return;
+      let connectAttempts = 0;
+      const MAX_CONNECT_ATTEMPTS = 120; // ~2s at 60fps — enough for layout settle
       const connectPty = () => {
         if (cancelled) return;
         const el = containerRef.current;
         // Poll until container has real dimensions (may be display:none initially)
         if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) {
-          requestAnimationFrame(connectPty);
+          connectAttempts++;
+          if (connectAttempts < MAX_CONNECT_ATTEMPTS) {
+            requestAnimationFrame(connectPty);
+          }
           return;
         }
         fitAddon.fit();
@@ -228,24 +234,34 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       writeToPty(data);
     });
 
-    // Send resize events to PTY
-    term.onResize(({ cols, rows }) => {
-      resizeTerminal(terminalId, rows, cols).catch(() => {});
-    });
+    // Send resize events to PTY — the ResizeObserver handler above already
+    // sends resize commands with dedup, so this onResize is kept as a safety
+    // net for programmatic resizes not triggered by the observer.
+    // We skip it here to avoid double-firing which contributes to oscillation.
+    // (ResizeObserver is the single source of truth for PTY resize.)
 
     // Observe container size changes (sidebar drag, view switch, window resize, etc.)
-    // Use rAF instead of setTimeout for faster, frame-aligned fitting.
-    // Track previous width to detect display:none → visible transitions (0 → real size)
-    // which need an extra delayed refit to catch late layout shifts.
+    // Track previous cols/rows to prevent resize oscillation: fitAddon.fit() can
+    // toggle a scrollbar → container width changes → ResizeObserver fires again → loop.
+    // By comparing cols/rows we break the cycle when the terminal size is stable.
     let resizeRaf = 0;
     let resizeSafetyTimeout = 0;
     let prevWidth = containerRef.current?.offsetWidth ?? 0;
+    let prevCols = term.cols;
+    let prevRows = term.rows;
     const observer = new ResizeObserver(() => {
       cancelAnimationFrame(resizeRaf);
       clearTimeout(resizeSafetyTimeout);
       resizeRaf = requestAnimationFrame(() => {
+        const el = containerRef.current;
+        // Skip if container is hidden (display:none gives 0 dimensions)
+        if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) return;
+
         fitAddon.fit();
-        const curWidth = containerRef.current?.offsetWidth ?? 0;
+        const curWidth = el.offsetWidth;
+        const newCols = term.cols;
+        const newRows = term.rows;
+
         // Container just became visible (0 → real size) — schedule a safety refit
         // because the first fit may use intermediate dimensions
         if (prevWidth === 0 && curWidth > 0) {
@@ -255,6 +271,14 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
               resizeTerminal(terminalId, termRef.current.rows, termRef.current.cols).catch(() => {});
             }
           }, 100);
+        }
+
+        // Only send resize to PTY if cols/rows actually changed — prevents
+        // oscillation loop where fitAddon toggles scrollbar back and forth
+        if (newCols !== prevCols || newRows !== prevRows) {
+          prevCols = newCols;
+          prevRows = newRows;
+          resizeTerminal(terminalId, newRows, newCols).catch(() => {});
         }
         prevWidth = curWidth;
       });
@@ -317,12 +341,19 @@ export function TerminalInstance({ terminalId, projectPath }: Props) {
       return;
     }
 
-    // Container not laid out yet (display:none → visible) — poll with rAF
+    // Container not laid out yet (display:none → visible) — poll with rAF.
+    // Cap at 30 attempts (~500ms) to prevent infinite loops when the panel
+    // is genuinely hidden (e.g. git view sets display:none on terminal panel).
     let rafId = 0;
+    let attempts = 0;
+    const MAX_REFIT_ATTEMPTS = 30;
     const refit = () => {
       const container = containerRef.current;
       if (!container || container.offsetWidth === 0 || container.offsetHeight === 0) {
-        rafId = requestAnimationFrame(refit);
+        attempts++;
+        if (attempts < MAX_REFIT_ATTEMPTS) {
+          rafId = requestAnimationFrame(refit);
+        }
         return;
       }
       reattachWebGL();
